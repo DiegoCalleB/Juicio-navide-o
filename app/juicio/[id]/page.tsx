@@ -7,6 +7,7 @@ import { getRecentSignatures, getTrialByShortId } from '@/services/trials';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ nuevo?: string }>;
 }
 
 export const revalidate = 15; // ISR: absorbe picos de tráfico viral sin machacar la BD
@@ -24,10 +25,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title, description, openGraph: { title, description }, twitter: { title, description } };
 }
 
-export default async function TrialPage({ params }: PageProps) {
+export default async function TrialPage({ params, searchParams }: PageProps) {
   const trial = await loadTrial((await params).id);
   if (!trial) notFound();
+  const isNew = (await searchParams).nuevo === '1';
   const signatures = await getRecentSignatures(trial.id);
   const shareUrl = `${clientEnv.NEXT_PUBLIC_SITE_URL}/juicio/${trial.shortId}`;
-  return <Tribunal trial={trial} signatures={signatures} shareUrl={shareUrl} />;
+  return <Tribunal trial={trial} signatures={signatures} shareUrl={shareUrl} isNew={isNew} />;
 }

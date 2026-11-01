@@ -7,12 +7,20 @@ interface TribunalProps {
   trial: Trial;
   signatures: Signature[];
   shareUrl: string;
+  isNew?: boolean;
 }
 
+export const VERDICT_THRESHOLD = 10;
+
 /** Server Component: React escapa todo el texto de usuario (sin dangerouslySetInnerHTML). */
-export function Tribunal({ trial, signatures, shareUrl }: TribunalProps) {
+export function Tribunal({ trial, signatures, shareUrl, isNew = false }: TribunalProps) {
   return (
     <div className="space-y-4">
+      {isNew && (
+        <p role="status" className="animate-pop rounded-2xl bg-court-gold px-4 py-3 text-center font-bold text-court-bg">
+          Juicio abierto. Compártelo ahora para reunir al jurado.
+        </p>
+      )}
       <Card className="text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-court-gold">Tribunal Navideño</p>
         {trial.photoUrl && (
@@ -34,6 +42,15 @@ export function Tribunal({ trial, signatures, shareUrl }: TribunalProps) {
         </p>
         <p className="mt-4 text-4xl font-black tabular-nums text-court-red">{trial.signatureCount}</p>
         <p className="text-xs uppercase tracking-wider text-court-snow/50">firmas de culpabilidad</p>
+        {trial.signatureCount >= VERDICT_THRESHOLD ? (
+          <p className="mt-4 inline-block -rotate-3 rounded-lg border-4 border-court-red px-4 py-1 text-xl font-black uppercase tracking-widest text-court-red">
+            Culpable · Sentencia firme
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-court-snow/50">
+            Faltan {VERDICT_THRESHOLD - trial.signatureCount} firmas para la sentencia firme
+          </p>
+        )}
       </Card>
 
       <ShareButtons

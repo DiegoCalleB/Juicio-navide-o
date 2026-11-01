@@ -17,6 +17,13 @@ export const getTrialByShortId = cache(async (shortId: string): Promise<Trial | 
     .eq('short_id', shortId)
     .maybeSingle();
   if (error || !data) return null;
+  return toTrial(data);
+});
+
+function toTrial(data: {
+  id: string; short_id: string; defendant_name: string; charge: string; sentence: string;
+  photo_path: string | null; signature_count: number; created_at: string;
+}): Trial {
   return {
     id: data.id,
     shortId: data.short_id,
@@ -27,7 +34,20 @@ export const getTrialByShortId = cache(async (shortId: string): Promise<Trial | 
     signatureCount: data.signature_count,
     createdAt: data.created_at,
   };
-});
+}
+
+/** Juicios con más firmas (prueba social + descubrimiento en portada). */
+export async function getTopTrials(limit = 5): Promise<Trial[]> {
+  const { data, error } = await getServerClient()
+    .from('trials')
+    .select(TRIAL_COLUMNS)
+    .gt('signature_count', 0)
+    .order('signature_count', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return data.map(toTrial);
+}
 
 export async function getRecentSignatures(trialId: string, limit = 30): Promise<Signature[]> {
   const { data, error } = await getServerClient()
