@@ -22,7 +22,7 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
         <div style={{ fontSize: 88, fontWeight: 800, marginTop: 24, lineHeight: 1.05 }}>{name}</div>
         <div style={{ fontSize: 44, marginTop: 24, color: '#cbd5e1' }}>{charge}</div>
         <div style={{ fontSize: 56, marginTop: 40, color: '#e5383b', fontWeight: 800 }}>
-          {count} firmas de culpabilidad
+          {`${count} firmas de culpabilidad`}
         </div>
       </div>
     ),
