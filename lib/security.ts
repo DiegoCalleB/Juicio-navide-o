@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
 import { headers } from 'next/headers';
-import { serverEnv } from '@/lib/env.server';
+import { getServerEnv } from '@/lib/env.server';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
 
@@ -20,7 +20,7 @@ export async function getClientFingerprint(): Promise<string> {
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
   const ua = h.get('user-agent') ?? '';
-  return createHash('sha256').update(`${serverEnv.FINGERPRINT_SALT}|${ip}|${ua}`).digest('hex');
+  return createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|${ip}|${ua}`).digest('hex');
 }
 
 /**

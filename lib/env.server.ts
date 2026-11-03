@@ -1,12 +1,13 @@
 import 'server-only';
 import { z } from 'zod';
 
-const parsed = z.object({ FINGERPRINT_SALT: z.string().min(16) }).safeParse({
-  FINGERPRINT_SALT: process.env.FINGERPRINT_SALT,
-});
+const schema = z.object({ FINGERPRINT_SALT: z.string().min(16) });
 
-if (!parsed.success) {
-  throw new Error('Variable de entorno inválida o ausente: FINGERPRINT_SALT (mínimo 16 caracteres).');
+/** Lazy: no rompe la carga del módulo; falla con un mensaje claro al usarse. */
+export function getServerEnv(): z.infer<typeof schema> {
+  const parsed = schema.safeParse({ FINGERPRINT_SALT: process.env.FINGERPRINT_SALT });
+  if (!parsed.success) {
+    throw new Error('Variable de entorno inválida o ausente: FINGERPRINT_SALT (mínimo 16 caracteres).');
+  }
+  return parsed.data;
 }
-
-export const serverEnv = parsed.data;

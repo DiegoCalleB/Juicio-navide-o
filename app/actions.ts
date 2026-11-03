@@ -20,7 +20,24 @@ function failure(outcome: Exclude<MutationOutcome, 'ok'>): ActionResult<never> {
   }
 }
 
+async function safely<T>(name: string, fn: () => Promise<ActionResult<T>>): Promise<ActionResult<T>> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`[${name}]`, err);
+    return { ok: false, error: appError('UNKNOWN') };
+  }
+}
+
 export async function createTrialAction(raw: unknown): Promise<ActionResult<{ shortId: string }>> {
+  return safely('createTrialAction', () => createTrial(raw));
+}
+
+export async function signTrialAction(raw: unknown): Promise<ActionResult<{ shortId: string }>> {
+  return safely('signTrialAction', () => signTrial(raw));
+}
+
+async function createTrial(raw: unknown): Promise<ActionResult<{ shortId: string }>> {
   const parsed = createTrialSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: appError('VALIDATION', parsed.error.flatten().fieldErrors) };
   if (parsed.data.website) return { ok: false, error: appError('SPAM') };
@@ -37,7 +54,7 @@ export async function createTrialAction(raw: unknown): Promise<ActionResult<{ sh
   return { ok: false, error: appError('UNKNOWN') };
 }
 
-export async function signTrialAction(raw: unknown): Promise<ActionResult<{ shortId: string }>> {
+async function signTrial(raw: unknown): Promise<ActionResult<{ shortId: string }>> {
   const parsed = signTrialSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: appError('VALIDATION', parsed.error.flatten().fieldErrors) };
   if (parsed.data.website) return { ok: false, error: appError('SPAM') };
