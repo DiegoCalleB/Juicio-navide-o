@@ -31,6 +31,7 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
   const [messages, setMessages] = useState<RoomMessageDTO[]>([]);
   const [text, setText] = useState('');
   const [delay, setDelay] = useState<ReplyDelay>(2);
+  const [mode, setMode] = useState<'voice' | 'text'>('voice');
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; msg: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,7 +47,7 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
     const fromChild = list.filter((m) => m.from === 'child').length;
     if (childCount.current >= 0 && fromChild > childCount.current) {
       navigator.vibrate?.([120, 80, 120]);
-      document.title = `🔔 ${childName} ha mandado un audio`;
+      document.title = `🔔 Nuevo mensaje de ${childName}`;
     }
     childCount.current = fromChild;
     setMessages(list);
@@ -74,7 +75,7 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
       const res = await fetch(`/api/rooms/${token}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: body, delayMinutes: delay }),
+        body: JSON.stringify({ text: body, delayMinutes: delay, mode }),
       });
       const json = (await res.json()) as ApiResult<null>;
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
@@ -126,7 +127,7 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
 
           {messages.length === 0 && (
             <p className="py-8 text-center text-[14px] text-[#fff6dc]/60">
-              Aún no hay mensajes. Cuando {childName} mande un audio, te vibrará el móvil.
+              Aún no hay mensajes. Cuando {childName} escriba o mande un audio, te vibrará el móvil.
             </p>
           )}
 
@@ -149,13 +150,25 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
           <div className="relative">
             <label htmlFor="reply" className="sr-only">Mensaje de {king.name}</label>
             <textarea id="reply" rows={3} maxLength={MAX_CHARS} value={text} onChange={(e) => setText(e.target.value)}
-              placeholder={`Escribe lo que dirá ${kingShort}… llegará como nota de voz`}
+              placeholder={mode === 'voice' ? `Escribe lo que dirá ${kingShort}… llegará como nota de voz` : `Escribe el mensaje de ${kingShort}…`}
               className="w-full resize-none rounded-2xl border border-white/15 bg-[#120822] px-3.5 py-3 text-[15px] text-[#fff6dc] placeholder:text-[#fff6dc]/35 focus:border-[#f6d77a] focus:outline-none" />
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#fff6dc]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[12px] text-[#fff6dc]/60">Llega en</span>
+            <span className="w-14 text-[12px] text-[#fff6dc]/60">Como</span>
+            <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
+              {(['voice', 'text'] as const).map((m) => (
+                <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}
+                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#fff6dc]/70'}`}>
+                  {m === 'voice' ? 'Nota de voz' : 'Por escrito'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="w-14 text-[12px] text-[#fff6dc]/60">Llega en</span>
             <div role="radiogroup" aria-label="Cuándo llega la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
               {REPLY_DELAYS.map((d) => (
                 <button key={d} type="button" role="radio" aria-checked={delay === d} onClick={() => setDelay(d)}
@@ -172,7 +185,9 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
 
           <button type="button" onClick={send} disabled={!text.trim() || sending}
             className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg disabled:opacity-50 active:scale-[0.99]">
-            {sending ? `Grabando la voz de ${kingShort}…` : `Enviar con la voz de ${kingShort}`}
+            {sending
+              ? mode === 'voice' ? `Grabando la voz de ${kingShort}…` : 'Enviando…'
+              : mode === 'voice' ? `Enviar con la voz de ${kingShort}` : `Enviar como ${kingShort}`}
           </button>
         </footer>
       </div>
@@ -192,7 +207,8 @@ function PanelMessage({ m, king, childName }: { m: RoomMessageDTO; king: KingPro
         {m.kind === 'voice' && (
           <VoiceNote duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} king={king} src={m.audioUrl} />
         )}
-        {!child && m.text && <p className="mt-1.5 border-t border-black/10 pt-1.5 text-[13px] leading-snug text-[#5b3a1e]">“{m.text}”</p>}
+        {m.kind === 'text' && m.text && <p className="whitespace-pre-line text-[15px] leading-snug">{m.text}</p>}
+        {m.kind === 'voice' && !child && m.text && <p className="mt-1.5 border-t border-black/10 pt-1.5 text-[13px] leading-snug text-[#5b3a1e]">“{m.text}”</p>}
         <p className="mt-1 text-right text-[10.5px] opacity-60">
           {m.pending ? `Se entregará a las ${fmtTime(m.at)}` : fmtTime(m.at)}
         </p>

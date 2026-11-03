@@ -5,9 +5,9 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: 'Juicio Navideño', template: '%s · Juicio Navideño' },
-  description: 'Lleva a tu cuñado, suegra o amigo secreto a juicio esta Navidad. Crea el caso y que firme el jurado.',
-  openGraph: { type: 'website', siteName: 'Juicio Navideño', locale: 'es_ES' },
+  title: { default: 'Mensajería Real de Oriente', template: '%s · Mensajería Real de Oriente' },
+  description: 'Tu hijo escribe o manda notas de voz a su Rey Mago favorito… y el Rey le contesta.',
+  openGraph: { type: 'website', siteName: 'Mensajería Real de Oriente', locale: 'es_ES' },
   twitter: { card: 'summary_large_image' },
 };
 

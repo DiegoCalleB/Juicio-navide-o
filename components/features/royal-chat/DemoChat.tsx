@@ -1,30 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { RoyalChat } from './RoyalChat';
+import { RoyalChat, type KingActivity } from './RoyalChat';
 import { fmtTime } from './mapping';
 import type { ChatMessage, King } from './types';
 
-/** Demo sin backend: simula grabación y respuesta del Rey. */
+/** Demo sin backend: simula audios/textos del niño y la respuesta del Rey. */
 export function DemoChat({ king, childName, initial }: { king: King; childName: string; initial: ChatMessage[] }) {
   const [messages, setMessages] = useState(initial);
-  const [kingRecording, setKingRecording] = useState(false);
+  const [activity, setActivity] = useState<KingActivity>(null);
   const now = () => fmtTime(new Date().toISOString());
+
+  const kingAnswers = (reply: ChatMessage) => {
+    setTimeout(() => setActivity(reply.kind === 'voice' ? 'recording' : 'typing'), 700);
+    setTimeout(() => {
+      setActivity(null);
+      setMessages((m) => [...m, reply]);
+    }, 3600);
+  };
 
   return (
     <RoyalChat
       king={king}
       childName={childName}
       messages={messages}
-      kingRecording={kingRecording}
+      kingActivity={activity}
       simulateRecording
       onVoice={({ seconds }) => {
         setMessages((m) => [...m, { id: crypto.randomUUID(), from: 'child', kind: 'voice', duration: Math.max(1, Math.round(seconds)), seed: Math.round(seconds * 977), time: now() }]);
-        setTimeout(() => setKingRecording(true), 700);
-        setTimeout(() => {
-          setKingRecording(false);
-          setMessages((m) => [...m, { id: crypto.randomUUID(), from: 'king', kind: 'voice', duration: 16, seed: Date.now() % 9973, time: now() }]);
-        }, 3600);
+        kingAnswers({ id: crypto.randomUUID(), from: 'king', kind: 'voice', duration: 16, seed: Date.now() % 9973, time: now() });
+      }}
+      onText={(text) => {
+        setMessages((m) => [...m, { id: crypto.randomUUID(), from: 'child', kind: 'text', text, time: now() }]);
+        kingAnswers({ id: crypto.randomUUID(), from: 'king', kind: 'text', text: `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Gaspar y a Baltasar ✨`, time: now() });
       }}
     />
   );

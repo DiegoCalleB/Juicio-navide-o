@@ -162,7 +162,22 @@ export async function addChildVoice(room: Room, audio: Buffer, mime: string, sec
   await maybeAcknowledge(room);
 }
 
-export async function addKingReply(room: Room, text: string, delayMinutes: ReplyDelay): Promise<void> {
+export async function addChildText(room: Room, text: string): Promise<void> {
+  await insertMessage({ room_id: room.id, sender: 'child', kind: 'text', body: text });
+  await maybeAcknowledge(room);
+}
+
+export async function addKingReply(
+  room: Room,
+  text: string,
+  delayMinutes: ReplyDelay,
+  mode: 'voice' | 'text' = 'voice',
+): Promise<void> {
+  const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
+  if (mode === 'text') {
+    await insertMessage({ room_id: room.id, sender: 'king', kind: 'text', body: text, deliver_at: deliverAt });
+    return;
+  }
   const { audio, seconds } = await synthesizeKingVoice(room.king, text);
   const path = `${room.id}/${randomUUID()}.mp3`;
   const { error } = await getAdminClient()
@@ -177,6 +192,6 @@ export async function addKingReply(room: Room, text: string, delayMinutes: Reply
     body: text,
     audio_path: path,
     duration_s: Math.min(120, seconds),
-    deliver_at: new Date(Date.now() + delayMinutes * 60_000).toISOString(),
+    deliver_at: deliverAt,
   });
 }

@@ -46,8 +46,11 @@ export const createRoomSchema = z.object({
   website: honeypot,
 });
 
+export const childTextSchema = z.object({ text: text(1, 300) });
+
 export const kingReplySchema = z.object({
   text: text(1, 300),
+  mode: z.enum(['voice', 'text']).default('voice'),
   delayMinutes: z.union([z.literal(REPLY_DELAYS[0]), z.literal(REPLY_DELAYS[1]), z.literal(REPLY_DELAYS[2]), z.literal(REPLY_DELAYS[3])]),
 });
 

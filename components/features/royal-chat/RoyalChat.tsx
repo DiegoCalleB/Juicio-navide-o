@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MAX_VOICE_SECONDS } from '@/lib/royal';
-import { IconBack, IconMic, IconSeal, IconStar } from './icons';
+import { IconBack, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
 import { OrientPhoto } from './OrientPhoto';
 import { RoyalAvatar } from './RoyalAvatar';
 import { useVoiceRecorder, type Recording } from './useVoiceRecorder';
@@ -13,8 +13,10 @@ interface RoyalChatProps {
   king: King;
   childName: string;
   messages: ChatMessage[];
-  kingRecording: boolean;
+  /** Qué está haciendo el Rey ahora mismo (para el indicador). */
+  kingActivity: KingActivity;
   onVoice: (rec: Recording & { blob: Blob }) => void;
+  onText: (text: string) => void;
   /** Demo sin micrófono real. */
   simulateRecording?: boolean;
   /** Aviso no bloqueante (errores de red, permisos…). */
@@ -22,27 +24,34 @@ interface RoyalChatProps {
   sending?: boolean;
 }
 
+export type KingActivity = 'recording' | 'typing' | null;
+
 const MIN_RECORD_S = 0.8;
+const MAX_TEXT = 300;
 
 export function RoyalChat({
   king,
   childName,
   messages,
-  kingRecording,
+  kingActivity,
   onVoice,
+  onText,
   simulateRecording = false,
   notice,
   sending = false,
 }: RoyalChatProps) {
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
+  const [draft, setDraft] = useState('');
+  const kingShort = king.name.replace('Rey ', '');
+  const busy = kingActivity !== null;
   const endRef = useRef<HTMLDivElement>(null);
   const firstScroll = useRef(true);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: firstScroll.current ? 'auto' : 'smooth', block: 'end' });
     firstScroll.current = false;
-  }, [messages.length, kingRecording]);
+  }, [messages.length, busy]);
 
   const finish = async () => {
     const rec = await stop();
@@ -62,6 +71,14 @@ export function RoyalChat({
 
   const banner = error ?? notice;
 
+  const submitText = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const text = draft.trim();
+    if (!text || sending) return;
+    onText(text.slice(0, MAX_TEXT));
+    setDraft('');
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black">
       <div className="relative flex h-dvh w-full max-w-md flex-col overflow-hidden bg-[#160a2b] text-[#2b1b0e]">
@@ -79,7 +96,7 @@ export function RoyalChat({
               <IconSeal className="size-4 text-[#f2c94c]" aria-label="Rey verificado de Oriente" />
             </p>
             <p className="text-[12.5px] text-[#f6d77a]/90" aria-live="polite">
-              {kingRecording ? 'grabando un audio…' : 'desde Oriente'}
+              {kingActivity === 'recording' ? 'grabando un audio…' : kingActivity === 'typing' ? 'escribiendo…' : 'desde Oriente'}
             </p>
           </div>
         </header>
@@ -89,10 +106,10 @@ export function RoyalChat({
             <IconStar className="size-3 shrink-0" /> Solo {childName} y los Reyes pueden ver estos mensajes
           </p>
 
-          {messages.length === 0 && !kingRecording && (
+          {messages.length === 0 && !busy && (
             <div className="mx-auto mt-10 max-w-[80%] text-center text-[14px] leading-relaxed text-[#fff6dc]/80">
               <p className="font-serif text-lg text-[#f6d77a]">¡Hola, {childName}!</p>
-              <p className="mt-2">Mantén pulsado el botón dorado y cuéntale a {king.name.replace('Rey ', '')} lo que quieras.</p>
+              <p className="mt-2">Escríbele o mantén pulsado el botón dorado para mandarle un audio a {kingShort}.</p>
             </div>
           )}
 
@@ -100,14 +117,14 @@ export function RoyalChat({
             <Bubble key={m.id} message={m} king={king} />
           ))}
 
-          {kingRecording && (
+          {busy && (
             <div className="flex animate-pop items-end gap-2">
               <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-[#fbf5e6] px-3.5 py-2.5 shadow-md">
                 <span className="relative grid size-6 place-items-center">
                   <span className="absolute inset-0 animate-ping rounded-full bg-[#7a3fb0]/30" />
-                  <IconMic className="relative size-4 text-[#7a3fb0]" />
+                  {kingActivity === 'recording' ? <IconMic className="relative size-4 text-[#7a3fb0]" /> : <IconPen className="relative size-4 text-[#7a3fb0]" />}
                 </span>
-                <span className="text-[13px] text-[#5b3a1e]">{king.name} está grabando un audio…</span>
+                <span className="text-[13px] text-[#5b3a1e]">{king.name} está {kingActivity === 'recording' ? 'grabando un audio' : 'escribiendo'}…</span>
               </div>
             </div>
           )}
@@ -120,7 +137,7 @@ export function RoyalChat({
           </p>
         )}
 
-        <footer className="relative z-10 flex items-end gap-2 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
+        <form onSubmit={submitText} className="relative z-10 flex items-end gap-2 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
           <div className="relative flex min-h-12 flex-1 items-center rounded-3xl bg-[#fbf5e6] px-4 shadow-md">
             {recording ? (
               <p className="flex items-center gap-2 text-[15px] text-[#5b3a1e]">
@@ -128,10 +145,20 @@ export function RoyalChat({
                 <span className="tabular-nums">{`0:${String(Math.floor(elapsed)).padStart(2, '0')}`}</span>
                 <span className="text-[#5b3a1e]/60">Suelta para enviar</span>
               </p>
-            ) : sending ? (
-              <p className="text-[15px] text-[#5b3a1e]/70">Enviando a Oriente…</p>
             ) : (
-              <p className="select-none text-[15px] text-[#5b3a1e]/50">Mantén pulsado para hablar</p>
+              <>
+                <label htmlFor="royal-draft" className="sr-only">Mensaje para {king.name}</label>
+                <input
+                  id="royal-draft"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={MAX_TEXT}
+                  enterKeyHint="send"
+                  autoComplete="off"
+                  placeholder={sending ? 'Enviando a Oriente…' : `Escribe a ${kingShort}…`}
+                  className="w-full bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
+                />
+              </>
             )}
             {hint && (
               <span role="status" className="absolute -top-10 right-0 animate-pop rounded-xl bg-[#2a0f4a] px-3 py-1.5 text-xs text-[#f6d77a] shadow-lg">
@@ -139,23 +166,34 @@ export function RoyalChat({
               </span>
             )}
           </div>
-          <button
-            type="button"
-            aria-label="Mantén pulsado para grabar una nota de voz"
-            disabled={sending}
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              setHint(false);
-              void start();
-            }}
-            onPointerUp={() => void finish()}
-            onPointerCancel={() => void finish()}
-            onContextMenu={(e) => e.preventDefault()}
-            className={`grid size-12 shrink-0 touch-none select-none place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform duration-150 disabled:opacity-60 ${recording ? 'scale-125' : 'active:scale-95'}`}
-          >
-            <IconMic className="size-6" />
-          </button>
-        </footer>
+          {draft.trim() && !recording ? (
+            <button
+              type="submit"
+              aria-label={`Enviar mensaje a ${king.name}`}
+              disabled={sending}
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform active:scale-95 disabled:opacity-60"
+            >
+              <IconSend className="ml-0.5 size-5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Mantén pulsado para grabar una nota de voz"
+              disabled={sending}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setHint(false);
+                void start();
+              }}
+              onPointerUp={() => void finish()}
+              onPointerCancel={() => void finish()}
+              onContextMenu={(e) => e.preventDefault()}
+              className={`grid size-12 shrink-0 touch-none select-none place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform duration-150 disabled:opacity-60 ${recording ? 'scale-125' : 'active:scale-95'}`}
+            >
+              <IconMic className="size-6" />
+            </button>
+          )}
+        </form>
       </div>
     </div>
   );

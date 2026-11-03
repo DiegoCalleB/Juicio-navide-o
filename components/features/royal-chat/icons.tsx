@@ -19,3 +19,5 @@ export const IconCamel = (p: P) => (
     <path d="M4 9.5c0-1 .8-1.8 1.8-1.8.6 0 1 .3 1.3.7l.6 1c.3-1.6 1.4-3.4 3-3.4 1.4 0 2 1.2 2.4 2.4.4-1 1.1-1.9 2.3-1.9 1.6 0 2.4 1.6 2.6 3.2l.4 2.4 1.6-1.1c.5-.3 1.1-.1 1.3.4.2.4 0 .9-.4 1.1l-2.5 1.6c-.3 1.4-1.3 2.4-2.6 2.8v3.6h-1.5v-3.4h-4.6v3.4H8.2v-3.6c-1.2-.5-2-1.6-2.2-3l-.3-2.6-.9.3C4.4 11.3 4 10.5 4 9.5z" />
   </svg>
 );
+export const IconSend = (p: P) => (<svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M3.4 20.4l17.4-7.5a1 1 0 0 0 0-1.8L3.4 3.6a1 1 0 0 0-1.4 1.1L3.8 11l9.2 1-9.2 1-1.8 6.3a1 1 0 0 0 1.4 1.1z" /></svg>);
+export const IconPen = (p: P) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>);

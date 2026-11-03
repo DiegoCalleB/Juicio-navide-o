@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KingProfile, RoomMessageDTO } from '@/lib/royal';
 import { fmtTime, startPolling, toChatMessage, type ApiResult } from './mapping';
-import { RoyalChat } from './RoyalChat';
+import { RoyalChat, type KingActivity } from './RoyalChat';
 import type { ChatMessage } from './types';
 
-const KING_TYPING_MS = 3500;
+const KING_ACTIVITY_MS = 3500;
 
-/** Chat del niño conectado: sube notas de voz y recibe las del Rey (con "grabando un audio…"). */
+/** Chat del niño conectado: envía audios o texto y recibe al Rey (con "grabando…/escribiendo…"). */
 export function LiveChildChat({ token, king, childName }: { token: string; king: KingProfile; childName: string }) {
   const [shown, setShown] = useState<ChatMessage[]>([]);
   const [local, setLocal] = useState<ChatMessage[]>([]);
-  const [kingRecording, setKingRecording] = useState(false);
+  const [kingActivity, setKingActivity] = useState<KingActivity>(null);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const seen = useRef<Set<string>>(new Set());
@@ -33,16 +33,17 @@ export function LiveChildChat({ token, king, childName }: { token: string; king:
     if (immediate.length) setShown((s) => [...s, ...immediate]);
     loaded.current = true;
 
-    if (fromKing.length && !revealing.current) {
+    const first = fromKing[0];
+    if (first && !revealing.current) {
       revealing.current = true;
-      setKingRecording(true);
+      setKingActivity(first.kind === 'voice' ? 'recording' : 'typing');
       setTimeout(() => {
         fromKing.forEach((m) => seen.current.add(m.id));
         setShown((s) => [...s, ...fromKing]);
-        setKingRecording(false);
+        setKingActivity(null);
         revealing.current = false;
         navigator.vibrate?.(180);
-      }, KING_TYPING_MS);
+      }, KING_ACTIVITY_MS);
     }
   }, [token]);
 
@@ -51,29 +52,45 @@ export function LiveChildChat({ token, king, childName }: { token: string; king:
     return stop;
   }, [poll]);
 
-  const onVoice = async ({ blob, seconds }: { blob: Blob; seconds: number }) => {
+  /** Envío optimista: se muestra al instante y se sustituye por el del servidor. */
+  const send = async (optimistic: ChatMessage, request: () => Promise<Response>) => {
     setNotice(null);
-    const localId = `local-${Date.now()}`;
-    const optimistic: ChatMessage = {
-      id: localId, from: 'child', kind: 'voice', duration: Math.round(seconds),
-      seed: Math.round(seconds * 977) || 7, src: URL.createObjectURL(blob), time: fmtTime(new Date().toISOString()),
-    };
     setLocal((l) => [...l, optimistic]);
     setSending(true);
     try {
-      const form = new FormData();
-      form.append('audio', blob, 'nota');
-      form.append('duration', String(seconds));
-      const res = await fetch(`/api/rooms/${token}/voice`, { method: 'POST', body: form });
+      const res = await request();
       const body = (await res.json()) as ApiResult<null>;
       if (!body.ok) throw new Error(body.error?.message ?? 'No se pudo enviar.');
       await poll();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : 'No se pudo enviar. Inténtalo otra vez.');
     } finally {
-      setLocal((l) => l.filter((m) => m.id !== localId));
+      setLocal((l) => l.filter((m) => m.id !== optimistic.id));
       setSending(false);
     }
+  };
+
+  const now = () => fmtTime(new Date().toISOString());
+
+  const onVoice = ({ blob, seconds }: { blob: Blob; seconds: number }) => {
+    const form = new FormData();
+    form.append('audio', blob, 'nota');
+    form.append('duration', String(seconds));
+    void send(
+      { id: `local-${Date.now()}`, from: 'child', kind: 'voice', duration: Math.round(seconds), seed: Math.round(seconds * 977) || 7, src: URL.createObjectURL(blob), time: now() },
+      () => fetch(`/api/rooms/${token}/voice`, { method: 'POST', body: form }),
+    );
+  };
+
+  const onText = (text: string) => {
+    void send(
+      { id: `local-${Date.now()}`, from: 'child', kind: 'text', text, time: now() },
+      () => fetch(`/api/rooms/${token}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      }),
+    );
   };
 
   return (
@@ -81,8 +98,9 @@ export function LiveChildChat({ token, king, childName }: { token: string; king:
       king={king}
       childName={childName}
       messages={[...shown, ...local]}
-      kingRecording={kingRecording}
+      kingActivity={kingActivity}
       onVoice={onVoice}
+      onText={onText}
       notice={notice}
       sending={sending}
     />
