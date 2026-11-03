@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Tribunal } from '@/components/features/Tribunal';
-import { clientEnv } from '@/lib/env';
+import { getSiteUrl } from '@/lib/site';
 import { shortIdSchema } from '@/lib/schemas';
 import { getRecentSignatures, getTrialByShortId } from '@/services/trials';
 
@@ -30,6 +30,6 @@ export default async function TrialPage({ params, searchParams }: PageProps) {
   if (!trial) notFound();
   const isNew = (await searchParams).nuevo === '1';
   const signatures = await getRecentSignatures(trial.id);
-  const shareUrl = `${clientEnv.NEXT_PUBLIC_SITE_URL}/juicio/${trial.shortId}`;
+  const shareUrl = `${getSiteUrl()}/juicio/${trial.shortId}`;
   return <Tribunal trial={trial} signatures={signatures} shareUrl={shareUrl} isNew={isNew} />;
 }

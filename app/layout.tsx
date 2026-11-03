@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { clientEnv } from '@/lib/env';
+import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(clientEnv.NEXT_PUBLIC_SITE_URL),
+  metadataBase: new URL(getSiteUrl()),
   title: { default: 'Juicio Navideño', template: '%s · Juicio Navideño' },
   description: 'Lleva a tu cuñado, suegra o amigo secreto a juicio esta Navidad. Crea el caso y que firme el jurado.',
   openGraph: { type: 'website', siteName: 'Juicio Navideño', locale: 'es_ES' },
