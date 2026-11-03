@@ -5,3 +5,21 @@
 :root { color-scheme: dark; }
 html { -webkit-tap-highlight-color: transparent; }
 body { @apply bg-court-bg text-court-snow antialiased; overscroll-behavior-y: none; }
+
+/* ── Escena de veredicto (solo transform/opacity: GPU) ── */
+@keyframes fade-up { from { opacity: 0; transform: translate3d(0, 16px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes judge-in { from { opacity: 0; transform: translate3d(0, 40px, 0) scale(0.7); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+@keyframes gavel { 0% { transform: rotate(-50deg); } 55% { transform: rotate(-50deg); } 70% { transform: rotate(15deg); } 100% { transform: rotate(0deg); } }
+@keyframes shake { 0%,100% { transform: translate3d(0,0,0); } 20% { transform: translate3d(-6px,2px,0); } 40% { transform: translate3d(6px,-2px,0); } 60% { transform: translate3d(-4px,0,0); } 80% { transform: translate3d(4px,0,0); } }
+@keyframes stamp { 0% { opacity: 0; transform: scale(3) rotate(-18deg); } 70% { opacity: 1; transform: scale(0.92) rotate(-8deg); } 100% { opacity: 1; transform: scale(1) rotate(-8deg); } }
+@keyframes snow { from { transform: translate3d(0, -10vh, 0); } to { transform: translate3d(24px, 110vh, 0); } }
+.anim-fade-up { animation: fade-up 0.6s ease-out both; }
+.anim-judge-in { animation: judge-in 0.7s cubic-bezier(.2,.9,.3,1.3) both; }
+.anim-gavel { transform-origin: 90% 90%; animation: gavel 1.4s ease-in 2.6s both; }
+.anim-shake { animation: shake 0.45s linear 3.3s both; }
+.anim-stamp { animation: stamp 0.5s cubic-bezier(.2,.9,.3,1.2) 3.3s both; }
+.anim-snow { animation: snow linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up, .anim-judge-in, .anim-gavel, .anim-shake, .anim-stamp { animation-duration: 0.01ms; animation-delay: 0s; }
+  .anim-snow { animation: none; }
+}

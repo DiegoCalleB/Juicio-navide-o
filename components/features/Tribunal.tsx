@@ -1,6 +1,8 @@
 import { Card } from '@/components/ui/Card';
+import { VerdictButton } from '@/components/features/VerdictButton';
 import { JuryPanel } from '@/components/features/JuryPanel';
 import { ShareButtons } from '@/components/features/ShareButtons';
+import { VERDICT_THRESHOLD } from '@/lib/verdict';
 import type { Signature, Trial } from '@/types';
 
 interface TribunalProps {
@@ -10,7 +12,6 @@ interface TribunalProps {
   isNew?: boolean;
 }
 
-export const VERDICT_THRESHOLD = 10;
 
 /** Server Component: React escapa todo el texto de usuario (sin dangerouslySetInnerHTML). */
 export function Tribunal({ trial, signatures, shareUrl, isNew = false }: TribunalProps) {
@@ -56,6 +57,15 @@ export function Tribunal({ trial, signatures, shareUrl, isNew = false }: Tribuna
       <ShareButtons
         url={shareUrl}
         text={`${trial.defendantName} está siendo juzgado por: ${trial.charge}. ¡Firma como jurado!`}
+      />
+
+      <VerdictButton
+        shortId={trial.shortId}
+        defendantName={trial.defendantName}
+        charge={trial.charge}
+        sentence={trial.sentence}
+        signatureCount={trial.signatureCount}
+        shareUrl={shareUrl}
       />
 
       <JuryPanel shortId={trial.shortId} defendantName={trial.defendantName} />
