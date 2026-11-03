@@ -23,3 +23,17 @@ body { @apply bg-court-bg text-court-snow antialiased; overscroll-behavior-y: no
   .anim-fade-up, .anim-judge-in, .anim-gavel, .anim-shake, .anim-stamp { animation-duration: 0.01ms; animation-delay: 0s; }
   .anim-snow { animation: none; }
 }
+
+/* ── Mensajería Real de Oriente ── */
+.royal-sky {
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255,246,220,.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 9%, rgba(255,246,220,.7) 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 38% 42%, rgba(255,246,220,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 36%, rgba(255,246,220,.8) 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 22% 71%, rgba(255,246,220,.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 61% 64%, rgba(255,246,220,.7) 50%, transparent 51%),
+    radial-gradient(1.3px 1.3px at 93% 82%, rgba(255,246,220,.6) 50%, transparent 51%),
+    linear-gradient(180deg, #1d0b3a 0%, #160a2b 45%, #120822 100%);
+  background-size: 180px 180px, 220px 220px, 260px 260px, 200px 200px, 240px 240px, 210px 210px, 230px 230px, 100% 100%;
+}
