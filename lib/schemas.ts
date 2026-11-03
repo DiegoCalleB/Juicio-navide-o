@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { sanitizeText } from '@/lib/sanitize';
+import { KING_IDS, REPLY_DELAYS } from '@/lib/royal';
 
 const text = (min: number, max: number) =>
   z
@@ -37,3 +38,18 @@ export const signTrialSchema = z.object({
 
 export type CreateTrialInput = z.infer<typeof createTrialSchema>;
 export type SignTrialInput = z.infer<typeof signTrialSchema>;
+
+export const createRoomSchema = z.object({
+  childName: text(1, 30),
+  king: z.enum(KING_IDS),
+  consent: z.literal(true, { errorMap: () => ({ message: 'Necesitamos tu consentimiento' }) }),
+  website: honeypot,
+});
+
+export const kingReplySchema = z.object({
+  text: text(1, 300),
+  delayMinutes: z.union([z.literal(REPLY_DELAYS[0]), z.literal(REPLY_DELAYS[1]), z.literal(REPLY_DELAYS[2]), z.literal(REPLY_DELAYS[3])]),
+});
+
+export type CreateRoomInput = z.infer<typeof createRoomSchema>;
+export type KingReplyInput = z.infer<typeof kingReplySchema>;

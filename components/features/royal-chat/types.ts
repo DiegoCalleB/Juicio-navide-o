@@ -1,4 +1,7 @@
-export type Sender = 'king' | 'child';
+import type { KingProfile } from '@/lib/royal';
+
+export type Sender = 'king' | 'child' | 'system';
+export type King = KingProfile;
 
 interface BaseMessage {
   id: string;
@@ -8,12 +11,5 @@ interface BaseMessage {
 
 export type ChatMessage =
   | (BaseMessage & { kind: 'text'; text: string })
-  | (BaseMessage & { kind: 'voice'; duration: number; seed: number })
+  | (BaseMessage & { kind: 'voice'; duration: number; seed: number; src?: string })
   | (BaseMessage & { kind: 'photo'; caption: string });
-
-export interface King {
-  id: 'melchor' | 'gaspar' | 'baltasar';
-  name: string;
-  /** Color del manto: tiñe avatar y detalles. */
-  robe: string;
-}

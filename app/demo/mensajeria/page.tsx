@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { RoyalChat } from '@/components/features/royal-chat/RoyalChat';
+import { DemoChat } from '@/components/features/royal-chat/DemoChat';
 import type { ChatMessage, King } from '@/components/features/royal-chat/types';
+import { KINGS } from '@/lib/royal';
 
 export const metadata: Metadata = { title: 'Mensajería Real de Oriente', robots: { index: false } };
 export const viewport: Viewport = { themeColor: '#2a0f4a' };
 
-const MELCHOR: King = { id: 'melchor', name: 'Rey Melchor', robe: '#7a3fb0' };
+const MELCHOR: King = KINGS.melchor;
 
 const DEMO: ChatMessage[] = [
   { id: '1', from: 'king', kind: 'text', time: '19:41', text: '¡Hola, Lucía! Soy Melchor ✨\nMis pajes me acaban de traer tu carta desde Madrid.' },
@@ -16,5 +17,5 @@ const DEMO: ChatMessage[] = [
 ];
 
 export default function MensajeriaDemo() {
-  return <RoyalChat king={MELCHOR} childName="Lucía" initialMessages={DEMO} />;
+  return <DemoChat king={MELCHOR} childName="Lucía" initial={DEMO} />;
 }

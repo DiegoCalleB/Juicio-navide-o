@@ -24,23 +24,35 @@ interface VoiceNoteProps {
   seed: number;
   mine: boolean;
   king: King;
+  /** URL real del audio. Sin ella, reproducción simulada (demo). */
+  src?: string;
 }
 
-/** Nota de voz: onda determinista, progreso con rAF (sin re-render por frame del padre). */
-export function VoiceNote({ duration, seed, mine, king }: VoiceNoteProps) {
+/** Nota de voz: onda determinista; con `src` reproduce audio real (progreso vía rAF). */
+export function VoiceNote({ duration, seed, mine, king, src }: VoiceNoteProps) {
   const bars = useMemo(() => waveform(seed), [seed]);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const startRef = useRef(0);
   const rafRef = useRef(0);
 
+  useEffect(() => () => {
+    cancelAnimationFrame(rafRef.current);
+    audioRef.current?.pause();
+  }, []);
+
   useEffect(() => {
     if (!playing) return;
+    const audio = audioRef.current;
     startRef.current = performance.now() - progress * duration * 1000;
     const tick = (now: number) => {
-      const p = Math.min(1, (now - startRef.current) / (duration * 1000));
+      const total = audio && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duration;
+      const p = audio ? Math.min(1, audio.currentTime / total) : Math.min(1, (now - startRef.current) / (duration * 1000));
       setProgress(p);
-      if (p >= 1) {
+      const ended = audio ? audio.ended : p >= 1;
+      if (ended) {
         setPlaying(false);
         setTimeout(() => setProgress(0), 400);
         return;
@@ -52,8 +64,29 @@ export function VoiceNote({ duration, seed, mine, king }: VoiceNoteProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, duration]);
 
+  const toggle = async () => {
+    if (!src) return setPlaying((p) => !p);
+    audioRef.current ??= new Audio(src);
+    const audio = audioRef.current;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+    try {
+      if (audio.ended) audio.currentTime = 0;
+      await audio.play();
+      setFailed(false);
+      setPlaying(true);
+    } catch {
+      setFailed(true);
+    }
+  };
+
   const played = Math.round(progress * BARS);
   const shown = playing || progress > 0 ? progress * duration : duration;
+  const ink = mine ? 'bg-[#3a2208]' : 'bg-[#5b2a86]';
+  const inkSoft = mine ? 'bg-[#3a2208]/30' : 'bg-[#5b2a86]/30';
 
   return (
     <div className="flex w-[15.5rem] items-center gap-2.5">
@@ -61,13 +94,13 @@ export function VoiceNote({ duration, seed, mine, king }: VoiceNoteProps) {
         <div className="relative">
           <RoyalAvatar king={king} size={42} />
           <span className="absolute -bottom-0.5 -right-0.5 grid size-[18px] place-items-center rounded-full bg-[#fbf5e6]">
-            <span className="size-2.5 rounded-full bg-[#7a3fb0]" />
+            <span className="size-2.5 rounded-full" style={{ background: king.robe }} />
           </span>
         </div>
       )}
       <button
         type="button"
-        onClick={() => setPlaying((p) => !p)}
+        onClick={toggle}
         aria-label={playing ? 'Pausar nota de voz' : 'Reproducir nota de voz'}
         className={`grid size-9 shrink-0 place-items-center rounded-full transition-transform active:scale-90 ${mine ? 'text-[#3a2208]' : 'text-[#5b2a86]'}`}
       >
@@ -76,18 +109,13 @@ export function VoiceNote({ duration, seed, mine, king }: VoiceNoteProps) {
       <div className="min-w-0 flex-1">
         <div className="relative flex h-7 items-center gap-[2px]" aria-hidden>
           {bars.map((h, i) => (
-            <span
-              key={i}
-              className={`w-[3px] rounded-full transition-colors duration-150 ${i < played ? (mine ? 'bg-[#3a2208]' : 'bg-[#5b2a86]') : mine ? 'bg-[#3a2208]/30' : 'bg-[#5b2a86]/30'}`}
-              style={{ height: `${h * 100}%` }}
-            />
+            <span key={i} className={`w-[3px] rounded-full transition-colors duration-150 ${i < played ? ink : inkSoft}`} style={{ height: `${h * 100}%` }} />
           ))}
-          <span
-            className={`absolute top-1/2 size-3 -translate-y-1/2 rounded-full shadow ${mine ? 'bg-[#3a2208]' : 'bg-[#7a3fb0]'}`}
-            style={{ left: `calc(${progress * 100}% - 6px)` }}
-          />
+          <span className={`absolute top-1/2 size-3 -translate-y-1/2 rounded-full shadow ${mine ? 'bg-[#3a2208]' : 'bg-[#7a3fb0]'}`} style={{ left: `calc(${progress * 100}% - 6px)` }} />
         </div>
-        <p className={`mt-0.5 text-[11px] tabular-nums ${mine ? 'text-[#3a2208]/70' : 'text-[#5b3a1e]/70'}`}>{fmt(shown)}</p>
+        <p className={`mt-0.5 text-[11px] tabular-nums ${mine ? 'text-[#3a2208]/70' : 'text-[#5b3a1e]/70'}`}>
+          {failed ? 'Toca otra vez' : fmt(shown)}
+        </p>
       </div>
     </div>
   );
