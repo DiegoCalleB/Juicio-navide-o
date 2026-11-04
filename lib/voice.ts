@@ -8,11 +8,11 @@ import { getElevenLabsKey } from '@/lib/env.server';
  * ELEVENLABS_VOICE_BALTASAR y ELEVENLABS_VOICE_RATON_PEREZ (el valor es el voice_id).
  */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
-  papa_noel: 'Yb8JGzcZyW5YYzenhRCm', // El Abuelo Charlie – abuelo cálido en español (provisional)
-  melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – maduro, cálido
-  gaspar: '7qXldmK3yFlWBHejdkpP', // Julio Alonso – grave, solemne
-  baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – cuentos y leyendas
-  raton_perez: 'CPv3Zr3CQCqE4ZzuCgBP', // Lulu – aguda, dulce y juguetona (provisional)
+  papa_noel: 'Yb8JGzcZyW5YYzenhRCm', // El Abuelo Charlie – anciano cálido y calmado (acento latino; elegido por el cliente)
+  melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
+  gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
+  baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
+  raton_perez: 'CPv3Zr3CQCqE4ZzuCgBP', // Lulu – aguda, dulce y juguetona (acento latino; elegida por el cliente)
 };
 
 const BITRATE = 64_000;
