@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { PajePanel } from '@/components/features/royal-chat/PajePanel';
 import { CHARACTERS } from '@/lib/characters';
-import { getSiteUrl } from '@/lib/site';
+import { originFromHeaders } from '@/lib/site';
 import { deriveChildToken } from '@/lib/tokens';
 import { findRoomByToken } from '@/services/rooms';
 
@@ -14,6 +15,6 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'parent') notFound();
-  const childLink = `${getSiteUrl()}/r/${deriveChildToken(token)}`;
+  const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token)}`;
   return <PajePanel token={token} childLink={childLink} character={CHARACTERS[found.room.character]} childName={found.room.childName} />;
 }
