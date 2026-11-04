@@ -7,12 +7,16 @@ import { getElevenLabsKey } from '@/lib/env.server';
  * ELEVENLABS_VOICE_PAPA_NOEL, ELEVENLABS_VOICE_MELCHOR, ELEVENLABS_VOICE_GASPAR,
  * ELEVENLABS_VOICE_BALTASAR y ELEVENLABS_VOICE_RATON_PEREZ (el valor es el voice_id).
  */
+/**
+ * REGLA DEL PROYECTO: solo voces en castellano de España. Nunca acento latinoamericano.
+ * (El Abuelo Charlie y Lulu se descartaron por eso.)
+ */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
-  papa_noel: 'Yb8JGzcZyW5YYzenhRCm', // El Abuelo Charlie – anciano cálido y calmado (acento latino; elegido por el cliente)
+  papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, anciano contador de historias, cálido (provisional hasta que el cliente elija)
   melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
   gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
-  raton_perez: 'CPv3Zr3CQCqE4ZzuCgBP', // Lulu – aguda, dulce y juguetona (acento latino; elegida por el cliente)
+  raton_perez: 'ODQQw99uvxi7piSglbBJ', // Carlota – castellana, aguda, dulce y alegre, pensada para niños (provisional)
 };
 
 const BITRATE = 64_000;

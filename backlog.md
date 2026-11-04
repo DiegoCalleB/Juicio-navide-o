@@ -23,6 +23,8 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 ## Producto
 
+- **Regla**: las voces de los personajes son siempre castellano de España, nunca latinas. Si ninguna candidata convence (Papá Noel y el Ratoncito siguen provisionales), diseñar una voz a medida en ElevenLabs.
+
 - La ruta de los padres sigue llamándose `/paje/…` por dentro (nadie la ve más que los padres). Renombrarla a `/padres/…` exigiría migrar los enlaces ya compartidos.
 
 - **Agenda mágica**: una sola entrada para el niño con varios contactos (Papá Noel, Reyes, Ratoncito Pérez) y un único panel para los padres. Hoy cada personaje es una sala aparte con su enlace. Solo merece la pena si los padres usan la app más allá de la Navidad.
