@@ -15,6 +15,12 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Modelo: "Pase de Navidad" por sala (hipótesis 3–5 €), recuerdo digital aparte, sala-regalo para abuelos y tíos, suscripción Ratoncito Pérez todo el año, campañas B2B. Sin publicidad en el chat del niño.
 - Cuidado con: sociedad e IVA de la UE, desistimiento de 14 días en contenido digital, y el coste de voz, que crece con la viralidad.
 
+## Limpieza del Supabase heredado (verificado el 4-nov, pendiente de decidir)
+
+- Bucket público `evidence` con política `evidence_insert_public` (INSERT anónimo, 256 KB): quedó del "Juicio Navideño". Con la clave anon (pública) cualquiera puede subir archivos. La app actual no lo usa. Eliminar política y bucket.
+- Tablas `trials` y `signatures` (1 fila cada una) también son del proyecto antiguo.
+- `rooms.expires_at` tiene por defecto 45 días en la base de datos; la app lo fija ella misma (hasta pasadas las fiestas), pero conviene no depender de ello.
+
 ## Producto
 
 - Notificaciones push a los padres (en iPhone solo con la PWA instalada).
