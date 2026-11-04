@@ -38,6 +38,12 @@ const toRecord = (r: MessageRow): MessageRecord => ({
   createdAt: r.created_at,
 });
 
+/** URLs firmadas en caché: evitan llamar a Storage en cada cambio (caducan a los 50 min; el TTL real es 60). */
+const URL_CACHE_MS = 50 * 60_000;
+const URL_CACHE_MAX = 5000;
+const g = globalThis as unknown as { __signedUrlCache?: Map<string, { url: string; exp: number }> };
+const urlCache = () => (g.__signedUrlCache ??= new Map());
+
 export class SupabaseRoomStore implements RoomStore {
   async insertRoom(room: NewRoom): Promise<void> {
     const { error } = await getAdminClient().from('rooms').insert({
@@ -104,6 +110,18 @@ export class SupabaseRoomStore implements RoomStore {
     return data.map(toRecord);
   }
 
+  async getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string> {
+    const db = getAdminClient();
+    const nowIso = new Date().toISOString();
+    const base = () => db.from('room_messages').select('id', { count: 'exact', head: true }).eq('room_id', roomId);
+    const [total, delivered, latest] = await Promise.all([
+      opts.deliveredOnly ? base().lte('deliver_at', nowIso) : base(),
+      base().lte('deliver_at', nowIso),
+      db.from('room_messages').select('id').eq('room_id', roomId).order('created_at', { ascending: false }).limit(1).maybeSingle<{ id: string }>(),
+    ]);
+    return `${total.count ?? 0}.${delivered.count ?? 0}.${latest.data?.id ?? '-'}`;
+  }
+
   async countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number> {
     const { count } = await getAdminClient()
       .from('room_messages')
@@ -145,8 +163,23 @@ export class SupabaseRoomStore implements RoomStore {
   async signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {
     const urls = new Map<string, string>();
     if (paths.length === 0) return urls;
-    const { data } = await getAdminClient().storage.from(bucket).createSignedUrls(paths, SIGNED_URL_TTL);
-    for (const s of data ?? []) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl);
+    const cache = urlCache();
+    const now = Date.now();
+    const missing: string[] = [];
+    for (const p of paths) {
+      const hit = cache.get(`${bucket}/${p}`);
+      if (hit && hit.exp > now) urls.set(p, hit.url);
+      else missing.push(p);
+    }
+    if (missing.length > 0) {
+      const { data } = await getAdminClient().storage.from(bucket).createSignedUrls(missing, SIGNED_URL_TTL);
+      for (const s of data ?? []) {
+        if (!s.path || !s.signedUrl) continue;
+        urls.set(s.path, s.signedUrl);
+        cache.set(`${bucket}/${s.path}`, { url: s.signedUrl, exp: now + URL_CACHE_MS });
+      }
+      if (cache.size > URL_CACHE_MAX) for (const [k, v] of cache) if (v.exp <= now) cache.delete(k);
+    }
     return urls;
   }
 

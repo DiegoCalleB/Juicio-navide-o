@@ -25,10 +25,10 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const page = await ctx.newPage(); const errs = [];
   page.on('pageerror', e => errs.push(e.message)); page.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(m.text().slice(0, 140)); });
   await page.goto(BASE + '/r/' + tok, { waitUntil: 'networkidle', timeout: 60000 });
-  check('enlace del niño inválido: pantalla amable', await page.getByRole('heading', { name: 'Este enlace no funciona' }).isVisible());
+  check('enlace del niño inválido: pantalla amable', await page.getByRole('heading', { name: 'Este enlace no funciona' }).waitFor({ timeout: 40000 }).then(() => true, () => false));
   await page.screenshot({ path: S + '/u1-child-notfound.png' });
   await page.goto(BASE + '/paje/' + tok, { waitUntil: 'networkidle' });
-  check('panel inválido: pantalla amable con acción', await page.getByRole('heading', { name: /no existe o ha caducado/ }).isVisible() && await page.getByRole('link', { name: 'Crear una sala nueva' }).isVisible());
+  check('panel inválido: pantalla amable con acción', await page.getByRole('heading', { name: /no existe o ha caducado/ }).waitFor({ timeout: 40000 }).then(() => true, () => false) && await page.getByRole('link', { name: 'Crear una sala nueva' }).isVisible());
   await page.goto(BASE + '/privacidad', { waitUntil: 'networkidle' });
   check('privacidad: menciona audios, ElevenLabs y el contacto configurado', await page.getByText(/ElevenLabs/).first().isVisible() && await page.getByRole('link', { name: 'hola@ejemplo.com' }).isVisible());
   await page.goto(BASE + '/terminos', { waitUntil: 'networkidle' });

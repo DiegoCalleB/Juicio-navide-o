@@ -57,6 +57,11 @@ export interface RoomStore {
   findRoomByTokenHash(hash: string): Promise<RoomRecord | null>;
   insertMessage(message: NewMessage): Promise<MessageRecord>;
   listMessages(roomId: string, opts: { deliveredOnly: boolean }): Promise<MessageRecord[]>;
+  /**
+   * Huella barata del estado de la sala. Cambia al llegar un mensaje o al vencer uno
+   * diferido. Permite responder "sin cambios" sin listar ni firmar nada.
+   */
+  getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
   countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number>;
   /** Respuestas con voz del personaje en esa sala desde `sinceIso` (tope por sala). */
   countVoiceRepliesSince(roomId: string, sinceIso: string): Promise<number>;

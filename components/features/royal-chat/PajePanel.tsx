@@ -49,6 +49,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [momentId, setMomentId] = useState(character.moments[0]?.id ?? 'charla');
 
   const childCount = useRef(-1);
+  const versionRef = useRef('');
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -56,9 +57,11 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const short = character.shortName;
 
   const refresh = useCallback(async () => {
-    const res = await fetch(`/api/rooms/${token}/messages`, { cache: 'no-store' });
-    const body = (await res.json()) as ApiResult<{ messages: RoomMessageDTO[] }>;
+    const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
+    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[] }>;
     if (!body.ok || !body.data) return;
+    versionRef.current = body.data.version;
+    if (body.data.unchanged || !body.data.messages) return;
     const list = body.data.messages;
     const fromChild = list.filter((m) => m.from === 'child').length;
     if (childCount.current >= 0 && fromChild > childCount.current) {

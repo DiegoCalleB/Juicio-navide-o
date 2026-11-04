@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "node e2e/run.cjs"
+    "test:e2e": "node e2e/run.cjs",
+    "test:load": "node e2e/load.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

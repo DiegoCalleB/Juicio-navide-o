@@ -53,6 +53,11 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
 
 // ── Lectura ──────────────────────────────────────────────────────────────
 
+/** Versión del estado de la sala para el sondeo condicional. */
+export async function getMessagesVersion(room: Room, role: Role): Promise<string> {
+  return getRoomStore().getRoomVersion(room.id, { deliveredOnly: role === 'child' });
+}
+
 export async function listMessages(room: Room, role: Role): Promise<RoomMessageDTO[]> {
   const store = getRoomStore();
   const records = await store.listMessages(room.id, { deliveredOnly: role === 'child' });

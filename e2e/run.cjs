@@ -28,6 +28,7 @@ const env = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'e2e-anon-key-e2e-anon-key',
   NEXT_PUBLIC_CONTACT_EMAIL: 'hola@ejemplo.com',
   E2E_BASE: BASE,
+  NEXT_DIST_DIR: '.next-e2e',
   ...(withVoice ? { NEXT_PUBLIC_ENABLE_VOICE: '1', VOICE_ROOM_DAILY_LIMIT: '2', NODE_USE_ENV_PROXY: '1' } : {}),
 };
 

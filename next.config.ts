@@ -25,6 +25,8 @@ const csp = [
 ].join('; ');
 
 const config: NextConfig = {
+  // Las pruebas E2E compilan en su propia carpeta para no mezclarse con el build de producción.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {

@@ -34,6 +34,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   const lastTypingAt = useRef(0);
   const lastSignalAt = useRef(0);
   const pending = useRef<ChatMessage[]>([]);
+  const versionRef = useRef('');
 
   useEffect(() => () => {
     clearTimeout(revealTimer.current);
@@ -56,9 +57,15 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   }, []);
 
   const refresh = useCallback(async () => {
-    const res = await fetch(`/api/rooms/${token}/messages`, { cache: 'no-store' });
-    const body = (await res.json()) as ApiResult<{ messages: RoomMessageDTO[] }>;
+    const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
+    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[] }>;
     if (!body.ok || !body.data) throw new Error(body.error?.message ?? 'error');
+    versionRef.current = body.data.version;
+    if (body.data.unchanged || !body.data.messages) {
+      // Nada nuevo, pero la primera carga (aunque esté vacía) cuenta como historial.
+      loaded.current = true;
+      return;
+    }
 
     const all = body.data.messages.map(toChatMessage).filter((m): m is ChatMessage => m !== null);
     const fresh = all.filter((m) => !seen.current.has(m.id));

@@ -10,7 +10,7 @@ interface Options {
   onTyping: () => void;
 }
 
-const POLL_CONNECTED_MS = 20_000;
+const POLL_CONNECTED_MS = 60_000;
 const POLL_FALLBACK_MS = 5_000;
 
 /**
