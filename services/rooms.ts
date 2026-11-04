@@ -4,7 +4,7 @@ import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
-import { synthesizeKingVoice } from '@/lib/voice';
+import { prepareSpeechText, synthesizeKingVoice, voiceLimits, VoiceError } from '@/lib/voice';
 import { publish, publishRefresh, type Audience } from '@/services/realtime';
 import { RoomError } from '@/services/room-errors';
 import { getRoomStore } from '@/services/room-store';
@@ -166,22 +166,46 @@ export async function addChildVoice(room: Room, audio: Buffer, mime: string, sec
   await maybeAcknowledge(room);
 }
 
+export interface ReplyOutcome {
+  delivered: 'voice' | 'text';
+  /** Si se pidió voz y se entregó por escrito, por qué. */
+  fallback?: 'limit' | 'unavailable';
+}
+
 export async function addKingReply(
   room: Room,
   text: string,
   delayMinutes: ReplyDelay,
   mode: 'voice' | 'text' = 'text',
   effect?: 'surprise',
-): Promise<void> {
+): Promise<ReplyOutcome> {
   const store = getRoomStore();
   const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
 
-  if (mode === 'text' || !KING_VOICE_ENABLED) {
+  const sendText = async (fallback?: ReplyOutcome['fallback']): Promise<ReplyOutcome> => {
     const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, effect: effect ?? null, deliverAt });
     notify(room, rec);
-    return;
+    return fallback ? { delivered: 'text', fallback } : { delivered: 'text' };
+  };
+
+  // La sorpresa siempre va por escrito (la pantalla especial muestra el texto).
+  if (mode === 'text' || !KING_VOICE_ENABLED || effect === 'surprise') return sendText();
+  if (!prepareSpeechText(text)) return sendText();
+
+  // Topes de coste: por sala y diario global. Si se superan, se entrega por escrito.
+  const limits = voiceLimits();
+  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const [roomReplies, totalChars] = await Promise.all([store.countVoiceRepliesSince(room.id, since), store.sumVoiceCharsSince(since)]);
+  if (roomReplies >= limits.roomDailyReplies || totalChars + text.length > limits.dailyChars) return sendText('limit');
+
+  let synth: Awaited<ReturnType<typeof synthesizeKingVoice>>;
+  try {
+    synth = await synthesizeKingVoice(room.character, text);
+  } catch (err) {
+    console.error('[voice]', err instanceof VoiceError ? err.message : err);
+    return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
   }
-  const { audio, seconds } = await synthesizeKingVoice(room.character, text);
+  const { audio, seconds } = synth;
   const path = `${room.id}/${randomUUID()}.mp3`;
   await store.uploadFile('voices', path, audio, 'audio/mpeg');
   const rec = await store.insertMessage({
@@ -194,6 +218,7 @@ export async function addKingReply(
     deliverAt,
   });
   notify(room, rec);
+  return { delivered: 'voice' };
 }
 
 /** "Escribiendo…" en vivo hacia el otro lado. No se guarda. */

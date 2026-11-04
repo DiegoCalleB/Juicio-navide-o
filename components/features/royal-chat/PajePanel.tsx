@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { vibrate } from '@/lib/haptics';
 import { fillChild, type CharacterProfile } from '@/lib/characters';
 import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
@@ -28,10 +29,11 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [messages, setMessages] = useState<RoomMessageDTO[]>([]);
   const [text, setText] = useState('');
   const [delay, setDelay] = useState<ReplyDelay>(0);
-  const [mode, setMode] = useState<'voice' | 'text'>('text');
+  const [mode, setMode] = useState<'voice' | 'text'>(KING_VOICE_ENABLED ? 'voice' : 'text');
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
   const [sending, setSending] = useState(false);
-  const [notice, setNotice] = useState<{ ok: boolean; msg: string } | null>(null);
+  type Tone = 'ok' | 'warn' | 'error';
+  const [notice, setNotice] = useState<{ tone: Tone; msg: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [childTyping, setChildTyping] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     const list = body.data.messages;
     const fromChild = list.filter((m) => m.from === 'child').length;
     if (childCount.current >= 0 && fromChild > childCount.current) {
-      navigator.vibrate?.([120, 80, 120]);
+      vibrate([120, 80, 120]);
       document.title = `🔔 Nuevo mensaje de ${childName}`;
       setChildTyping(false);
     }
@@ -129,7 +131,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
       const blob = await compressForChat(file);
       setPhoto({ blob, url: URL.createObjectURL(blob) });
     } catch (err) {
-      setNotice({ ok: false, msg: err instanceof Error ? err.message : 'No se pudo preparar la foto.' });
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo preparar la foto.' });
     }
   };
 
@@ -154,14 +156,23 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           body: JSON.stringify({ text: text.trim(), delayMinutes: delay, mode: KING_VOICE_ENABLED ? mode : 'text' }),
         });
       }
-      const json = (await res.json()) as ApiResult<null>;
+      const json = (await res.json()) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }>;
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
       setPhoto(null);
-      setNotice({ ok: true, msg: delay === 0 ? `${short} ya ha contestado.` : `${short} contestará en ${delay} min.` });
+      const when = delay === 0 ? `${short} ya ha contestado.` : `${short} contestará en ${delay} min.`;
+      const fb = json.data?.fallback;
+      if (fb) {
+        setNotice({
+          tone: 'warn',
+          msg: `${fb === 'limit' ? 'Se ha alcanzado el límite diario de voz' : 'La voz no está disponible ahora'}: se ha enviado por escrito. ${when}`,
+        });
+      } else {
+        setNotice({ tone: 'ok', msg: when });
+      }
       await refresh();
     } catch (err) {
-      setNotice({ ok: false, msg: err instanceof Error ? err.message : 'No se pudo enviar.' });
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo enviar.' });
     } finally {
       setSending(false);
     }
@@ -181,7 +192,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
       setSurpriseSent(true);
       await refresh();
     } catch (err) {
-      setNotice({ ok: false, msg: err instanceof Error ? err.message : 'No se pudo enviar la sorpresa.' });
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo enviar la sorpresa.' });
     } finally {
       setCountdown(null);
     }
@@ -427,7 +438,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             </div>
           </div>
 
-          {notice && <p role="status" className={`text-center text-[13px] ${notice.ok ? 'text-[#7ee2a8]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
+          {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#f6d77a]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
 
           <button
             type="button"

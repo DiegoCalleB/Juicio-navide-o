@@ -114,6 +114,29 @@ export class SupabaseRoomStore implements RoomStore {
     return count ?? 0;
   }
 
+  async countVoiceRepliesSince(roomId: string, sinceIso: string): Promise<number> {
+    const { count } = await getAdminClient()
+      .from('room_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('room_id', roomId)
+      .eq('sender', 'king')
+      .eq('kind', 'voice')
+      .gte('created_at', sinceIso);
+    return count ?? 0;
+  }
+
+  async sumVoiceCharsSince(sinceIso: string): Promise<number> {
+    const { data } = await getAdminClient()
+      .from('room_messages')
+      .select('body')
+      .eq('sender', 'king')
+      .eq('kind', 'voice')
+      .gte('created_at', sinceIso)
+      .limit(20000)
+      .returns<{ body: string | null }[]>();
+    return (data ?? []).reduce((sum, r) => sum + (r.body?.length ?? 0), 0);
+  }
+
   async uploadFile(bucket: Bucket, path: string, data: Buffer, contentType: string): Promise<void> {
     const { error } = await getAdminClient().storage.from(bucket).upload(path, data, { contentType, upsert: false });
     if (error) throw new Error(`upload: ${error.message}`);

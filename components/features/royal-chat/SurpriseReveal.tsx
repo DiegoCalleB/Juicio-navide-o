@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { vibrate } from '@/lib/haptics';
 import type { Character } from './types';
 import { RoyalAvatar } from './RoyalAvatar';
 
@@ -24,7 +25,7 @@ interface SurpriseRevealProps {
  */
 export function SurpriseReveal({ character, childName, text, onClose }: SurpriseRevealProps) {
   useEffect(() => {
-    navigator.vibrate?.([200, 100, 200, 100, 400]);
+    vibrate([200, 100, 200, 100, 400]);
     const t = setTimeout(onClose, 25_000);
     return () => clearTimeout(t);
   }, [onClose]);

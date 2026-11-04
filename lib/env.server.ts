@@ -12,20 +12,17 @@ export function getServerEnv(): z.infer<typeof schema> {
   return parsed.data;
 }
 
-/** Credenciales de la Mensajería Real (solo servidor). Nunca con prefijo NEXT_PUBLIC_. */
-export function getRoyalEnv(): { SUPABASE_SECRET_KEY: string; ELEVENLABS_API_KEY: string } {
-  const parsed = z
-    .object({ SUPABASE_SECRET_KEY: z.string().min(20), ELEVENLABS_API_KEY: z.string().min(10) })
-    .safeParse({
-      SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
-      ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
-    });
-  if (!parsed.success) {
-    const bad = parsed.error.issues.map((i) => i.path.join('.')).join(', ');
-    throw new Error(`Variables de entorno ausentes para la Mensajería Real: ${bad}.`);
-  }
-  return parsed.data;
+function required(name: string, minLength: number): string {
+  const v = process.env[name];
+  if (!v || v.length < minLength) throw new Error(`Variable de entorno ausente o inválida: ${name}.`);
+  return v;
 }
+
+/** Clave secreta de Supabase (solo servidor). Nunca con prefijo NEXT_PUBLIC_. */
+export const getSupabaseSecretKey = () => required('SUPABASE_SECRET_KEY', 20);
+
+/** Clave de ElevenLabs (solo servidor). Solo hace falta si la voz está activada. */
+export const getElevenLabsKey = () => required('ELEVENLABS_API_KEY', 10);
 
 /** Secreto del endpoint de limpieza (lo llama un programador externo). */
 export function getCronSecret(): string | null {

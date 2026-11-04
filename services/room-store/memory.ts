@@ -67,6 +67,16 @@ export class MemoryRoomStore implements RoomStore {
     return state().messages.filter((m) => m.roomId === roomId && m.sender === 'system' && Date.parse(m.createdAt) >= since).length;
   }
 
+  async countVoiceRepliesSince(roomId: string, sinceIso: string): Promise<number> {
+    const since = Date.parse(sinceIso);
+    return state().messages.filter((m) => m.roomId === roomId && m.sender === 'king' && m.kind === 'voice' && Date.parse(m.createdAt) >= since).length;
+  }
+
+  async sumVoiceCharsSince(sinceIso: string): Promise<number> {
+    const since = Date.parse(sinceIso);
+    return state().messages.filter((m) => m.sender === 'king' && m.kind === 'voice' && Date.parse(m.createdAt) >= since).reduce((n, m) => n + (m.body?.length ?? 0), 0);
+  }
+
   async uploadFile(bucket: Bucket, path: string, data: Buffer, contentType: string): Promise<void> {
     state().files.set(`${bucket}/${path}`, { data, contentType });
   }

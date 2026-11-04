@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { vibrate } from '@/lib/haptics';
 import type { CharacterProfile } from '@/lib/characters';
 import { compressForChat } from '@/lib/image';
 import type { RoomMessageDTO } from '@/lib/royal';
@@ -51,7 +52,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     const special = batch.find((m) => m.kind === 'text' && m.effect === 'surprise');
     if (special?.kind === 'text') setSurprise(special.text);
     setShown((s) => [...s, ...batch]);
-    navigator.vibrate?.(180);
+    vibrate(180);
   }, []);
 
   const refresh = useCallback(async () => {
