@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getSiteUrl } from '@/lib/site';
 
-export const alt = 'Papá Noel y los Reyes Magos contestan a tu hijo';
+export const alt = 'Que antes de abrir los regalos, hable con Papá Noel';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -26,10 +26,10 @@ export default function OgImage() {
           Mensajería mágica de Navidad
         </div>
         <div style={{ display: 'flex', fontSize: 72, fontWeight: 800, lineHeight: 1.08, marginTop: 28 }}>
-          Papá Noel y los Reyes Magos le contestan a tu hijo
+          Que antes de abrir los regalos, hable con Papá Noel
         </div>
         <div style={{ display: 'flex', fontSize: 34, marginTop: 30, color: '#d9cfe8', maxWidth: 980 }}>
-          Tú escribes desde tu móvil. A él le llega como si fuera el personaje, en directo.
+          Tú contestas desde tu móvil. A él le llega como si fuera Papá Noel, en directo.
         </div>
         <div style={{ display: 'flex', fontSize: 30, marginTop: 'auto', paddingTop: 24, color: '#f6d77a' }}>{host}</div>
       </div>

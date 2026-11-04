@@ -38,6 +38,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [countdown, setCountdown] = useState<number | null>(null);
   const [surpriseSent, setSurpriseSent] = useState(false);
   const [shared, setShared] = useState(false);
+  const [momentId, setMomentId] = useState(character.moments[0]?.id ?? 'charla');
 
   const childCount = useRef(-1);
   const endRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,32 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const { connected } = useRoomEvents(token, { onRefresh: refresh, onTyping: onChildTyping });
 
   useEffect(() => () => clearTimeout(typingTimer.current), []);
+
+  // Mantiene la pantalla encendida mientras el panel está abierto (para no perder mensajes del niño).
+  useEffect(() => {
+    let lock: WakeLockSentinel | null = null;
+    let cancelled = false;
+    const request = async () => {
+      try {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        const l = await navigator.wakeLock.request('screen');
+        if (cancelled) await l.release();
+        else lock = l;
+      } catch {
+        /* no soportado o denegado: el panel sigue funcionando */
+      }
+    };
+    void request();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void request();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      void lock?.release().catch(() => undefined);
+    };
+  }, []);
   useEffect(() => {
     const reset = () => {
       if (document.visibilityState === 'visible') document.title = 'Panel de los padres';
@@ -202,6 +229,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
+  const activeMoment = character.moments.find((m) => m.id === momentId) ?? character.moments[0];
   const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
 
   return (
@@ -296,8 +324,23 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         </div>
 
         <footer className="space-y-2.5 border-t border-white/10 bg-[#1d0b3a] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+          <div role="tablist" aria-label="Momento" className="-mx-3 flex gap-1.5 overflow-x-auto px-3 [scrollbar-width:none]">
+            {character.moments.map((mo) => (
+              <button
+                key={mo.id}
+                type="button"
+                role="tab"
+                aria-selected={momentId === mo.id}
+                onClick={() => setMomentId(mo.id)}
+                className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${momentId === mo.id ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'bg-white/8 text-[#fff6dc]/70'}`}
+              >
+                {mo.label}
+              </button>
+            ))}
+          </div>
+          {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#f6d77a]/80">💡 {activeMoment.tip}</p>}
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
-            {character.quickReplies.map((tpl) => fillChild(tpl, childName)).map((q) => (
+            {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button
                 key={q}
                 type="button"

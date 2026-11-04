@@ -27,6 +27,8 @@ interface RoyalChatProps {
   /** Aviso no bloqueante (errores de red, permisos…). */
   notice?: string | null;
   sending?: boolean;
+  /** Dentro de otra página (portada): marco de móvil en vez de pantalla completa. */
+  embedded?: boolean;
 }
 
 export type KingActivity = 'recording' | 'typing' | null;
@@ -46,6 +48,7 @@ export function RoyalChat({
   simulateRecording = false,
   notice,
   sending = false,
+  embedded = false,
 }: RoyalChatProps) {
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
@@ -56,11 +59,12 @@ export function RoyalChat({
   const { theme } = character;
   const place = character.group === 'noel' ? 'Polo Norte' : 'Oriente';
   const busy = kingActivity !== null;
-  const endRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
   const firstScroll = useRef(true);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: firstScroll.current ? 'auto' : 'smooth', block: 'end' });
+    const el = logRef.current;
+    el?.scrollTo({ top: el.scrollHeight, behavior: firstScroll.current ? 'auto' : 'smooth' });
     firstScroll.current = false;
   }, [messages.length, busy]);
 
@@ -97,8 +101,11 @@ export function RoyalChat({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-center bg-black">
-      <div className="relative flex h-dvh w-full max-w-md flex-col overflow-hidden text-[#2b1b0e]" style={{ background: theme.bg }}>
+    <div className={embedded ? 'relative flex justify-center' : 'fixed inset-0 z-40 flex justify-center bg-black'}>
+      <div
+        className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh'}`}
+        style={{ background: theme.bg }}
+      >
         <div aria-hidden className={`${theme.sky === 'snow' ? 'royal-snow' : 'royal-sky'} pointer-events-none absolute inset-0`} />
         <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[#f2c94c]/15 blur-3xl" />
 
@@ -118,7 +125,7 @@ export function RoyalChat({
           </div>
         </header>
 
-        <div role="log" aria-label="Conversación" className="relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 py-4">
+        <div ref={logRef} role="log" aria-label="Conversación" className="relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 py-4">
           <p className="mx-auto mb-3 flex w-fit max-w-[85%] items-center gap-1.5 rounded-xl bg-[#f6d77a]/10 px-3 py-1.5 text-center text-[11.5px] leading-snug text-[#f6d77a]">
             <IconStar className="size-3 shrink-0" /> Solo {childName} y {character.group === 'noel' ? 'Papá Noel' : 'los Reyes'} pueden ver estos mensajes
           </p>
@@ -145,7 +152,6 @@ export function RoyalChat({
               </div>
             </div>
           )}
-          <div ref={endRef} />
         </div>
 
         {banner && (

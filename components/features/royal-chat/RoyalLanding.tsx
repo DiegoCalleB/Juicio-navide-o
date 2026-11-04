@@ -1,17 +1,32 @@
+import { CHARACTERS } from '@/lib/characters';
 import { CreateRoomForm } from './CreateRoomForm';
+import { DemoChat } from './DemoChat';
+import { DEMO_NOEL } from './demoData';
 
 export function RoyalLanding() {
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
-        <header className="mb-8 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería Mágica de Navidad</p>
-          <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Papá Noel y los Reyes Magos contestan a tu hijo</h1>
+        <header className="mb-6 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería mágica de Navidad</p>
+          <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Que antes de abrir los regalos, hable con Papá Noel</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
-            Tu peque escribe o manda fotos y dibujos a Papá Noel o a su Rey favorito. Tú, desde tu móvil, preparas la respuesta… y le llega como si la hubiera escrito el personaje, en directo.
+            Tu peque le escribe a Papá Noel (o a los Reyes Magos) y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.
           </p>
         </header>
+
+        <section aria-labelledby="demo-title" className="mb-8">
+          <h2 id="demo-title" className="mb-3 text-center text-[13px] font-semibold uppercase tracking-widest text-[#fff6dc]/60">
+            Esto es lo que verá tu hijo · pruébalo
+          </h2>
+          <DemoChat embedded character={CHARACTERS.papa_noel} childName="Lucía" initial={DEMO_NOEL} />
+        </section>
+
+        <div className="mb-3 text-center">
+          <h2 className="font-serif text-2xl text-[#fff6dc]">Crea la sala de tu peque</h2>
+          <p className="mt-1 text-[14px] text-[#fff6dc]/60">Gratis, sin registrarte. Tarda un minuto.</p>
+        </div>
         <div className="rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur">
           <CreateRoomForm />
         </div>
