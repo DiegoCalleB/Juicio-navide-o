@@ -64,3 +64,19 @@ Ideas aparcadas. No están construidas ni verificadas.
 **Advertencia:** los padres deben escribir como personaje, no como padres. Una guía corta en el panel: contestar con calma, sin emojis, con pequeños errores y con unos minutos de retraso.
 
 **Orden sugerido:** ficha mágica y carta primero (más impacto por menos esfuerzo).
+
+## Ubicación en tiempo real (idea, NO construir sin revisión legal y de seguridad)
+
+**Idea:** que el niño (o los padres) vean dónde está Papá Noel o el Ratoncito "en directo".
+
+**Riesgos graves:**
+- Compartir la ubicación real de un menor, aunque sea "de juguete", crea un riesgo de seguridad: cualquiera con el enlace podría saber dónde está el niño.
+- El enlace del niño es una credencial de acceso. Si se reenvía o se filtra, la ubicación queda expuesta.
+- El tratamiento de datos de geolocalización de menores es categoría de especial cuidado en el RGPD. Exige base legal, evaluación de impacto y consentimiento informado.
+- Con un personaje que "conoce" al niño, una ubicación en vivo puede aprovecharse para contactar o seguirle, y sería difícil de justificar ante una familia o ante la prensa.
+
+**Alternativa segura (la que sí tiene sentido):**
+- Trineo en directo con una ruta **ficticia** (ver idea 5 de "Ideas de magia"): un mapa estilizado que avanza por el tiempo y por los mensajes programados, sin usar la posición real de nadie.
+- Si algún día se quiere algo con la ubicación real, solo para los padres, con precisión de ciudad (no de calle), sin persistencia, sin enlace del niño y tras revisión legal y de seguridad.
+
+**Decisión pendiente:** no construir nada de esto antes de la revisión legal.
