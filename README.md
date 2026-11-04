@@ -1,6 +1,6 @@
 # Mensajería Mágica de Navidad
 
-Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. Fase 1b: el niño escribe, manda fotos o **audios**; los padres contestan con texto y fotos. La voz sintetizada del personaje queda tras un interruptor.
+Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. El niño escribe, manda fotos o **audios**; los padres contestan con texto, fotos o **la voz del personaje**, y pueden **grabar su reacción** con el propio móvil.
 
 ## Pantallas
 | Ruta | Quién | Qué |
@@ -14,6 +14,15 @@ Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y d
 
 ## Variables de entorno
 Ver `.env.example`. Imprescindibles: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `FINGERPRINT_SALT`, `CRON_SECRET`. Opcionales: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ENABLE_VOICE=1` (+ `ELEVENLABS_API_KEY`, respuesta con voz del personaje), `NEXT_PUBLIC_ENABLE_CHILD_AUDIO=0` (apaga los audios del niño).
+
+## Voz del personaje (fase 2)
+Se activa con `NEXT_PUBLIC_ENABLE_VOICE=1` + `ELEVENLABS_API_KEY` y redeploy. Las voces se cambian por variable (`ELEVENLABS_VOICE_PAPA_NOEL`…) sin tocar código. Topes de coste: `VOICE_ROOM_DAILY_LIMIT` (por sala) y `VOICE_DAILY_CHAR_LIMIT` (global, por día). Si se supera un tope o ElevenLabs falla, el mensaje se entrega **por escrito** y el panel lo avisa: nunca se pierde. La sorpresa siempre va por escrito.
+
+## Grabar la reacción (fase 2)
+En el panel, “Graba su reacción”: “Con otro móvil” (recomendado) o “Con este móvil” (cámara trasera, MP4 si el navegador puede, máx. 60 s, vista previa minimizable mientras se sigue contestando). El vídeo vive solo en el móvil de los padres: se guarda o comparte desde ahí y **nunca se sube**.
+
+## Instalable (PWA)
+`manifest`, iconos y metadatos para iOS/Android: se puede añadir a la pantalla de inicio. Las rutas `/r/*` y `/paje/*` llevan `Referrer-Policy: no-referrer`, `no-store` y `noindex`.
 
 ## Modo sorpresa (grabar la reacción)
 La app no graba vídeo ni usa la cámara del niño. En el panel de los padres, “Graba su reacción”: quien graba usa **otro móvil**, se pulsa “Empezar la sorpresa” y tras 5 s el mensaje llega al niño con una pantalla especial a pantalla completa (`effect = 'surprise'`).

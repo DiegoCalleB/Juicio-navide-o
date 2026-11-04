@@ -9,9 +9,11 @@ export const metadata: Metadata = {
   description: 'Que antes de abrir los regalos, hable con Papá Noel: tu hijo le escribe y tú contestas desde tu móvil, en directo.',
   openGraph: { type: 'website', siteName: 'Mensajería Mágica de Navidad', locale: 'es_ES' },
   twitter: { card: 'summary_large_image' },
+  appleWebApp: { capable: true, title: 'Mensajería Mágica', statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = { themeColor: '#0a1a12', width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { themeColor: '#2a0f4a', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

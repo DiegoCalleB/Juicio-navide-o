@@ -1,7 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".55" stop-color="#f2c94c"/><stop offset="1" stop-color="#b8862b"/></linearGradient></defs>
-  <circle cx="24" cy="24" r="23" fill="#2a0f4a" stroke="url(#g)" stroke-width="2"/>
-  <path d="M12 30l-1.5-12 6.5 5.5L24 12l7 11.5 6.5-5.5L36 30z" fill="url(#g)"/>
-  <rect x="12" y="30" width="24" height="4.5" rx="1.5" fill="url(#g)"/>
-  <circle cx="24" cy="21.5" r="2" fill="#e5383b"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a1a80"/><stop offset="1" stop-color="#160a2b"/></linearGradient>
+  <radialGradient id="glow" cx="50%" cy="38%" r="55%"><stop offset="0" stop-color="#f6d77a" stop-opacity=".35"/><stop offset="1" stop-color="#f6d77a" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".55" stop-color="#f2c94c"/><stop offset="1" stop-color="#c8922f"/></linearGradient>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<rect width="512" height="512" fill="url(#glow)"/>
+<g transform="translate(256 256) scale(1.0) translate(-256 -256)">
+  <path d="M122 120h268a52 52 0 0 1 52 52v138a52 52 0 0 1-52 52H258l-84 70c-6 5-14 1-14-7v-63h-38a52 52 0 0 1-52-52V172a52 52 0 0 1 52-52z" fill="#fbf5e6"/>
+  <polygon points="256.0,148.0 279.5,211.6 347.3,214.3 294.0,256.4 312.4,321.7 256.0,284.0 199.6,321.7 218.0,256.4 164.7,214.3 232.5,211.6" fill="url(#gold)" stroke="#b8862b" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="118.0,124.0 124.5,141.1 142.7,142.0 128.5,153.4 133.3,171.0 118.0,161.0 102.7,171.0 107.5,153.4 93.3,142.0 111.5,141.1" fill="url(#gold)"/>
+  <polygon points="398.0,298.0 402.7,311.5 417.0,311.8 405.6,320.5 409.8,334.2 398.0,326.0 386.2,334.2 390.4,320.5 379.0,311.8 393.3,311.5" fill="url(#gold)"/>
+  <circle cx="392" cy="150" r="9" fill="#e5383b"/>
+</g>
 </svg>

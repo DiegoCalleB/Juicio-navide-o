@@ -299,6 +299,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             </p>
             <p className="truncate text-[15px] font-semibold">Contestas como {character.name} a {childName}</p>
           </div>
+          {!connected && <span className="text-[11px] font-semibold text-[#f6d77a]">Reconectando…</span>}
           <span
             title={connected ? 'Conectado en tiempo real' : 'Reconectando…'}
             className={`size-2.5 shrink-0 rounded-full ${connected ? 'bg-[#7ee2a8]' : 'animate-pulse bg-[#f6d77a]'}`}

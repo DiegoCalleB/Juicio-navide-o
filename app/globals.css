@@ -51,3 +51,11 @@ body { @apply bg-court-bg text-court-snow antialiased; overscroll-behavior-y: no
     linear-gradient(180deg, rgba(198,40,40,.10) 0%, rgba(0,0,0,0) 40%);
   background-size: 160px 160px, 210px 210px, 250px 250px, 190px 190px, 230px 230px, 200px 200px, 220px 220px, 100% 100%;
 }
+
+/* ── Accesibilidad ── */
+:focus-visible { outline: 3px solid #f6d77a; outline-offset: 2px; border-radius: 8px; }
+input:focus-visible, textarea:focus-visible { outline-offset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-ping, .animate-pulse, .animate-pop, .animate-spin { animation: none !important; }
+  .royal-sky, .royal-snow { background-attachment: scroll; }
+}

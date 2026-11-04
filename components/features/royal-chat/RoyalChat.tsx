@@ -29,6 +29,8 @@ interface RoyalChatProps {
   sending?: boolean;
   /** Dentro de otra página (portada): marco de móvil en vez de pantalla completa. */
   embedded?: boolean;
+  /** La conexión en directo se ha perdido un rato. */
+  reconnecting?: boolean;
 }
 
 export type KingActivity = 'recording' | 'typing' | null;
@@ -49,6 +51,7 @@ export function RoyalChat({
   notice,
   sending = false,
   embedded = false,
+  reconnecting = false,
 }: RoyalChatProps) {
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
@@ -154,6 +157,11 @@ export function RoyalChat({
           )}
         </div>
 
+        {reconnecting && (
+          <p role="status" className="relative z-10 mx-3 mb-1 flex items-center justify-center gap-2 rounded-xl bg-[#f6d77a]/15 px-3 py-1.5 text-center text-[12.5px] text-[#f6d77a]">
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Sin conexión. Reconectando…
+          </p>
+        )}
         {banner && (
           <p role="alert" className="relative z-10 mx-3 mb-1 rounded-xl bg-[#e5383b]/90 px-3 py-2 text-center text-[13px] text-white">
             {banner}

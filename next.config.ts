@@ -39,6 +39,14 @@ const config: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
         ],
       },
+      {
+        // Rutas con enlace secreto: sin Referer ni caché, para que el token no se filtre ni se guarde.
+        source: '/:section(r|paje)/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'private, no-store' },
+        ],
+      },
     ];
   },
 };

@@ -94,7 +94,18 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     typingTimer.current = setTimeout(() => setLiveTyping(false), 4500);
   }, []);
 
-  useRoomEvents(token, { onRefresh: refresh, onTyping: onPeerTyping });
+  const { connected } = useRoomEvents(token, { onRefresh: refresh, onTyping: onPeerTyping });
+
+  // Solo avisamos si la conexión lleva un rato caída (no en los primeros segundos de carga).
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    if (connected) {
+      setOffline(false);
+      return;
+    }
+    const t = setTimeout(() => setOffline(true), 7000);
+    return () => clearTimeout(t);
+  }, [connected]);
 
   /** Aviso (limitado) a los padres de que el niño está escribiendo. */
   const signalTyping = useCallback(() => {
@@ -176,6 +187,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       onTyping={signalTyping}
       notice={notice}
       sending={sending}
+      reconnecting={offline}
     />
     {surprise && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
     </>

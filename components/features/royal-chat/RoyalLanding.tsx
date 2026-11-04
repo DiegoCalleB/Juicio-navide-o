@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CHARACTERS } from '@/lib/characters';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
@@ -35,6 +36,14 @@ export function RoyalLanding() {
           <li><span className="font-bold text-[#f6d77a]">2.</span> Abre su enlace en el móvil o tablet que usará.</li>
           <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto, lee lo que escribe y contesta como si fueras él.</li>
         </ol>
+
+        <footer className="mt-10 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
+          <nav aria-label="Información legal" className="flex justify-center gap-5">
+            <Link href="/privacidad" className="underline-offset-2 hover:underline">Privacidad</Link>
+            <Link href="/terminos" className="underline-offset-2 hover:underline">Términos de uso</Link>
+          </nav>
+          <p className="mt-2">No somos Papá Noel ni los Reyes Magos, pero hacemos lo que podemos ✨</p>
+        </footer>
       </div>
     </div>
   );
