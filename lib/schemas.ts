@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { sanitizeText } from '@/lib/sanitize';
-import { KING_IDS, REPLY_DELAYS } from '@/lib/royal';
+import { CHARACTER_IDS } from '@/lib/characters';
+import { REPLY_DELAYS } from '@/lib/royal';
 
 const text = (min: number, max: number) =>
   z
@@ -41,7 +42,7 @@ export type SignTrialInput = z.infer<typeof signTrialSchema>;
 
 export const createRoomSchema = z.object({
   childName: text(1, 30),
-  king: z.enum(KING_IDS),
+  characterId: z.enum(CHARACTER_IDS),
   consent: z.literal(true, { errorMap: () => ({ message: 'Necesitamos tu consentimiento' }) }),
   website: honeypot,
 });

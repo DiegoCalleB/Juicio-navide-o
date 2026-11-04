@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconPause, IconPlay } from './icons';
 import { RoyalAvatar } from './RoyalAvatar';
-import type { King } from './types';
+import type { Character } from './types';
 
 const BARS = 34;
 
@@ -23,13 +23,13 @@ interface VoiceNoteProps {
   duration: number;
   seed: number;
   mine: boolean;
-  king: King;
+  character: Character;
   /** URL real del audio. Sin ella, reproducción simulada (demo). */
   src?: string;
 }
 
 /** Nota de voz: onda determinista; con `src` reproduce audio real (progreso vía rAF). */
-export function VoiceNote({ duration, seed, mine, king, src }: VoiceNoteProps) {
+export function VoiceNote({ duration, seed, mine, character, src }: VoiceNoteProps) {
   const bars = useMemo(() => waveform(seed), [seed]);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -85,16 +85,16 @@ export function VoiceNote({ duration, seed, mine, king, src }: VoiceNoteProps) {
 
   const played = Math.round(progress * BARS);
   const shown = playing || progress > 0 ? progress * duration : duration;
-  const ink = mine ? 'bg-[#3a2208]' : 'bg-[#5b2a86]';
-  const inkSoft = mine ? 'bg-[#3a2208]/30' : 'bg-[#5b2a86]/30';
+  const inkColor = mine ? '#3a2208' : character.theme.ink;
+  const inkSoftColor = `color-mix(in srgb, ${inkColor} 30%, transparent)`;
 
   return (
     <div className="flex w-[15.5rem] items-center gap-2.5">
       {!mine && (
         <div className="relative">
-          <RoyalAvatar king={king} size={42} />
+          <RoyalAvatar character={character} size={42} />
           <span className="absolute -bottom-0.5 -right-0.5 grid size-[18px] place-items-center rounded-full bg-[#fbf5e6]">
-            <span className="size-2.5 rounded-full" style={{ background: king.robe }} />
+            <span className="size-2.5 rounded-full" style={{ background: character.theme.ink }} />
           </span>
         </div>
       )}
@@ -102,16 +102,17 @@ export function VoiceNote({ duration, seed, mine, king, src }: VoiceNoteProps) {
         type="button"
         onClick={toggle}
         aria-label={playing ? 'Pausar nota de voz' : 'Reproducir nota de voz'}
-        className={`grid size-9 shrink-0 place-items-center rounded-full transition-transform active:scale-90 ${mine ? 'text-[#3a2208]' : 'text-[#5b2a86]'}`}
+        className="grid size-9 shrink-0 place-items-center rounded-full transition-transform active:scale-90"
+        style={{ color: inkColor }}
       >
         {playing ? <IconPause className="size-7" /> : <IconPlay className="size-7" />}
       </button>
       <div className="min-w-0 flex-1">
         <div className="relative flex h-7 items-center gap-[2px]" aria-hidden>
           {bars.map((h, i) => (
-            <span key={i} className={`w-[3px] rounded-full transition-colors duration-150 ${i < played ? ink : inkSoft}`} style={{ height: `${h * 100}%` }} />
+            <span key={i} className="w-[3px] rounded-full transition-colors duration-150" style={{ height: `${h * 100}%`, background: i < played ? inkColor : inkSoftColor }} />
           ))}
-          <span className={`absolute top-1/2 size-3 -translate-y-1/2 rounded-full shadow ${mine ? 'bg-[#3a2208]' : 'bg-[#7a3fb0]'}`} style={{ left: `calc(${progress * 100}% - 6px)` }} />
+          <span className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full shadow" style={{ background: inkColor, left: `calc(${progress * 100}% - 6px)` }} />
         </div>
         <p className={`mt-0.5 text-[11px] tabular-nums ${mine ? 'text-[#3a2208]/70' : 'text-[#5b3a1e]/70'}`}>
           {failed ? 'Toca otra vez' : fmt(shown)}

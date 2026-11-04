@@ -1,7 +1,7 @@
-import type { KingProfile } from '@/lib/royal';
+import type { CharacterProfile } from '@/lib/characters';
 
 export type Sender = 'king' | 'child' | 'system';
-export type King = KingProfile;
+export type Character = CharacterProfile;
 
 interface BaseMessage {
   id: string;

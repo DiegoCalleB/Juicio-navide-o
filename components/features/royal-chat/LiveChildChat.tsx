@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { KingProfile, RoomMessageDTO } from '@/lib/royal';
+import type { CharacterProfile } from '@/lib/characters';
+import type { RoomMessageDTO } from '@/lib/royal';
 import { fmtTime, startPolling, toChatMessage, type ApiResult } from './mapping';
 import { RoyalChat, type KingActivity } from './RoyalChat';
 import type { ChatMessage } from './types';
@@ -9,7 +10,7 @@ import type { ChatMessage } from './types';
 const KING_ACTIVITY_MS = 3500;
 
 /** Chat del niño conectado: envía audios o texto y recibe al Rey (con "grabando…/escribiendo…"). */
-export function LiveChildChat({ token, king, childName }: { token: string; king: KingProfile; childName: string }) {
+export function LiveChildChat({ token, character, childName }: { token: string; character: CharacterProfile; childName: string }) {
   const [shown, setShown] = useState<ChatMessage[]>([]);
   const [local, setLocal] = useState<ChatMessage[]>([]);
   const [kingActivity, setKingActivity] = useState<KingActivity>(null);
@@ -95,7 +96,7 @@ export function LiveChildChat({ token, king, childName }: { token: string; king:
 
   return (
     <RoyalChat
-      king={king}
+      character={character}
       childName={childName}
       messages={[...shown, ...local]}
       kingActivity={kingActivity}

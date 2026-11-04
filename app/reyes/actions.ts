@@ -15,7 +15,7 @@ export async function createRoomAction(raw: unknown): Promise<ActionResult<{ chi
     const fp = await getClientFingerprint();
     if (!rateLimit(`room:${fp}`, 5, 60_000)) return { ok: false, error: appError('RATE_LIMITED') };
 
-    const tokens = await createRoom({ childName: parsed.data.childName, king: parsed.data.king }, fp);
+    const tokens = await createRoom({ childName: parsed.data.childName, characterId: parsed.data.characterId }, fp);
     return { ok: true, data: tokens };
   } catch (err) {
     if (err instanceof RoomError && err.code === 'RATE_LIMITED') return { ok: false, error: appError('RATE_LIMITED') };

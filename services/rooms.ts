@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
 import { synthesizeKingVoice } from '@/lib/voice';
-import { KINGS, type KingId, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
+import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
+import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 
 const BUCKET = 'voices';
 const SIGNED_URL_TTL = 60 * 60;
@@ -13,13 +14,13 @@ export type Role = 'child' | 'parent';
 export interface Room {
   id: string;
   childName: string;
-  king: KingId;
+  character: CharacterId;
 }
 
 interface RoomRow {
   id: string;
   child_name: string;
-  king: KingId;
+  character_id: string;
   child_token_hash: string;
   parent_token_hash: string;
 }
@@ -45,7 +46,7 @@ function isRateLimit(err: { message: string } | null): boolean {
 }
 
 export async function createRoom(
-  input: { childName: string; king: KingId },
+  input: { childName: string; characterId: CharacterId },
   creatorHash: string,
 ): Promise<{ childToken: string; parentToken: string }> {
   const parentToken = newToken();
@@ -54,8 +55,9 @@ export async function createRoom(
     child_token_hash: hashToken(childToken),
     parent_token_hash: hashToken(parentToken),
     child_name: input.childName,
-    king: input.king,
+    character_id: input.characterId,
     creator_hash: creatorHash,
+    expires_at: new Date(Date.now() + CHARACTERS[input.characterId].expiresDays * 86_400_000).toISOString(),
   });
   if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
   if (error) throw new Error(`createRoom: ${error.message}`);
@@ -68,13 +70,13 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const h = hashToken(token);
   const { data, error } = await getAdminClient()
     .from('rooms')
-    .select('id, child_name, king, child_token_hash, parent_token_hash')
+    .select('id, child_name, character_id, child_token_hash, parent_token_hash')
     .or(`child_token_hash.eq.${h},parent_token_hash.eq.${h}`)
     .gt('expires_at', new Date().toISOString())
     .maybeSingle<RoomRow>();
-  if (error || !data) return null;
+  if (error || !data || !isCharacterId(data.character_id)) return null;
   return {
-    room: { id: data.id, childName: data.child_name, king: data.king },
+    room: { id: data.id, childName: data.child_name, character: data.character_id },
     role: data.child_token_hash === h ? 'child' : 'parent',
   };
 }
@@ -138,12 +140,13 @@ async function maybeAcknowledge(room: Room): Promise<void> {
     .eq('sender', 'system')
     .gte('created_at', since);
   if ((count ?? 0) > 0) return;
-  const king = KINGS[room.king].name.replace('Rey ', '');
+  const c = CHARACTERS[room.character];
+  const where = c.group === 'noel' ? 'hacia el Polo Norte' : 'hacia Oriente';
   await insertMessage({
     room_id: room.id,
     sender: 'system',
     kind: 'text',
-    body: `Tu mensaje ya vuela hacia Oriente ✨ Los Reyes están muy ocupados preparando los regalos. ¡${king} te contestará pronto!`,
+    body: `Tu mensaje ya vuela ${where} ✨ ${c.busyExcuse}. ¡${c.shortName} te contestará pronto!`,
   });
 }
 
@@ -178,7 +181,7 @@ export async function addKingReply(
     await insertMessage({ room_id: room.id, sender: 'king', kind: 'text', body: text, deliver_at: deliverAt });
     return;
   }
-  const { audio, seconds } = await synthesizeKingVoice(room.king, text);
+  const { audio, seconds } = await synthesizeKingVoice(room.character, text);
   const path = `${room.id}/${randomUUID()}.mp3`;
   const { error } = await getAdminClient()
     .storage.from(BUCKET)

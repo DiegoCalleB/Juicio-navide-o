@@ -3,20 +3,14 @@
 import { useState, useTransition } from 'react';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
-import { KING_IDS, KINGS, type KingId } from '@/lib/royal';
+import { CHARACTERS, CHARACTER_GROUPS, type CharacterId } from '@/lib/characters';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
-
-const KING_HINT: Record<KingId, string> = {
-  melchor: 'Cariñoso y abuelete',
-  gaspar: 'Sereno y sabio',
-  baltasar: 'Alegre y bonachón',
-};
 
 export function CreateRoomForm() {
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
-  const [king, setKing] = useState<KingId>('melchor');
+  const [characterId, setCharacterId] = useState<CharacterId>('papa_noel');
   const [consent, setConsent] = useState(false);
   const [trap, setTrap] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +19,7 @@ export function CreateRoomForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const payload = { childName, king, consent, website: trap };
+    const payload = { childName, characterId, consent, website: trap };
     const check = createRoomSchema.safeParse(payload);
     if (!check.success) {
       const f = check.error.flatten().fieldErrors;
@@ -62,18 +56,29 @@ export function CreateRoomForm() {
         <p className="text-xs text-[#fff6dc]/50">Solo el nombre de pila. Nunca pedimos apellidos, fotos ni dirección.</p>
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">Su Rey favorito</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {KING_IDS.map((id) => (
-            <label key={id} className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border p-3 text-center transition-colors ${king === id ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
-              <input type="radio" name="king" value={id} checked={king === id} onChange={() => setKing(id)} className="sr-only" />
-              <RoyalAvatar king={KINGS[id]} size={48} />
-              <span className="text-[13px] font-bold text-[#fff6dc]">{KINGS[id].name.replace('Rey ', '')}</span>
-              <span className="text-[10.5px] leading-tight text-[#fff6dc]/55">{KING_HINT[id]}</span>
-            </label>
-          ))}
-        </div>
+      <fieldset className="space-y-3">
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
+        {CHARACTER_GROUPS.map((group) => (
+          <div key={group.id}>
+            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]/80">{group.label}</p>
+            <div className={`grid gap-2 ${group.ids.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              {group.ids.map((id) => {
+                const c = CHARACTERS[id];
+                const selected = characterId === id;
+                return (
+                  <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${group.ids.length === 1 ? 'flex-row' : 'flex-col text-center'} ${selected ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
+                    <input type="radio" name="character" value={id} checked={selected} onChange={() => setCharacterId(id)} className="sr-only" />
+                    <RoyalAvatar character={c} size={group.ids.length === 1 ? 52 : 48} />
+                    <span className={group.ids.length === 1 ? '' : 'contents'}>
+                      <span className="block text-[14px] font-bold text-[#fff6dc]">{group.ids.length === 1 ? c.name : c.shortName}</span>
+                      <span className="block text-[11px] leading-tight text-[#fff6dc]/55">{c.tagline}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </fieldset>
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">

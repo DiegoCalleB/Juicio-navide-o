@@ -1,9 +1,10 @@
 import 'server-only';
 import { getRoyalEnv } from '@/lib/env.server';
-import type { KingId } from '@/lib/royal';
+import type { CharacterId } from '@/lib/characters';
 
-/** Voces provisionales de la biblioteca de ElevenLabs (español peninsular / narrador). */
-const VOICE_IDS: Record<KingId, string> = {
+/** Voces provisionales de la biblioteca de ElevenLabs. Cambiar una voz = cambiar una línea. */
+const VOICE_IDS: Record<CharacterId, string> = {
+  papa_noel: 'Yb8JGzcZyW5YYzenhRCm', // El Abuelo Charlie – abuelo cálido en español (provisional)
   melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – maduro, cálido
   gaspar: '7qXldmK3yFlWBHejdkpP', // Julio Alonso – grave, solemne
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – cuentos y leyendas
@@ -11,9 +12,9 @@ const VOICE_IDS: Record<KingId, string> = {
 
 const BITRATE = 64_000;
 
-export async function synthesizeKingVoice(king: KingId, text: string): Promise<{ audio: Buffer; seconds: number }> {
+export async function synthesizeKingVoice(character: CharacterId, text: string): Promise<{ audio: Buffer; seconds: number }> {
   const res = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS[king]}?output_format=mp3_44100_64`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS[character]}?output_format=mp3_44100_64`,
     {
       method: 'POST',
       headers: { 'xi-api-key': getRoyalEnv().ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },

@@ -5,9 +5,9 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: 'Mensajería Real de Oriente', template: '%s · Mensajería Real de Oriente' },
-  description: 'Tu hijo escribe o manda notas de voz a su Rey Mago favorito… y el Rey le contesta.',
-  openGraph: { type: 'website', siteName: 'Mensajería Real de Oriente', locale: 'es_ES' },
+  title: { default: 'Mensajería Mágica de Navidad', template: '%s · Mensajería Mágica de Navidad' },
+  description: 'Tu hijo escribe o manda notas de voz a Papá Noel o a los Reyes Magos… y ellos le contestan.',
+  openGraph: { type: 'website', siteName: 'Mensajería Mágica de Navidad', locale: 'es_ES' },
   twitter: { card: 'summary_large_image' },
 };
 

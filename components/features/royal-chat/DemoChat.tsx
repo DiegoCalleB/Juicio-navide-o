@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { RoyalChat, type KingActivity } from './RoyalChat';
 import { fmtTime } from './mapping';
-import type { ChatMessage, King } from './types';
+import type { Character, ChatMessage } from './types';
 
 /** Demo sin backend: simula audios/textos del niño y la respuesta del Rey. */
-export function DemoChat({ king, childName, initial }: { king: King; childName: string; initial: ChatMessage[] }) {
+export function DemoChat({ character, childName, initial }: { character: Character; childName: string; initial: ChatMessage[] }) {
   const [messages, setMessages] = useState(initial);
   const [activity, setActivity] = useState<KingActivity>(null);
   const now = () => fmtTime(new Date().toISOString());
@@ -21,7 +21,7 @@ export function DemoChat({ king, childName, initial }: { king: King; childName: 
 
   return (
     <RoyalChat
-      king={king}
+      character={character}
       childName={childName}
       messages={messages}
       kingActivity={activity}

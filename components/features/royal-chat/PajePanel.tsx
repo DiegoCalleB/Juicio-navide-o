@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { REPLY_DELAYS, type KingProfile, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
+import { fillChild, type CharacterProfile } from '@/lib/characters';
+import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconSeal } from './icons';
 import { fmtTime, seedFrom, startPolling, type ApiResult } from './mapping';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -9,25 +10,17 @@ import { VoiceNote } from './VoiceNote';
 
 const MAX_CHARS = 300;
 
-const QUICK = (name: string) => [
-  `¡Hola, ${name}! Qué alegría escucharte. Aquí en Oriente hace un frío que pela, pero los camellos están contentísimos.`,
-  `Hemos recibido tu carta, ${name}. La estamos leyendo con muchísima atención.`,
-  `Me han contado mis pajes que este año te has portado muy bien, ${name}. ¡Sigue así!`,
-  `Los camellos te mandan saludos. ¿Les dejarás un poquito de agua la noche de Reyes?`,
-  `Recuerda irte pronto a la cama la noche del cinco, que si estás despierto no podemos pasar.`,
-];
-
 const DELAY_LABEL: Record<ReplyDelay, string> = { 0: 'Ahora', 2: '2 min', 10: '10 min', 30: '30 min' };
 
 interface PajePanelProps {
   token: string;
   childLink: string;
-  king: KingProfile;
+  character: CharacterProfile;
   childName: string;
 }
 
-/** Panel secreto de los padres: escuchan al niño y contestan con la voz del Rey. */
-export function PajePanel({ token, childLink, king, childName }: PajePanelProps) {
+/** Panel secreto de los padres: escuchan al niño y contestan con la voz del personaje. */
+export function PajePanel({ token, childLink, character, childName }: PajePanelProps) {
   const [messages, setMessages] = useState<RoomMessageDTO[]>([]);
   const [text, setText] = useState('');
   const [delay, setDelay] = useState<ReplyDelay>(2);
@@ -37,7 +30,8 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
   const [copied, setCopied] = useState(false);
   const childCount = useRef(-1);
   const endRef = useRef<HTMLDivElement>(null);
-  const kingShort = king.name.replace('Rey ', '');
+  const kingShort = character.shortName;
+  const king = character;
 
   const poll = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages`, { cache: 'no-store' });
@@ -100,8 +94,8 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black">
       <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#120822] text-[#fff6dc]">
-        <header className="flex items-center gap-3 border-b border-white/10 bg-[#1d0b3a] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <RoyalAvatar king={king} size={40} />
+        <header className="flex items-center gap-3 border-b border-white/10 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]" style={{ background: character.theme.headerTo }}>
+          <RoyalAvatar character={character} size={40} />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]">
               <IconSeal className="size-3.5" /> Panel del Paje Real
@@ -132,14 +126,14 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
           )}
 
           {messages.map((m) => (
-            <PanelMessage key={m.id} m={m} king={king} childName={childName} />
+            <PanelMessage key={m.id} m={m} character={character} childName={childName} />
           ))}
           <div ref={endRef} />
         </div>
 
         <footer className="space-y-2.5 border-t border-white/10 bg-[#1d0b3a] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
-            {QUICK(childName).map((q) => (
+            {character.quickReplies.map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button key={q} type="button" onClick={() => setText(q.slice(0, MAX_CHARS))}
                 className="shrink-0 max-w-[14rem] truncate rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#fff6dc]/85 active:bg-white/10">
                 {q}
@@ -195,7 +189,7 @@ export function PajePanel({ token, childLink, king, childName }: PajePanelProps)
   );
 }
 
-function PanelMessage({ m, king, childName }: { m: RoomMessageDTO; king: KingProfile; childName: string }) {
+function PanelMessage({ m, character, childName }: { m: RoomMessageDTO; character: CharacterProfile; childName: string }) {
   if (m.from === 'system') {
     return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#fff6dc]/50">Aviso automático enviado: “{m.text}”</p>;
   }
@@ -203,9 +197,9 @@ function PanelMessage({ m, king, childName }: { m: RoomMessageDTO; king: KingPro
   return (
     <div className={`flex ${child ? 'justify-start' : 'justify-end'}`}>
       <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#f8e08e] text-[#2b1b0e]' : 'rounded-br-md bg-[#fbf5e6] text-[#2b1b0e]'}`}>
-        <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : king.name}</p>
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : character.name}</p>
         {m.kind === 'voice' && (
-          <VoiceNote duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} king={king} src={m.audioUrl} />
+          <VoiceNote duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />
         )}
         {m.kind === 'text' && m.text && <p className="whitespace-pre-line text-[15px] leading-snug">{m.text}</p>}
         {m.kind === 'voice' && !child && m.text && <p className="mt-1.5 border-t border-black/10 pt-1.5 text-[13px] leading-snug text-[#5b3a1e]">“{m.text}”</p>}
