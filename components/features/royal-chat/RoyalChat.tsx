@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CHILD_AUDIO_ENABLED } from '@/lib/features';
+import { playChime } from '@/lib/chime';
+import { vibrate } from '@/lib/haptics';
 import { MAX_VOICE_SECONDS } from '@/lib/royal';
 import { IconBack, IconCamera, IconClose, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
+import { Garland, MagicScene } from './MagicScene';
 import { OrientPhoto } from './OrientPhoto';
 import { RoyalAvatar } from './RoyalAvatar';
 import { useVoiceRecorder, type Recording } from './useVoiceRecorder';
@@ -60,7 +63,7 @@ export function RoyalChat({
   const fileRef = useRef<HTMLInputElement>(null);
   const kingShort = character.shortName;
   const { theme } = character;
-  const place = character.group === 'noel' ? 'Polo Norte' : 'Oriente';
+  const [tapped, setTapped] = useState(0);
   const busy = kingActivity !== null;
   const logRef = useRef<HTMLDivElement>(null);
   const firstScroll = useRef(true);
@@ -109,34 +112,53 @@ export function RoyalChat({
         className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh'}`}
         style={{ background: theme.bg }}
       >
-        <div aria-hidden className={`${theme.sky === 'snow' ? 'royal-snow' : 'royal-sky'} pointer-events-none absolute inset-0`} />
-        <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[#f2c94c]/15 blur-3xl" />
+        <MagicScene sky={theme.sky} />
 
         <header className="relative z-10 flex items-center gap-3 px-2 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-[0_6px_20px_rgba(0,0,0,.35)]" style={{ background: `linear-gradient(to bottom, ${theme.headerFrom}, ${theme.headerTo})` }}>
           <span aria-hidden className="grid size-9 place-items-center rounded-full text-[#f6d77a]">
             <IconBack className="size-6" />
           </span>
-          <RoyalAvatar character={character} size={42} />
+          <button
+            type="button"
+            aria-label={`Saludar a ${character.name}`}
+            onClick={() => {
+              setTapped((n) => n + 1);
+              playChime();
+              vibrate(40);
+            }}
+            className="relative shrink-0 rounded-full active:scale-95"
+          >
+            <RoyalAvatar character={character} size={42} />
+            <span aria-hidden className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-[#3a0d12] bg-[#4cd98a] shadow-[0_0_8px_#4cd98a]" style={{ borderColor: theme.headerTo }} />
+            {tapped > 0 && (
+              <span key={tapped} aria-hidden className="anim-tap-line pointer-events-none absolute left-full top-1 z-20 ml-2 whitespace-nowrap rounded-2xl rounded-bl-sm bg-[#fbf5e6] px-3 py-1.5 text-[14px] font-bold text-[#2b1b0e] shadow-lg">
+                {character.avatarTap}
+              </span>
+            )}
+          </button>
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1 font-serif text-[17px] font-semibold leading-tight text-[#fff6dc]">
               {character.name}
               <IconSeal className="size-4 text-[#f2c94c]" aria-label="Personaje verificado" />
             </p>
             <p className="text-[12.5px] text-[#f6d77a]/90" aria-live="polite">
-              {kingActivity === 'recording' ? 'grabando un audio…' : kingActivity === 'typing' ? 'escribiendo…' : `desde ${place === 'Polo Norte' ? 'el Polo Norte' : 'Oriente'}`}
+              {kingActivity === 'recording' ? 'grabando un audio…' : kingActivity === 'typing' ? 'escribiendo…' : `desde ${character.placeLabel}`}
             </p>
           </div>
+          <Garland sky={theme.sky} />
         </header>
 
-        <div ref={logRef} role="log" aria-label="Conversación" className="relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 py-4">
-          <p className="mx-auto mb-3 flex w-fit max-w-[85%] items-center gap-1.5 rounded-xl bg-[#f6d77a]/10 px-3 py-1.5 text-center text-[11.5px] leading-snug text-[#f6d77a]">
-            <IconStar className="size-3 shrink-0" /> Solo {childName} y {character.group === 'noel' ? 'Papá Noel' : 'los Reyes'} pueden ver estos mensajes
+        <div ref={logRef} role="log" aria-label="Conversación" className="kid-font relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 pb-4 pt-7">
+          <p className="mx-auto mb-3 flex w-fit max-w-[88%] items-center gap-1.5 rounded-xl bg-[#f6d77a]/10 px-3 py-1.5 text-center text-[11.5px] leading-snug text-[#f6d77a]">
+            <IconStar className="size-3 shrink-0" /> Línea mágica con {character.placeLabel}: solo {childName} y {character.group === 'noel' ? 'Papá Noel' : 'los Reyes'} pueden leerla
           </p>
 
           {messages.length === 0 && !busy && (
-            <div className="mx-auto mt-10 max-w-[80%] text-center text-[14px] leading-relaxed text-[#fff6dc]/80">
-              <p className="font-serif text-lg text-[#f6d77a]">¡Hola, {childName}!</p>
-              <p className="mt-2">{CHILD_AUDIO_ENABLED ? `Escríbele, mándale una foto o mantén pulsado el botón dorado para contarle algo a ${kingShort} con tu voz.` : `Escríbele o mándale una foto o un dibujo a ${kingShort}.`}</p>
+            <div className="mx-auto mt-6 max-w-[86%] text-center text-[15px] leading-relaxed text-[#fff6dc]/85">
+              <p className="anim-float text-4xl" aria-hidden>{character.group === 'noel' ? '🧝' : '⭐'}</p>
+              <p className="mt-2 font-serif text-xl text-[#f6d77a]">¡Hola, {childName}!</p>
+              <p className="mt-2">{character.helper.name}, {character.helper.role}, ha abierto la línea mágica. {kingShort} vendrá en cuanto pueda.</p>
+              <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Mientras, escríbele, mándale un dibujo o mantén pulsado el botón dorado para hablarle.` : `Mientras, escríbele o mándale una foto o un dibujo.`}</p>
             </div>
           )}
 
@@ -146,12 +168,17 @@ export function RoyalChat({
 
           {busy && (
             <div className="flex animate-pop items-end gap-2">
-              <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-[#fbf5e6] px-3.5 py-2.5 shadow-md">
-                <span className="relative grid size-6 place-items-center">
+              <div className="flex w-fit max-w-[88%] items-center gap-2.5 rounded-2xl rounded-bl-md bg-[#fbf5e6] px-3.5 py-2.5 shadow-md">
+                <span className="relative grid size-6 shrink-0 place-items-center">
                   <span className="absolute inset-0 animate-ping rounded-full opacity-30" style={{ background: theme.robe }} />
                   {kingActivity === 'recording' ? <IconMic className="relative size-4" style={{ color: theme.robe }} /> : <IconPen className="relative size-4" style={{ color: theme.robe }} />}
                 </span>
-                <span className="text-[13px] text-[#5b3a1e]">{character.name} está {kingActivity === 'recording' ? 'grabando un audio' : 'escribiendo'}…</span>
+                <TypingText character={character} recording={kingActivity === 'recording'} />
+                <span aria-hidden className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="anim-dot size-1.5 rounded-full" style={{ background: theme.robe, animationDelay: `${i * 0.18}s` }} />
+                  ))}
+                </span>
               </div>
             </div>
           )}
@@ -159,7 +186,7 @@ export function RoyalChat({
 
         {reconnecting && (
           <p role="status" className="relative z-10 mx-3 mb-1 flex items-center justify-center gap-2 rounded-xl bg-[#f6d77a]/15 px-3 py-1.5 text-center text-[12.5px] text-[#f6d77a]">
-            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Sin conexión. Reconectando…
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… {character.crew} la están arreglando ✨
           </p>
         )}
         {banner && (
@@ -189,8 +216,8 @@ export function RoyalChat({
                   maxLength={MAX_TEXT}
                   enterKeyHint="send"
                   autoComplete="off"
-                  placeholder={sending ? `Enviando al ${place === 'Polo Norte' ? 'Polo Norte' : 'Oriente'}…` : `Escribe a ${kingShort}…`}
-                  className="min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
+                  placeholder={sending ? `${character.helper.name} lo lleva volando…` : `Escribe a ${kingShort}…`}
+                  className="kid-font min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
                 />
                 {onPhoto && (
                   <>
@@ -270,20 +297,22 @@ export function RoyalChat({
 function Bubble({ message, character, onOpenPhoto }: { message: ChatMessage; character: Character; onOpenPhoto: (src: string) => void }) {
   if (message.from === 'system' && message.kind === 'text') {
     return (
-      <p className="mx-auto w-fit max-w-[88%] animate-pop rounded-2xl bg-[#f6d77a]/12 px-3 py-2 text-center text-[12.5px] leading-snug text-[#f6d77a]">
-        {message.text}
-      </p>
+      <div className="mx-auto flex w-fit max-w-[90%] animate-pop items-start gap-2 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/10 px-3 py-2 text-left text-[13.5px] leading-snug text-[#fff1c2]">
+        <span aria-hidden className="mt-0.5 text-lg leading-none">{character.group === 'noel' ? '🧝' : '📜'}</span>
+        <span>{message.text}</span>
+      </div>
     );
   }
   const mine = message.from === 'child';
   const shell = mine
     ? 'ml-auto rounded-2xl rounded-br-md bg-gradient-to-b from-[#f8e08e] to-[#ecc25a] text-[#2b1b0e]'
-    : 'mr-auto rounded-2xl rounded-bl-md bg-[#fbf5e6] text-[#2b1b0e]';
+    : 'mr-auto rounded-2xl rounded-bl-md bg-[#fbf5e6] text-[#2b1b0e] anim-arrive ring-1 ring-[#f6d77a]/60';
 
   return (
-    <div className={`flex animate-pop ${mine ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${mine ? 'animate-pop justify-end' : 'justify-start'}`}>
       <div className={`relative max-w-[82%] shadow-md ${shell} ${message.kind === 'photo' ? 'overflow-hidden p-1' : 'px-3 py-2'}`}>
-        {message.kind === 'text' && <p className="whitespace-pre-line text-[15px] leading-snug">{message.text}</p>}
+        {!mine && message.kind === 'text' && <Sparkles />}
+        {message.kind === 'text' && <p className={`whitespace-pre-line leading-snug ${mine ? 'text-[15px]' : 'text-[16.5px]'}`}>{message.text}</p>}
         {message.kind === 'voice' && <VoiceNote duration={message.duration} seed={message.seed} mine={mine} character={character} src={message.src} />}
         {message.kind === 'photo' && (
           <figure className="w-64">
@@ -309,5 +338,33 @@ function Bubble({ message, character, onOpenPhoto }: { message: ChatMessage; cha
         </span>
       </div>
     </div>
+  );
+}
+
+/** Mini destellos que suben cuando llega un mensaje del personaje. */
+function Sparkles() {
+  return (
+    <span aria-hidden className="pointer-events-none absolute -top-2 left-2 right-2 h-0">
+      {[8, 38, 70, 92].map((left, i) => (
+        <span key={left} className="anim-spark absolute text-[13px] text-[#f2c94c]" style={{ left: `${left}%`, animationDelay: `${0.15 + i * 0.14}s` }}>✦</span>
+      ))}
+    </span>
+  );
+}
+
+/** "Papá Noel está escribiendo…" y, pasados unos segundos, una gracia del taller. */
+function TypingText({ character, recording }: { character: Character; recording: boolean }) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (recording) return;
+    const t = setInterval(() => setStep((n) => n + 1), 4200);
+    return () => clearInterval(t);
+  }, [recording]);
+  const quips = character.typingQuips;
+  const quip = !recording && step > 0 && quips.length > 0 ? quips[(step - 1) % quips.length] : null;
+  return (
+    <span className="text-[13px] text-[#5b3a1e]">
+      {quip ? `${character.shortName} ${quip}` : `${character.name} está ${recording ? 'grabando un audio' : 'escribiendo'}…`}
+    </span>
   );
 }

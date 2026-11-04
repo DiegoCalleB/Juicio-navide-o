@@ -40,8 +40,20 @@ export interface CharacterProfile {
   theme: CharacterTheme;
   /** Días que vive la sala antes de borrarse. */
   expiresDays: number;
-  /** Texto para "{personaje} está ocupado". */
+  /** Frase en tercera persona para "{personaje} está ocupado" (el duende o paje avisa al niño). */
   busyExcuse: string;
+  /** Quién abre la línea mágica y atiende al niño mientras llega el personaje. */
+  helper: { name: string; role: string };
+  /** "el Polo Norte", "Oriente": para frases ("desde …", "hacia …"). */
+  placeLabel: string;
+  /** "los duendes" / "los pajes": quienes cuidan la línea mágica. */
+  crew: string;
+  /** Lo que dice al tocar su foto. */
+  avatarTap: string;
+  /** Textos de la pantalla de entrada del niño. Solo datos. */
+  intro: { connecting: string; ready: string; button: string };
+  /** Frases graciosas que rotan mientras el personaje escribe. */
+  typingQuips: string[];
   /** Mensajes preparados por momento (Nochebuena, mañana de regalos…). `{child}` = nombre del niño. Solo datos. */
   moments: CharacterMoment[];
 }
@@ -50,6 +62,19 @@ export const CHARACTER_IDS = ['papa_noel', 'melchor', 'gaspar', 'baltasar'] as c
 export type CharacterId = (typeof CHARACTER_IDS)[number];
 
 const ORIENT = { bg: '#160a2b', sky: 'orient' as const, headerFrom: '#3b1466', headerTo: '#2a0f4a' };
+
+const ORIENT_EXTRAS = {
+  helper: { name: 'Zafiro', role: 'paje real' },
+  placeLabel: 'Oriente',
+  crew: 'los pajes',
+  avatarTap: '¡Que la estrella te guíe!',
+  intro: {
+    connecting: 'Los pajes reales están encendiendo la estrella que guía los mensajes…',
+    ready: 'La estrella de Oriente ha encontrado tu casa',
+    button: 'Abrir mensaje de los Reyes',
+  },
+  typingQuips: ['está firmando con su pluma de oro…', 'escribe mientras los camellos miran…', 'se está colocando bien la corona…'],
+};
 
 const kingChat = [
   `¡Hola, {child}! Qué alegría escucharte. Aquí en Oriente hace un frío que pela, pero los camellos están contentísimos.`,
@@ -60,6 +85,15 @@ const kingChat = [
 ];
 
 const kingMoments: CharacterMoment[] = [
+  {
+    id: 'primero',
+    label: 'Primer saludo',
+    tip: 'El primero es el que más cuenta: envíalo en cuanto el niño abra el enlace.',
+    replies: [
+      `¿{child}? ¡Qué alegría! Zafiro, mi paje, me avisó de que ibas a escribirnos y los camellos han levantado las orejas de la emoción.`,
+      `Tu nombre está en nuestro libro de oro, {child}. Cuéntame, ¿qué tal estás?`,
+    ],
+  },
   { id: 'charla', label: 'Charla', replies: kingChat },
   {
     id: 'noche',
@@ -92,8 +126,38 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     avatar: 'santa',
     theme: { headerFrom: '#9b1c24', headerTo: '#6b1218', bg: '#0e2418', sky: 'snow', ink: '#8a1a1f', robe: '#c62828' },
     expiresDays: 45,
-    busyExcuse: 'Estoy muy ocupado en el taller con los duendes',
+    busyExcuse: 'Papá Noel está en el taller con los duendes',
+    helper: { name: 'Pipo', role: 'duende de las comunicaciones' },
+    placeLabel: 'el Polo Norte',
+    crew: 'los duendes',
+    avatarTap: '¡Jo, jo, jo!',
+    intro: {
+      connecting: 'Los duendes de Laponia están encendiendo la línea mágica…',
+      ready: 'La línea con el Polo Norte está abierta',
+      button: 'Abrir mensaje de Papá Noel',
+    },
+    typingQuips: ['se está limpiando las gafitas…', 'teclea despacito con los guantes puestos…', 'escribe con Rodolfo mirándole por encima del hombro…'],
     moments: [
+      {
+        id: 'primero',
+        label: 'Primer saludo',
+        tip: 'El primero es el que más cuenta: envíalo en cuanto el niño abra el enlace.',
+        replies: [
+          `¡Jo, jo, jo! ¿{child}? ¿Eres tú de verdad? ¡Pipo me dijo que me ibas a escribir y casi se me cae el chocolate caliente!`,
+          `Estoy sentado en mi sillón del taller, con las botas calentitas y los duendes empaquetando a mi alrededor. ¿Qué tal estás, {child}?`,
+          `Tengo tu nombre apuntado en mi libro grande, {child}. Y te cuento un secreto: está en la página de los que se portan bien.`,
+        ],
+      },
+      {
+        id: 'taller',
+        label: 'Cosas del taller',
+        replies: [
+          `¡Jo, jo, jo! Pipo ha probado un caramelo del taller y se le ha puesto la lengua verde. No para de reírse, {child}.`,
+          `Se me ha enredado la barba con una guirnalda, {child}. Los duendes llevan un rato intentando desenredarme. ¡Jo, jo, jo!`,
+          `Los duendes me han dejado las botas llenas de purpurina. Dejo brillitos por todo el Polo Norte, {child}.`,
+          `Rodolfo se ha puesto celoso porque hoy te escribo a ti. Le he dado una zanahoria extra para que se le pase, {child}.`,
+        ],
+      },
       {
         id: 'charla',
         label: 'Charla',
@@ -130,19 +194,19 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     id: 'melchor', name: 'Rey Melchor', shortName: 'Melchor', group: 'reyes',
     tagline: 'Cariñoso y abuelete', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#3b1466', headerTo: '#2a0f4a', ink: '#5b2a86', robe: '#7a3fb0' },
-    expiresDays: 45, busyExcuse: 'Los Reyes estamos muy ocupados preparando los regalos', moments: kingMoments,
+    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   gaspar: {
     id: 'gaspar', name: 'Rey Gaspar', shortName: 'Gaspar', group: 'reyes',
     tagline: 'Sereno y sabio', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#1f5a3d', headerTo: '#153d2a', ink: '#1f5a3d', robe: '#2f6f4f' },
-    expiresDays: 45, busyExcuse: 'Los Reyes estamos muy ocupados preparando los regalos', moments: kingMoments,
+    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   baltasar: {
     id: 'baltasar', name: 'Rey Baltasar', shortName: 'Baltasar', group: 'reyes',
     tagline: 'Alegre y bonachón', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#8a2330', headerTo: '#5d1620', ink: '#8a2330', robe: '#a8323a' },
-    expiresDays: 45, busyExcuse: 'Los Reyes estamos muy ocupados preparando los regalos', moments: kingMoments,
+    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
 };
 

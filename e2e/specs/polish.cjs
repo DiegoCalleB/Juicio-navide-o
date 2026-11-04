@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   // ── Metadatos, PWA, SEO y cabeceras (sin navegador)
@@ -47,19 +47,19 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.waitForSelector('text=La sala real está lista');
   const childLink = (await page.locator('p.font-mono').first().innerText()).trim();
   const child = await ctx.newPage();
-  await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'networkidle' });
+  await openChild(child, childLink, {});
   await child.waitForTimeout(1500);
-  check('conectado: sin aviso de reconexión', (await child.getByText('Sin conexión. Reconectando').count()) === 0);
+  check('conectado: sin aviso de reconexión', (await child.getByText('Se ha cortado la línea mágica').count()) === 0);
   // Bloqueamos el canal SSE y las consultas para simular pérdida de conexión
   await child.route('**/api/rooms/**', r => r.abort());
   await child.evaluate(() => { /* fuerza error del EventSource */ });
   await child.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
   await child.waitForTimeout(8500);
-  const showed = await child.getByText('Sin conexión. Reconectando').isVisible().catch(() => false);
-  check('sin conexión: aparece "Sin conexión. Reconectando…" pasados unos segundos', showed);
+  const showed = await child.getByText('Se ha cortado la línea mágica').isVisible().catch(() => false);
+  check('sin conexión: aparece "Se ha cortado la línea mágica…" pasados unos segundos', showed);
   await child.screenshot({ path: S + '/u3-offline.png' });
   await child.unroute('**/api/rooms/**');
-  await child.waitForSelector('text=Sin conexión. Reconectando', { state: 'detached', timeout: 15000 }).then(() => check('al volver la conexión, el aviso desaparece solo', true)).catch(() => check('al volver la conexión, el aviso desaparece solo', false));
+  await child.waitForSelector('text=Se ha cortado la línea mágica', { state: 'detached', timeout: 15000 }).then(() => check('al volver la conexión, el aviso desaparece solo', true)).catch(() => check('al volver la conexión, el aviso desaparece solo', false));
   check('sin errores de página ni consola', errs.length === 0, errs.slice(0, 3).join(' | '));
   console.log(`RESUMEN: ${results.filter(Boolean).length}/${results.length} OK`);
   await b.close(); process.exit(results.every(Boolean) ? 0 : 1);

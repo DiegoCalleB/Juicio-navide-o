@@ -5,7 +5,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const errs = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
-  page.on('pageerror', e => errs.push('page:' + e.message)); page.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(m.text().slice(0, 140)); });
+  page.on('pageerror', e => errs.push('page:' + e.message)); page.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(m.text().slice(0, 3000)); });
 
   // Portada
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
@@ -40,14 +40,14 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await panel.waitForTimeout(500);
   check('el panel pide mantener la pantalla encendida', (await panel.evaluate(() => window.__wl)) >= 1);
   const tabs = await panel.getByRole('tab').allInnerTexts();
-  check('momentos de Papá Noel: Charla, Nochebuena, Mañana de Navidad', tabs.join('|') === 'Charla|Nochebuena|Mañana de Navidad', tabs.join('|'));
+  check('momentos de Papá Noel: Primer saludo, Cosas del taller, Charla, Nochebuena, Mañana de Navidad', tabs.join('|') === 'Primer saludo|Cosas del taller|Charla|Nochebuena|Mañana de Navidad', tabs.join('|'));
   await panel.getByRole('tab', { name: 'Mañana de Navidad' }).click();
   check('aparece el consejo del modo sorpresa', await panel.getByText(/modo sorpresa para el mensaje de abrir los regalos/).isVisible());
   await panel.getByRole('button', { name: /Ya puedes abrir los regalos, Lucía/ }).click();
   check('al elegir un mensaje, se rellena con el nombre del niño', (await panel.locator('#reply').inputValue()).includes('¡Ya puedes abrir los regalos, Lucía!'));
   check('el botón de sorpresa se activa con ese mensaje', await panel.getByRole('button', { name: /Empezar la sorpresa/ }).isEnabled());
   await panel.screenshot({ path: S + '/l3-panel-moments.png' });
-  check('sin errores de página ni consola', errs.length === 0, errs.slice(0, 3).join(' | '));
+  check('sin errores de página ni consola', errs.length === 0, errs.slice(0, 3).map(x=>x.slice(0,1500)).join(' | '));
   console.log(`RESUMEN: ${results.filter(Boolean).length}/${results.length} OK`);
   await b.close(); process.exit(results.every(Boolean) ? 0 : 1);
 })().catch(e => { console.error('CRASH', e.message); process.exit(2); });

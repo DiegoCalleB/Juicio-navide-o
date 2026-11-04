@@ -40,4 +40,12 @@ async function ensureFixtures() {
   await b.close();
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures };
+/** Abre el enlace del niño y pasa la pantalla de entrada (toca el sello cuando aparece). */
+async function openChild(page, link, opts = {}) {
+  await page.goto(link.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'networkidle', ...opts });
+  const seal = page.getByRole('button', { name: /Abrir mensaje de/ });
+  await seal.click({ timeout: 15000 }).catch(() => {});
+  await page.waitForSelector('[aria-label="Mensaje de Papá Noel"]', { state: 'detached', timeout: 5000 }).catch(() => {});
+}
+
+module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild };

@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
 
@@ -13,7 +13,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   const child = await childCtx.newPage();
   for (const [n, p] of [['parent', parent], ['child', child]]) {
     p.on('pageerror', e => errs.push(n + ':' + e.message));
-    p.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(n + ':console:' + m.text().slice(0, 160)); });
+    p.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(n + ':console:' + m.text().slice(0, 2500)); });
   }
 
   // ── 1. Selección de personajes y creación de la sala
@@ -34,7 +34,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
 
   // ── 2/3. Pantallas de niño y padres
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle', timeout: 60000 });
-  await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'networkidle', timeout: 60000 });
+  await openChild(child, childLink, { timeout: 60000 });
   check('niño: cabecera con el personaje', await child.getByText('Papá Noel').first().isVisible() && await child.getByText('desde el Polo Norte').isVisible());
   check('padres: contestan como Papá Noel a Lucía', await parent.getByText('Contestas como Papá Noel a Lucía').isVisible());
   await parent.waitForSelector('[role=status][aria-label="Conectado en tiempo real"]', { timeout: 10000 }).then(() => check('padres: conectado en tiempo real (SSE)', true)).catch(() => check('padres: conectado en tiempo real (SSE)', false));

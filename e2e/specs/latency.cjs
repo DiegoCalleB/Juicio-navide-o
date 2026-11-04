@@ -1,4 +1,4 @@
-const { BASE, launch } = require('../_lib.cjs');
+const { BASE, launch, openChild } = require('../_lib.cjs');
 (async () => {
   const b = await launch(['--no-sandbox']);
   const mk = async () => (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
@@ -10,7 +10,7 @@ const { BASE, launch } = require('../_lib.cjs');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
-  await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'networkidle' });
+  await openChild(child, childLink, {});
   await parent.waitForSelector('[aria-label="Conectado en tiempo real"]');
   const up = [], down = [];
   for (let i = 1; i <= 6; i++) {

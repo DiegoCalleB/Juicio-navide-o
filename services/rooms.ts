@@ -114,12 +114,12 @@ async function maybeAcknowledge(room: Room): Promise<void> {
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
   if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
   const c = CHARACTERS[room.character];
-  const where = c.group === 'noel' ? 'hacia el Polo Norte' : 'hacia Oriente';
+  const where = `hacia ${c.placeLabel}`;
   const rec = await getRoomStore().insertMessage({
     roomId: room.id,
     sender: 'system',
     kind: 'text',
-    body: `Tu mensaje ya vuela ${where} ✨ ${c.busyExcuse}. ¡${c.shortName} te contestará pronto!`,
+    body: `${c.helper.name}, ${c.helper.role}: ¡tu mensaje ya vuela ${where}! ✨ ${c.busyExcuse}, pero te contestará en cuanto pueda.`,
   });
   notify(room, rec);
 }

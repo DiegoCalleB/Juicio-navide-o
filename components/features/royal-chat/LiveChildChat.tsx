@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { playChime } from '@/lib/chime';
 import { vibrate } from '@/lib/haptics';
 import type { CharacterProfile } from '@/lib/characters';
 import { compressForChat } from '@/lib/image';
 import type { RoomMessageDTO } from '@/lib/royal';
 import { fmtTime, toChatMessage, type ApiResult } from './mapping';
+import { NorthPoleIntro } from './NorthPoleIntro';
 import { RoyalChat, type KingActivity } from './RoyalChat';
 import { SurpriseReveal } from './SurpriseReveal';
 import type { ChatMessage } from './types';
@@ -17,6 +19,9 @@ const RECENT_TYPING_MS = 12_000;
 const FAKE_TYPING_MS = 1800;
 const TYPING_SIGNAL_EVERY_MS = 2500;
 
+/** Error con un mensaje apto para el niño (el resto se sustituye por uno genérico). */
+class FriendlyError extends Error {}
+
 /** Chat del niño conectado en tiempo real: texto, fotos (y voz si está activada). */
 export function LiveChildChat({ token, character, childName }: { token: string; character: CharacterProfile; childName: string }) {
   const [shown, setShown] = useState<ChatMessage[]>([]);
@@ -26,6 +31,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   const [surprise, setSurprise] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [introOpen, setIntroOpen] = useState(true);
 
   const seen = useRef<Set<string>>(new Set());
   const loaded = useRef(false);
@@ -54,6 +60,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     if (special?.kind === 'text') setSurprise(special.text);
     setShown((s) => [...s, ...batch]);
     vibrate(180);
+    playChime();
   }, []);
 
   const refresh = useCallback(async () => {
@@ -122,6 +129,8 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     void fetch(`/api/rooms/${token}/typing`, { method: 'POST' }).catch(() => undefined);
   }, [token]);
 
+  const oops = `¡Uy! A ${character.helper.name} se le ha caído el mensaje. Inténtalo otra vez ✨`;
+
   /** Envío optimista: se muestra al instante y se sustituye por el del servidor. */
   const send = async (optimistic: ChatMessage, request: () => Promise<Response>) => {
     setNotice(null);
@@ -130,10 +139,10 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     try {
       const res = await request();
       const body = (await res.json()) as ApiResult<null>;
-      if (!body.ok) throw new Error(body.error?.message ?? 'No se pudo enviar.');
+      if (!body.ok) throw new FriendlyError(body.error?.message ?? oops);
       await refresh();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : 'No se pudo enviar. Inténtalo otra vez.');
+      setNotice(err instanceof FriendlyError ? err.message : oops);
     } finally {
       setLocal((l) => l.filter((m) => m.id !== optimistic.id));
       setSending(false);
@@ -165,7 +174,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
         () => fetch(`/api/rooms/${token}/photo`, { method: 'POST', body: form }),
       );
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : 'No se pudo preparar la foto.');
+      setNotice(oops);
     }
   };
 
@@ -196,6 +205,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       sending={sending}
       reconnecting={offline}
     />
+    {introOpen && <NorthPoleIntro token={token} character={character} childName={childName} onOpen={() => setIntroOpen(false)} />}
     {surprise && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
     </>
   );
