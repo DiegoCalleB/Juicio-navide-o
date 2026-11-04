@@ -49,3 +49,18 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Voz definitiva de Papá Noel (`ELEVENLABS_VOICE_PAPA_NOEL`).
 - Revisión legal de privacidad y términos.
 - Prueba de carga real y plan de escalado para el 24–25 de diciembre.
+
+## Ideas de magia (propuestas, sin decidir)
+
+1. **Ficha mágica** (prioridad alta). Al crear la sala, los padres rellenan cinco datos: mascota, juguete favorito, mejor amigo, algo que aprendió este año y algo que le da miedo. Las plantillas los usan ("he visto que este año aprendiste a montar en bici"). Lo específico que solo sabe el niño hace que se lo crea más que algo genérico.
+2. **Carta ritual.** El niño escribe o dicta su carta, la mete en un sobre con sello y la ve volar. Papá Noel contesta con otra carta que se despliega. Los padres reciben la lista de regalos ordenada, que les sirve para comprarlos.
+3. **Libro de los niños buenos.** Pantalla en la que Papá Noel enseña la página del niño, con su nombre, lo bueno que ha hecho (lo escriben los padres) y un sello. Se abre como un libro. Muy compartible.
+4. **Acciones para el niño, no solo chat.** En Nochebuena dejar una zanahoria a Rodolfo, y a la mañana siguiente aparece mordida. Con el Ratoncito, dejar el diente bajo la almohada y aparece la moneda. Gestos pequeños con animación que hacen la app más un juego.
+5. **Trineo en directo.** El 24 de diciembre, cuenta atrás y mapa estilizado ("Papá Noel ya sobrevuela tu ciudad"). Sincronizado con los mensajes programados.
+6. **Pruebas físicas.** Biblioteca de imágenes y sellos para que los padres envíen "huellas de reno en la nieve" o "la galleta mordida", y un sello de Polo Norte para sus propias fotos.
+
+**No hacer todavía:** vídeo de Papá Noel con cara animada. Es caro y un fallo de sincronización lo vuelve inquietante.
+
+**Advertencia:** los padres deben escribir como personaje, no como padres. Una guía corta en el panel: contestar con calma, sin emojis, con pequeños errores y con unos minutos de retraso.
+
+**Orden sugerido:** ficha mágica y carta primero (más impacto por menos esfuerzo).
