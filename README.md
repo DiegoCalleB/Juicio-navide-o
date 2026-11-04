@@ -44,5 +44,15 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://TU-DOMINIO/api/cron
 2. Su voz en `lib/voice.ts`.
 3. Su avatar en `components/features/royal-chat/RoyalAvatar.tsx` si no reutiliza uno.
 
+## Pruebas E2E
+Pruebas de navegador reales (dos navegadores: padres y niño) en `e2e/specs/`: portada, audios, modo sorpresa, grabación de vídeo, pulido/SEO/cabeceras, fase 1 (tiempo real, fotos, permisos, entrega diferida) y voz.
+```
+npx playwright install chromium   # una vez
+npm run test:e2e                  # todas (menos voz real)
+npm run test:e2e -- landing       # solo una
+npm run test:e2e -- --voice       # incluye voz real (gasta créditos de ElevenLabs)
+```
+Usan el almacén en memoria: no necesitan Supabase. La prueba de fase 1 incluye una entrega diferida de 2 min.
+
 ## Desarrollo y pruebas sin Supabase
 `ROOMS_STORE=memory npm run dev` usa un almacén en memoria (solo fuera de producción). Los archivos se sirven desde `/api/dev-media/...`.
