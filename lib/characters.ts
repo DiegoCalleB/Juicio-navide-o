@@ -4,8 +4,8 @@
  * Sin secretos: este archivo viaja al cliente.
  */
 
-export type AvatarKind = 'crown' | 'santa';
-export type SkyKind = 'orient' | 'snow';
+export type AvatarKind = 'crown' | 'santa' | 'mouse';
+export type SkyKind = 'orient' | 'snow' | 'night';
 
 export interface CharacterTheme {
   /** Degradado de la cabecera. */
@@ -39,7 +39,7 @@ export interface PlanItem {
 export interface CharacterPlan {
   id: string;
   label: string;
-  /** Día del año "MM-DD" (se usa el próximo que llegue). */
+  /** Día del año "MM-DD" (se usa el próximo que llegue), o "hoy" / "manana". */
   date: string;
   items: PlanItem[];
 }
@@ -50,14 +50,16 @@ export interface CharacterProfile {
   name: string;
   /** "Melchor", "Papá Noel" (para frases: "¡{short} te contestará pronto!") */
   shortName: string;
-  group: 'reyes' | 'noel';
+  group: 'reyes' | 'noel' | 'raton';
+  /** Con quién habla el niño en frases como "solo X y {audience} pueden leerla". */
+  audience: string;
   tagline: string;
   avatar: AvatarKind;
   theme: CharacterTheme;
   /** Días mínimos que vive la sala antes de borrarse. */
   expiresDays: number;
-  /** "MM-DD": la sala vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). */
-  holidayEnd: string;
+  /** "MM-DD": la sala vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). Sin él, solo cuenta `expiresDays`. */
+  holidayEnd?: string;
   /** Frase en tercera persona para "{personaje} está ocupado" (el duende o paje avisa al niño). */
   busyExcuse: string;
   /** Quién abre la línea mágica y atiende al niño mientras llega el personaje. */
@@ -66,6 +68,9 @@ export interface CharacterProfile {
   placeLabel: string;
   /** "los duendes" / "los pajes": quienes cuidan la línea mágica. */
   crew: string;
+  /** Emoji del ayudante (nota del duende/paje/ratoncito) y de la pantalla de conexión. */
+  helperEmoji: string;
+  introEmoji: string;
   /** Lo que dice al tocar su foto. */
   avatarTap: string;
   /** Textos de la pantalla de entrada del niño. Solo datos. */
@@ -80,7 +85,7 @@ export interface CharacterProfile {
   moments: CharacterMoment[];
 }
 
-export const CHARACTER_IDS = ['papa_noel', 'melchor', 'gaspar', 'baltasar'] as const;
+export const CHARACTER_IDS = ['papa_noel', 'melchor', 'gaspar', 'baltasar', 'raton_perez'] as const;
 export type CharacterId = (typeof CHARACTER_IDS)[number];
 
 const ORIENT = { bg: '#160a2b', sky: 'orient' as const, headerFrom: '#3b1466', headerTo: '#2a0f4a' };
@@ -89,6 +94,8 @@ const ORIENT_EXTRAS = {
   helper: { name: 'Zafiro', role: 'paje real' },
   placeLabel: 'Oriente',
   crew: 'los pajes',
+  helperEmoji: '⭐',
+  introEmoji: '⭐',
   avatarTap: '¡Que la estrella te guíe!',
   intro: {
     connecting: 'Los pajes reales están encendiendo la estrella que guía los mensajes…',
@@ -183,6 +190,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     name: 'Papá Noel',
     shortName: 'Papá Noel',
     group: 'noel',
+    audience: 'Papá Noel',
     tagline: 'Desde el Polo Norte, con sus renos',
     avatar: 'santa',
     theme: { headerFrom: '#9b1c24', headerTo: '#6b1218', bg: '#0e2418', sky: 'snow', ink: '#8a1a1f', robe: '#c62828' },
@@ -192,6 +200,8 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     helper: { name: 'Cascabel', role: 'duende de las comunicaciones' },
     placeLabel: 'el Polo Norte',
     crew: 'los duendes',
+    helperEmoji: '🧝',
+    introEmoji: '❄️',
     avatarTap: '¡Jo, jo, jo!',
     intro: {
       connecting: 'Los duendes de Laponia están encendiendo la línea mágica…',
@@ -293,22 +303,128 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     ],
   },
   melchor: {
-    id: 'melchor', name: 'Rey Melchor', shortName: 'Melchor', group: 'reyes',
+    id: 'melchor', name: 'Rey Melchor', shortName: 'Melchor', group: 'reyes', audience: 'los Reyes',
     tagline: 'Cariñoso y abuelete', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#3b1466', headerTo: '#2a0f4a', ink: '#5b2a86', robe: '#7a3fb0' },
     expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   gaspar: {
-    id: 'gaspar', name: 'Rey Gaspar', shortName: 'Gaspar', group: 'reyes',
+    id: 'gaspar', name: 'Rey Gaspar', shortName: 'Gaspar', group: 'reyes', audience: 'los Reyes',
     tagline: 'Sereno y sabio', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#1f5a3d', headerTo: '#153d2a', ink: '#1f5a3d', robe: '#2f6f4f' },
     expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   baltasar: {
-    id: 'baltasar', name: 'Rey Baltasar', shortName: 'Baltasar', group: 'reyes',
+    id: 'baltasar', name: 'Rey Baltasar', shortName: 'Baltasar', group: 'reyes', audience: 'los Reyes',
     tagline: 'Alegre y bonachón', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#8a2330', headerTo: '#5d1620', ink: '#8a2330', robe: '#a8323a' },
     expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+  },
+  raton_perez: {
+    id: 'raton_perez',
+    name: 'Ratoncito Pérez',
+    shortName: 'Ratoncito Pérez',
+    group: 'raton',
+    audience: 'el Ratoncito Pérez',
+    tagline: 'Recoge dientes y deja monedas',
+    avatar: 'mouse',
+    theme: { headerFrom: '#6a4fb3', headerTo: '#43348a', bg: '#171a45', sky: 'night', ink: '#4a3a99', robe: '#8566d6' },
+    expiresDays: 30,
+    busyExcuse: 'El Ratoncito Pérez está recogiendo dientes por las casas',
+    helper: { name: 'Quesito', role: 'ratoncito ayudante' },
+    placeLabel: 'la Casita del Ratoncito',
+    crew: 'los ratoncitos',
+    helperEmoji: '🐭',
+    introEmoji: '🦷',
+    avatarTap: '¡Quic, quic!',
+    intro: {
+      connecting: 'Los ratoncitos están encendiendo la lucecita de la línea mágica…',
+      ready: 'La línea con la Casita del Ratoncito está abierta',
+      button: 'Abrir mensaje del Ratoncito Pérez',
+    },
+    typingQuips: ['está buscando sus gafitas…', 'escribe con su plumita diminuta…', 'se ha enredado el bigote con la pluma…'],
+    plans: [
+      {
+        id: 'noche',
+        label: 'Esta noche',
+        date: 'hoy',
+        items: [
+          { time: '21:30', text: `¡Quic, quic! Ya salgo de mi casita con la bolsita de monedas, {child}. Cuando te duermas, paso a buscar tu diente.` },
+          { time: '23:00', text: `Estoy llegando a tu calle, {child}. Duérmete prontito, que a los ratones nos da vergüenza entrar si estás despierto.` },
+        ],
+      },
+      {
+        id: 'manana',
+        label: 'Mañana por la mañana',
+        date: 'manana',
+        items: [
+          { time: '08:00', surprise: true, text: `¡Buenos días, {child}! Anoche pasé por tu casa y encontré tu diente. Mira debajo de tu almohada, que te he dejado una sorpresa. ¡Quic, quic!` },
+          { time: '10:30', text: `¿Has encontrado mi regalito, {child}? Con tu diente estoy construyendo un palacio muy brillante en mi casita. ¡Gracias!` },
+        ],
+      },
+    ],
+    photoReplies: [
+      `¡Menudo dientazo, {child}! Es el diente más bonito que he visto esta semana.`,
+      `¡Qué foto tan buena, {child}! Mis ratoncitos y yo nos hemos reído mucho. ¡Quic, quic!`,
+      `Gracias por enseñármelo, {child}. Con un diente así, mi palacio va a quedar precioso.`,
+    ],
+    moments: [
+      {
+        id: 'primero',
+        label: 'Primer saludo',
+        tip: 'Envíalo en cuanto el niño abra el enlace, mejor justo después de que se le caiga el diente.',
+        replies: [
+          `¡Quic, quic! ¿{child}? ¡Me ha dicho Quesito que se te ha caído un diente! Se me han puesto los bigotes de punta de la emoción.`,
+          `Estoy en mi casita, con mis gafitas y mi saquito de monedas, preparándolo todo. ¿Me cuentas cómo ha sido, {child}?`,
+          `¡Enhorabuena, {child}! Un diente que se cae es un niño que crece. ¡Qué orgulloso estoy!`,
+        ],
+      },
+      {
+        id: 'diente',
+        label: 'Se cayó el diente',
+        replies: [
+          `Guarda el diente en una cajita o en un vasito y ponlo debajo de tu almohada, {child}. Esta noche paso a buscarlo.`,
+          `¿Te lo has enjuagado bien, {child}? A mí me gustan los dientes limpios y brillantes para mi palacio.`,
+          `Los ratones somos muy silenciosos. Seguro que ni te enteras cuando paso a por él. ¡Quic, quic!`,
+        ],
+      },
+      {
+        id: 'dientes',
+        label: 'Cuidar los dientes',
+        replies: [
+          `¿Te lavas los dientes todas las noches, {child}? A los ratones nos encantan los dientes sanos y brillantes.`,
+          `Un truco de ratón: cepíllate dos minutos, ¡lo que dura una canción pequeñita!, y verás qué sonrisa tan bonita tienes.`,
+          `Cuéntame, {child}: ¿cuál es tu pasta de dientes favorita? Yo, la de queso... bueno, no, era broma. ¡Quic, quic!`,
+        ],
+      },
+      {
+        id: 'noche',
+        label: 'Esa noche',
+        replies: [
+          `Esta noche paso por tu casa, {child}. Pon el diente bajo la almohada y duérmete prontito.`,
+          `Ya estoy de camino, {child}. Voy por los tejados con mi saquito de monedas. ¡Qué ilusión!`,
+        ],
+      },
+      {
+        id: 'manana',
+        label: 'A la mañana siguiente',
+        tip: 'Usa el modo sorpresa para el mensaje de la mañana y graba su cara al mirar bajo la almohada.',
+        replies: [
+          `¡Buenos días, {child}! Anoche pasé por tu casa. Mira debajo de tu almohada, que te he dejado algo. ¡Quic, quic!`,
+          `¿Has encontrado mi regalito, {child}? Gracias por tu diente. Con él estoy construyendo un palacio de dientes brillantes.`,
+          `Hasta la próxima vez, {child}. ¡Que te crezca un diente fuerte y bonito!`,
+        ],
+      },
+      {
+        id: 'charla',
+        label: 'Charla',
+        replies: [
+          `¡Quic, quic! Hola, {child}. Aquí en mi casita huele a queso y a galletas. ¿Y por tu casa?`,
+          `Quesito me ha contado que eres un niño muy valiente, {child}. Seguro que el próximo diente también te sale fenomenal.`,
+          `Hoy he recogido muchísimos dientes. Mi palacio ya tiene hasta tres torres, {child}.`,
+        ],
+      },
+    ],
   },
 };
 
@@ -318,6 +434,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
  */
 export function roomExpiresAt(character: CharacterProfile, now: Date = new Date()): Date {
   const min = new Date(now.getTime() + character.expiresDays * 86_400_000);
+  if (!character.holidayEnd) return min;
   const [m, d] = character.holidayEnd.split('-').map(Number) as [number, number];
   let end = new Date(Date.UTC(now.getUTCFullYear(), m - 1, d, 23, 59));
   if (end.getTime() < now.getTime()) end = new Date(Date.UTC(now.getUTCFullYear() + 1, m - 1, d, 23, 59));
@@ -330,9 +447,10 @@ export function isCharacterId(value: string): value is CharacterId {
 }
 
 /** Personajes agrupados para el selector. */
-export const CHARACTER_GROUPS: { id: 'noel' | 'reyes'; label: string; ids: CharacterId[] }[] = [
+export const CHARACTER_GROUPS: { id: 'noel' | 'reyes' | 'raton'; label: string; ids: CharacterId[] }[] = [
   { id: 'noel', label: 'Papá Noel', ids: ['papa_noel'] },
   { id: 'reyes', label: 'Los Reyes Magos', ids: ['melchor', 'gaspar', 'baltasar'] },
+  { id: 'raton', label: 'Cuando se cae un diente', ids: ['raton_perez'] },
 ];
 
 /** Rellena las plantillas con el nombre del niño. */

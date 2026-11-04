@@ -77,7 +77,7 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
           <div role="status" aria-live="polite" className="anim-fade-up flex flex-col items-center">
             <div className="relative grid size-24 place-items-center">
               <span aria-hidden className="anim-spin-slow absolute inset-0 rounded-full border-2 border-dashed border-[#f6d77a]/60" />
-              <span aria-hidden className="anim-float text-5xl">{character.group === 'noel' ? '❄️' : '⭐'}</span>
+              <span aria-hidden className="anim-float text-5xl">{character.introEmoji}</span>
             </div>
             <p className="mt-6 max-w-[17rem] font-serif text-[22px] leading-snug text-[#fff6dc]">{intro.connecting}</p>
             <p className="mt-3 text-[14px] text-[#f6d77a]/80">

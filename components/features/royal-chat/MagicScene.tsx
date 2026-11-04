@@ -46,6 +46,24 @@ export function MagicScene({ sky }: { sky: SkyKind }) {
       </div>
     );
   }
+  if (sky === 'night') {
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_8%,rgba(160,140,255,.28),transparent_55%),linear-gradient(180deg,#1b1f55_0%,#171a45_55%,#10122f_100%)]" />
+        <div className="absolute bottom-32 right-6 size-16 rounded-full shadow-[inset_-15px_7px_0_0_#fff3c4,0_0_46px_10px_rgba(255,243,196,.18)]" />
+        {STARS.map((s, i) => (
+          <span key={i} className="anim-twinkle absolute rounded-full bg-[#fff6dc]" style={{ left: s.left, top: s.top, width: s.size, height: s.size, animationDelay: `${s.delay}s` }} />
+        ))}
+        {[12, 36, 62, 84].map((left, i) => (
+          <span key={left} className="anim-float absolute text-[15px] text-[#ffd86b]" style={{ left: `${left}%`, top: `${30 + ((i * 17) % 40)}%`, animationDelay: `${-i * 0.9}s`, opacity: 0.7 }}>✦</span>
+        ))}
+        <svg className="absolute inset-x-0 bottom-0 h-24 w-full opacity-70" viewBox="0 0 400 96" preserveAspectRatio="none">
+          <path d="M0 96V66c40-12 70-6 110-14 40-8 80 4 130-4 50-8 100 0 160-10v58z" fill="#0d0f2b" />
+          <path d="M0 96V82c50-8 90-2 140-8 60-7 110 2 260-6v28z" fill="#0a0b22" />
+        </svg>
+      </div>
+    );
+  }
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="royal-sky absolute inset-0" />
@@ -60,7 +78,7 @@ export function MagicScene({ sky }: { sky: SkyKind }) {
 
 /** Guirnalda de luces bajo la cabecera: discreta, con bombillas que respiran. */
 export function Garland({ sky }: { sky: SkyKind }) {
-  const colors = sky === 'snow' ? ['#ff5a5f', '#f6d77a', '#4cd98a', '#6fb7ff'] : ['#f6d77a', '#fff1b8', '#f2c94c'];
+  const colors = sky === 'snow' ? ['#ff5a5f', '#f6d77a', '#4cd98a', '#6fb7ff'] : sky === 'night' ? ['#ffe08a', '#c9b8ff', '#fff3c4'] : ['#f6d77a', '#fff1b8', '#f2c94c'];
   const bulbs: { x: number; y: number; c: string; d: number }[] = [];
   for (let k = 0; k < 3; k++) {
     for (const t of [0.2, 0.5, 0.8]) {

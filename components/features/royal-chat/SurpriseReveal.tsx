@@ -31,7 +31,7 @@ export function SurpriseReveal({ character, childName, text, onClose }: Surprise
   }, [onClose]);
 
   const { theme } = character;
-  const place = character.group === 'noel' ? 'desde el Polo Norte' : 'desde Oriente';
+  const place = `desde ${character.placeLabel}`;
 
   return (
     <div

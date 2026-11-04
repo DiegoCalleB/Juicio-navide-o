@@ -19,6 +19,8 @@ const toDateInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${
 
 /** Próxima fecha "MM-DD" (hoy cuenta si aún no ha terminado). */
 function nextOccurrence(mmdd: string, now = new Date()): string {
+  if (mmdd === 'hoy') return toDateInput(now);
+  if (mmdd === 'manana') return toDateInput(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
   const [m, d] = mmdd.split('-').map(Number) as [number, number];
   const thisYear = new Date(now.getFullYear(), m - 1, d, 23, 59);
   return toDateInput(thisYear.getTime() >= now.getTime() ? thisYear : new Date(now.getFullYear() + 1, m - 1, d));

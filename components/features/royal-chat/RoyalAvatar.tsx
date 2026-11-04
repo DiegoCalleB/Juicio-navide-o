@@ -16,12 +16,12 @@ export function RoyalAvatar({ character, size = 40 }: { character: CharacterProf
       <defs>
         <radialGradient id={gid} cx="50%" cy="35%" r="70%">
           <stop offset="0%" stopColor={character.theme.robe} />
-          <stop offset="100%" stopColor="#1a0830" stopOpacity={character.avatar === 'santa' ? 0.55 : 1} />
+          <stop offset="100%" stopColor="#1a0830" stopOpacity={character.avatar === 'santa' ? 0.55 : character.avatar === 'mouse' ? 0.7 : 1} />
         </radialGradient>
         {GOLD}
       </defs>
       <circle cx="24" cy="24" r="23" fill={`url(#${gid})`} stroke="url(#gold)" strokeWidth="2" />
-      {character.avatar === 'crown' ? <Crown /> : <Santa />}
+      {character.avatar === 'crown' ? <Crown /> : character.avatar === 'mouse' ? <Mouse /> : <Santa />}
     </svg>
   );
 }
@@ -93,6 +93,50 @@ function Santa() {
       {/* brillo del gorro */}
       <path d="M16 11c1.5-3 4.5-4.5 7.5-4.3" fill="none" stroke="#fff" strokeOpacity=".35" strokeWidth="1.6" strokeLinecap="round" />
       </g>
+    </g>
+  );
+}
+
+function Mouse() {
+  return (
+    <g clipPath="url(#mouse-clip)">
+      <defs>
+        <clipPath id="mouse-clip"><circle cx="24" cy="24" r="22.2" /></clipPath>
+        <linearGradient id="mouse-fur" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d9dce8" />
+          <stop offset="100%" stopColor="#a9aec6" />
+        </linearGradient>
+      </defs>
+      {/* orejas */}
+      <circle cx="11.5" cy="12.5" r="8" fill="url(#mouse-fur)" />
+      <circle cx="11.5" cy="12.5" r="4.9" fill="#ffb3c7" />
+      <circle cx="36.5" cy="12.5" r="8" fill="url(#mouse-fur)" />
+      <circle cx="36.5" cy="12.5" r="4.9" fill="#ffb3c7" />
+      {/* cabeza */}
+      <ellipse cx="24" cy="26" rx="14.5" ry="13.5" fill="url(#mouse-fur)" />
+      <ellipse cx="24" cy="30.5" rx="9.5" ry="7.5" fill="#eef0f7" />
+      {/* mofletes */}
+      <circle cx="14.6" cy="28.5" r="2.7" fill="#ff9db8" fillOpacity=".6" />
+      <circle cx="33.4" cy="28.5" r="2.7" fill="#ff9db8" fillOpacity=".6" />
+      {/* gafitas */}
+      <circle cx="18.2" cy="23" r="4.6" fill="#fff" fillOpacity=".35" stroke="#d4a437" strokeWidth="1.1" />
+      <circle cx="29.8" cy="23" r="4.6" fill="#fff" fillOpacity=".35" stroke="#d4a437" strokeWidth="1.1" />
+      <path d="M22.8 23h2.4" stroke="#d4a437" strokeWidth="1.1" strokeLinecap="round" />
+      {/* ojos */}
+      <circle cx="18.4" cy="23.2" r="2" fill="#241a3a" />
+      <circle cx="29.6" cy="23.2" r="2" fill="#241a3a" />
+      <circle cx="19" cy="22.5" r=".7" fill="#fff" />
+      <circle cx="30.2" cy="22.5" r=".7" fill="#fff" />
+      {/* nariz y bigotes */}
+      <ellipse cx="24" cy="28.2" rx="2.1" ry="1.6" fill="#ff7fa3" />
+      <path d="M10 27l-6-1.6M10 30l-6 1.2M38 27l6-1.6M38 30l6 1.2" stroke="#8a8fa8" strokeWidth=".9" strokeLinecap="round" />
+      {/* sonrisa y dientes */}
+      <path d="M20.8 31.2c1.8 1.8 4.6 1.8 6.4 0" fill="none" stroke="#7a5668" strokeWidth="1" strokeLinecap="round" />
+      <rect x="22.2" y="31.4" width="1.7" height="3.1" rx=".6" fill="#fff" stroke="#c9ccdb" strokeWidth=".4" />
+      <rect x="24.1" y="31.4" width="1.7" height="3.1" rx=".6" fill="#fff" stroke="#c9ccdb" strokeWidth=".4" />
+      {/* lacito */}
+      <path d="M24 40l-3.6-2.4v4.8zM24 40l3.6-2.4v4.8z" fill="#e5383b" />
+      <circle cx="24" cy="40" r="1.4" fill="#b32428" />
     </g>
   );
 }

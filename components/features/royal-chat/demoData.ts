@@ -14,3 +14,11 @@ export const DEMO_NOEL: ChatMessage[] = [
   { id: '3', from: 'child', kind: 'text', time: '08:03', text: '¡Muy bien! ¿Rodolfo se comió la zanahoria?' },
   { id: '4', from: 'king', kind: 'text', time: '08:03', text: '¡Hasta la última miga! Te manda un saludo con su nariz roja.' },
 ];
+
+export const DEMO_RATON: ChatMessage[] = [
+  { id: '1', from: 'king', kind: 'text', time: '20:15', text: '¡Quic, quic! ¿Lucía? ¡Me ha dicho Quesito que se te ha caído un diente! 🦷' },
+  { id: '2', from: 'child', kind: 'text', time: '20:16', text: '¡Sí! Se me ha caído jugando. ¿Vendrás esta noche?' },
+  { id: '3', from: 'king', kind: 'text', time: '20:16', text: 'Pon el diente bajo la almohada y duérmete prontito. Yo paso por los tejados con mi saquito de monedas.' },
+];
+
+export const demoFor = (group: 'noel' | 'reyes' | 'raton'): ChatMessage[] => (group === 'noel' ? DEMO_NOEL : group === 'raton' ? DEMO_RATON : DEMO_REYES);

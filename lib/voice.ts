@@ -4,14 +4,15 @@ import { getElevenLabsKey } from '@/lib/env.server';
 
 /**
  * Voces de la biblioteca de ElevenLabs. Se pueden cambiar SIN tocar código con
- * ELEVENLABS_VOICE_PAPA_NOEL, ELEVENLABS_VOICE_MELCHOR, ELEVENLABS_VOICE_GASPAR y
- * ELEVENLABS_VOICE_BALTASAR (el valor es el voice_id).
+ * ELEVENLABS_VOICE_PAPA_NOEL, ELEVENLABS_VOICE_MELCHOR, ELEVENLABS_VOICE_GASPAR,
+ * ELEVENLABS_VOICE_BALTASAR y ELEVENLABS_VOICE_RATON_PEREZ (el valor es el voice_id).
  */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
   papa_noel: 'Yb8JGzcZyW5YYzenhRCm', // El Abuelo Charlie – abuelo cálido en español (provisional)
   melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – maduro, cálido
   gaspar: '7qXldmK3yFlWBHejdkpP', // Julio Alonso – grave, solemne
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – cuentos y leyendas
+  raton_perez: 'CPv3Zr3CQCqE4ZzuCgBP', // Lulu – aguda, dulce y juguetona (provisional)
 };
 
 const BITRATE = 64_000;

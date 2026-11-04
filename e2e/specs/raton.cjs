@@ -1,0 +1,63 @@
+const { OUT: S, BASE, launch, openChild } = require('../_lib.cjs');
+const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
+(async () => {
+  const b = await launch();
+  const mk = () => b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
+  const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
+
+  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
+  await parent.fill('#child', 'Lucía');
+  await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
+  await parent.getByRole('checkbox').check();
+  await parent.screenshot({ path: S + '/rp1-selector.png' });
+  await parent.getByRole('button', { name: /Crear la sala/ }).click();
+  await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  check('la sala se crea y los textos hablan del Ratoncito', await parent.getByText('contestas como Ratoncito Pérez', { exact: false }).isVisible());
+  const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
+  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
+  check('panel: "Contestas como Ratoncito Pérez a Lucía"', await parent.getByText('Contestas como Ratoncito Pérez a Lucía').isVisible());
+  const tabs = (await parent.getByRole('tab').allInnerTexts()).join('|');
+  check('plantillas del Ratoncito', tabs === 'Primer saludo|Se cayó el diente|Cuidar los dientes|Esa noche|A la mañana siguiente|Charla', tabs);
+
+  await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'domcontentloaded' });
+  await child.getByRole('button', { name: 'Abrir mensaje del Ratoncito Pérez' }).waitFor({ timeout: 20000 });
+  check('intro: "tienes un mensaje del Ratoncito Pérez" (con "del")', await child.getByText(/tienes un mensaje del Ratoncito Pérez/).isVisible());
+  await child.screenshot({ path: S + '/rp2-intro.png' });
+  await child.getByRole('button', { name: 'Abrir mensaje del Ratoncito Pérez' }).click();
+  await child.waitForSelector('#royal-draft');
+  check('cabecera y ayudante: Quesito, ratoncito ayudante', await child.getByText('Quesito, ratoncito ayudante').isVisible());
+  check('cabecera: "desde la Casita del Ratoncito"', await child.getByText('desde la Casita del Ratoncito').isVisible());
+  await child.screenshot({ path: S + '/rp3-chat.png' });
+  await child.fill('#royal-draft', '¡Se me ha caído un diente!'); await child.keyboard.press('Enter');
+  await parent.waitForSelector('text=Se me ha caído un diente');
+  await child.waitForSelector('text=vuela hacia la Casita del Ratoncito', { timeout: 8000 }).then(() => check('aviso de Quesito sin mencionar a Papá Noel', true)).catch(() => check('aviso de Quesito', false));
+  check('el niño nunca ve "Papá Noel" ni "Polo Norte"', (await child.locator('body').innerText()).match(/Papá Noel|Polo Norte|duende/i) === null);
+  await parent.getByRole('tab', { name: 'Primer saludo' }).click();
+  await parent.getByRole('button', { name: /Quic, quic! ¿Lucía\?/ }).first().click();
+  await parent.getByRole('button', { name: /Enviar como Ratoncito Pérez/ }).click();
+  await child.waitForSelector('text=se te ha caído un diente', { timeout: 8000 });
+  check('el niño recibe la respuesta del Ratoncito con su nombre', true);
+  await child.waitForTimeout(800); await child.screenshot({ path: S + '/rp4-reply.png' });
+
+  await parent.getByRole('button', { name: /Programar/ }).first().click();
+  const dlg = parent.getByRole('dialog', { name: 'Programar mensajes' });
+  check('programar: "Esta noche" y "Mañana por la mañana"', await dlg.getByRole('tab', { name: 'Esta noche' }).isVisible() && await dlg.getByRole('tab', { name: 'Mañana por la mañana' }).isVisible());
+  const today = new Date(); const pad = (n) => String(n).padStart(2, '0');
+  check('"Esta noche" propone el día de hoy', (await dlg.locator('input[type=date]').inputValue()) === `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`);
+  await dlg.getByRole('tab', { name: 'Mañana por la mañana' }).click();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  check('"Mañana por la mañana" propone el día siguiente y la pantalla de sorpresa', (await dlg.locator('input[type=date]').inputValue()) === `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}` && await dlg.getByText('Pantalla de sorpresa').isVisible());
+  await parent.screenshot({ path: S + '/rp5-planner.png' });
+
+  const demo = await (await mk()).newPage();
+  await demo.goto(BASE + '/demo/mensajeria?p=raton_perez', { waitUntil: 'networkidle' });
+  check('demo del Ratoncito disponible', await demo.getByText(/se te ha caído un diente/).first().isVisible());
+  const room = await fetch(`${BASE}/api/rooms/${pajeHref.split('/paje/')[1]}/messages`);
+  check('API de la sala funciona con el personaje nuevo', room.status === 200);
+  check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
+  console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
+  await b.close(); process.exit(results.every(Boolean) ? 0 : 1);
+})().catch((e) => { console.error('CRASH', e.message); process.exit(2); });

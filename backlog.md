@@ -23,6 +23,10 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 ## Producto
 
+- **Agenda mágica**: una sola entrada para el niño con varios contactos (Papá Noel, Reyes, Ratoncito Pérez) y un único panel para los padres. Hoy cada personaje es una sala aparte con su enlace. Solo merece la pena si los padres usan la app más allá de la Navidad.
+- Voz del Ratoncito Pérez: la elegida (Lulu, acento latinoamericano) es provisional; probarla y, si hace falta, cambiarla con `ELEVENLABS_VOICE_RATON_PEREZ`.
+- Más personajes por temporada (Conejo de Pascua, cumpleaños…).
+
 - Notificaciones push a los padres (en iPhone solo con la PWA instalada).
 - Personaje **Ratoncito Pérez**.
 - Cuenta atrás "faltan N días" en la sala del niño.

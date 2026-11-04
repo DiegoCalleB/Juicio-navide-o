@@ -100,10 +100,12 @@ const pad = (n) => String(n).padStart(2, '0');
   // ── 4. Entrega en directo
   console.log('… esperando la entrega programada (≈2 min)');
   const t0 = Date.now();
+  // La sorpresa (a ~100 s) llega antes que el mensaje normal (≥ 60 s, a su minuto) y la pantalla se cierra sola a los 25 s: se comprueba primero.
+  check('en directo, la sorpresa programada sale a pantalla completa', await child.getByRole('dialog', { name: /Mensaje de Papá Noel/ }).getByText('sorpresa programada').waitFor({ timeout: 170000 }).then(() => true, () => false), Math.round((Date.now() - t0) / 1000) + ' s');
+  await child.getByRole('dialog', { name: /Mensaje de Papá Noel/ }).click().catch(() => {});
   await child.waitForSelector('text=Ya estoy cargando el trineo', { timeout: 170000 })
     .then(() => check('el mensaje programado llega al niño a su hora, sin recargar', true, Math.round((Date.now() - t0) / 1000) + ' s'))
     .catch(() => check('el mensaje programado llega al niño a su hora, sin recargar', false));
-  check('en directo, la sorpresa programada sale a pantalla completa', await child.getByRole('dialog', { name: /Mensaje de Papá Noel/ }).getByText('sorpresa programada').isVisible().catch(() => false));
   await child.screenshot({ path: S + '/pl3-child-delivered.png' });
 
   // Un dispositivo nuevo (sala cerrada cuando llegó) ve la sorpresa a pantalla completa la primera vez

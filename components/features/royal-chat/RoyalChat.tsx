@@ -145,12 +145,12 @@ export function RoyalChat({
 
         <div ref={logRef} role="log" aria-label="Conversación" className="kid-font relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 pb-4 pt-7">
           <p className="mx-auto mb-3 flex w-fit max-w-[88%] items-center gap-1.5 rounded-xl bg-[#f6d77a]/10 px-3 py-1.5 text-center text-[11.5px] leading-snug text-[#f6d77a]">
-            <IconStar className="size-3 shrink-0" /> Línea mágica con {character.placeLabel}: solo {childName} y {character.group === 'noel' ? 'Papá Noel' : 'los Reyes'} pueden leerla
+            <IconStar className="size-3 shrink-0" /> Línea mágica con {character.placeLabel}: solo {childName} y {character.audience} pueden leerla
           </p>
 
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-6 max-w-[86%] text-center text-[15px] leading-relaxed text-[#fff6dc]/85">
-              <p className="anim-float text-4xl" aria-hidden>{character.group === 'noel' ? '🧝' : '⭐'}</p>
+              <p className="anim-float text-4xl" aria-hidden>{character.helperEmoji}</p>
               <p className="mt-2 font-serif text-xl text-[#f6d77a]">¡Hola, {childName}!</p>
               <p className="mt-2">{character.helper.name}, {character.helper.role}, ha abierto la línea mágica. {kingShort} vendrá en cuanto pueda.</p>
               <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Mientras, escríbele, mándale un dibujo o mantén pulsado el botón dorado para hablarle.` : `Mientras, escríbele o mándale una foto o un dibujo.`}</p>
@@ -293,7 +293,7 @@ function Bubble({ message, character, onOpenPhoto, followUps }: { message: ChatM
   if (message.from === 'system' && message.kind === 'text') {
     return (
       <div className="mx-auto flex w-fit max-w-[90%] animate-pop items-start gap-2 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/10 px-3 py-2 text-left text-[13.5px] leading-snug text-[#fff1c2]">
-        <span aria-hidden className="mt-0.5 text-lg leading-none">{character.group === 'noel' ? '🧝' : '📜'}</span>
+        <span aria-hidden className="mt-0.5 text-lg leading-none">{character.helperEmoji}</span>
         <span>{message.text}</span>
       </div>
     );
