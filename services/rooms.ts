@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { CHARACTERS, isCharacterId, roomExpiresAt, type CharacterId } from '@/lib/characters';
+import { CHARACTERS, fillChild, isCharacterId, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
@@ -109,17 +109,16 @@ function notify(room: Room, rec: MessageRecord): void {
   publishRefresh(room.id, rec.deliverAt);
 }
 
-/** Acuse automático: "los Reyes/Papá Noel están muy ocupados". Máximo uno cada 15 min. */
+/** Acuse automático en la voz del personaje ("he recibido tu mensaje…"). Máximo uno cada 15 min. */
 async function maybeAcknowledge(room: Room): Promise<void> {
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
   if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
   const c = CHARACTERS[room.character];
-  const where = `hacia ${c.placeLabel}`;
   const rec = await getRoomStore().insertMessage({
     roomId: room.id,
     sender: 'system',
     kind: 'text',
-    body: `${c.helper.name}, ${c.helper.role}: ¡tu mensaje ya vuela ${where}! ✨ ${c.busyExcuse}, pero te contestará en cuanto pueda.`,
+    body: fillChild(c.busyAck, room.childName),
   });
   notify(room, rec);
 }

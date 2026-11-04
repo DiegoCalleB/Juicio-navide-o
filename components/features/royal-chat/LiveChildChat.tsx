@@ -160,7 +160,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     void fetch(`/api/rooms/${token}/typing`, { method: 'POST' }).catch(() => undefined);
   }, [token]);
 
-  const oops = `¡Uy! A ${character.helper.name} se le ha caído el mensaje. Inténtalo otra vez ✨`;
+  const oops = '¡Uy! Se ha perdido tu mensaje por el camino. Inténtalo otra vez ✨';
 
   /** Envío optimista: se muestra al instante y se sustituye por el del servidor. */
   const send = async (optimistic: ChatMessage, request: () => Promise<Response>) => {

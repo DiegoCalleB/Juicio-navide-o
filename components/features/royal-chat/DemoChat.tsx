@@ -33,7 +33,7 @@ export function DemoChat({ character, childName, initial, embedded = false }: { 
       }}
       onText={(text) => {
         setMessages((m) => [...m, { id: crypto.randomUUID(), from: 'child', kind: 'text', text, time: now() }]);
-        kingAnswers({ id: crypto.randomUUID(), from: 'king', kind: 'text', text: character.group === 'noel' ? `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Rodolfo y a los duendes ✨` : character.group === 'raton' ? `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Quesito y a los ratoncitos ✨` : `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Gaspar y a Baltasar ✨`, time: now() });
+        kingAnswers({ id: crypto.randomUUID(), from: 'king', kind: 'text', text: character.group === 'noel' ? `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Rodolfo y a los duendes ✨` : character.group === 'raton' ? `¡Qué bonito lo que me cuentas, ${childName}! Se lo contaré a todos mis amigos ratones ✨` : `¡Qué bonito lo que me cuentas, ${childName}! Se lo diré a Gaspar y a Baltasar ✨`, time: now() });
       }}
     />
   );

@@ -60,16 +60,13 @@ export interface CharacterProfile {
   expiresDays: number;
   /** "MM-DD": la sala vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). Sin él, solo cuenta `expiresDays`. */
   holidayEnd?: string;
-  /** Frase en tercera persona para "{personaje} está ocupado" (el duende o paje avisa al niño). */
-  busyExcuse: string;
-  /** Quién abre la línea mágica y atiende al niño mientras llega el personaje. */
-  helper: { name: string; role: string };
+  /** Acuse automático en primera persona cuando el niño escribe y los padres aún no han contestado ("{child}" = nombre). */
+  busyAck: string;
   /** "el Polo Norte", "Oriente": para frases ("desde …", "hacia …"). */
   placeLabel: string;
-  /** "los duendes" / "los pajes": quienes cuidan la línea mágica. */
-  crew: string;
-  /** Emoji del ayudante (nota del duende/paje/ratoncito) y de la pantalla de conexión. */
-  helperEmoji: string;
+  /** Cómo se presenta en la sala vacía: "Soy Papá Noel". */
+  selfIntro: string;
+  /** Emoji de la pantalla de conexión. */
   introEmoji: string;
   /** Lo que dice al tocar su foto. */
   avatarTap: string;
@@ -91,17 +88,16 @@ export type CharacterId = (typeof CHARACTER_IDS)[number];
 const ORIENT = { bg: '#160a2b', sky: 'orient' as const, headerFrom: '#3b1466', headerTo: '#2a0f4a' };
 
 const ORIENT_EXTRAS = {
-  helper: { name: 'Zafiro', role: 'paje real' },
   placeLabel: 'Oriente',
-  crew: 'los pajes',
-  helperEmoji: '⭐',
+  selfIntro: 'Soy tu Rey Mago',
   introEmoji: '⭐',
   avatarTap: '¡Que la estrella te guíe!',
   intro: {
-    connecting: 'Los pajes reales están encendiendo la estrella que guía los mensajes…',
+    connecting: 'Conectando con Oriente…',
     ready: 'La estrella de Oriente ha encontrado tu casa',
     button: 'Abrir mensaje de los Reyes',
   },
+  busyAck: 'Hemos recibido tu mensaje, {child}. Ahora estamos preparando los regalos, pero te contestaremos en cuanto podamos.',
   typingQuips: ['está firmando con su pluma de oro…', 'escribe mientras los camellos miran…', 'se está colocando bien la corona…'],
   plans: [
     {
@@ -109,7 +105,7 @@ const ORIENT_EXTRAS = {
       label: 'Noche de Reyes',
       date: '01-05',
       items: [
-        { time: '18:30', text: `Estamos preparando los camellos, {child}. Los pajes han cargado los regalos y Zafiro no para de contarlos. ¡Qué nervios!` },
+        { time: '18:30', text: `Estamos preparando los camellos, {child}. Los pajes han cargado los regalos y no paran de contarlos. ¡Qué nervios!` },
         { time: '21:30', text: `Estamos ya cerquita de tu ciudad, {child}. Deja los zapatos preparados y un poquito de agua para los camellos.` },
         { time: '23:00', text: `Los camellos están cansadísimos, pero muy contentos. Acuéstate pronto, {child}, que si estás despierto no podemos entrar.` },
       ],
@@ -145,7 +141,7 @@ const kingMoments: CharacterMoment[] = [
     label: 'Primer saludo',
     tip: 'El primero es el que más cuenta: envíalo en cuanto el niño abra el enlace.',
     replies: [
-      `¿{child}? ¡Qué alegría! Zafiro, mi paje, me avisó de que ibas a escribirnos y los camellos han levantado las orejas de la emoción.`,
+      `¿{child}? ¡Qué alegría! Mis pajes me avisaron de que ibas a escribirnos y los camellos han levantado las orejas de la emoción.`,
       `Tu nombre está en nuestro libro de oro, {child}. Cuéntame, ¿qué tal estás?`,
     ],
   },
@@ -196,15 +192,13 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     theme: { headerFrom: '#9b1c24', headerTo: '#6b1218', bg: '#0e2418', sky: 'snow', ink: '#8a1a1f', robe: '#c62828' },
     expiresDays: 45,
     holidayEnd: '01-10',
-    busyExcuse: 'Papá Noel está en el taller con los duendes',
-    helper: { name: 'Cascabel', role: 'duende de las comunicaciones' },
+    busyAck: '¡Jo, jo, jo! He recibido tu mensaje, {child}. Ahora estoy en el taller con mucho trabajo, pero te contesto en cuanto pueda.',
     placeLabel: 'el Polo Norte',
-    crew: 'los duendes',
-    helperEmoji: '🧝',
+    selfIntro: 'Soy Papá Noel',
     introEmoji: '❄️',
     avatarTap: '¡Jo, jo, jo!',
     intro: {
-      connecting: 'Los duendes de Laponia están encendiendo la línea mágica…',
+      connecting: 'Conectando con el Polo Norte…',
       ready: 'La línea con el Polo Norte está abierta',
       button: 'Abrir mensaje de Papá Noel',
     },
@@ -242,7 +236,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         label: 'Primer saludo',
         tip: 'El primero es el que más cuenta: envíalo en cuanto el niño abra el enlace.',
         replies: [
-          `¡Jo, jo, jo! ¿{child}? ¿Eres tú de verdad? ¡Cascabel me dijo que me ibas a escribir y casi se me cae el chocolate caliente!`,
+          `¡Jo, jo, jo! ¿{child}? ¿Eres tú de verdad? ¡Un duende me dijo que me ibas a escribir y casi se me cae el chocolate caliente!`,
           `Estoy sentado en mi sillón del taller, con las botas calentitas y los duendes empaquetando a mi alrededor. ¿Qué tal estás, {child}?`,
           `Tengo tu nombre apuntado en mi libro grande, {child}. Y te cuento un secreto: está en la página de los que se portan bien.`,
         ],
@@ -251,7 +245,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         id: 'taller',
         label: 'Cosas del taller',
         replies: [
-          `¡Jo, jo, jo! Cascabel ha probado un caramelo del taller y se le ha puesto la lengua verde. No para de reírse, {child}.`,
+          `¡Jo, jo, jo! Un duende ha probado un caramelo del taller y se le ha puesto la lengua verde. No para de reírse, {child}.`,
           `Se me ha enredado la barba con una guirnalda, {child}. Los duendes llevan un rato intentando desenredarme. ¡Jo, jo, jo!`,
           `Los duendes me han dejado las botas llenas de purpurina. Dejo brillitos por todo el Polo Norte, {child}.`,
           `Rodolfo se ha puesto celoso porque hoy te escribo a ti. Le he dado una zanahoria extra para que se le pase, {child}.`,
@@ -306,19 +300,19 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     id: 'melchor', name: 'Rey Melchor', shortName: 'Melchor', group: 'reyes', audience: 'los Reyes',
     tagline: 'Cariñoso y abuelete', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#3b1466', headerTo: '#2a0f4a', ink: '#5b2a86', robe: '#7a3fb0' },
-    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   gaspar: {
     id: 'gaspar', name: 'Rey Gaspar', shortName: 'Gaspar', group: 'reyes', audience: 'los Reyes',
     tagline: 'Sereno y sabio', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#1f5a3d', headerTo: '#153d2a', ink: '#1f5a3d', robe: '#2f6f4f' },
-    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   baltasar: {
     id: 'baltasar', name: 'Rey Baltasar', shortName: 'Baltasar', group: 'reyes', audience: 'los Reyes',
     tagline: 'Alegre y bonachón', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#8a2330', headerTo: '#5d1620', ink: '#8a2330', robe: '#a8323a' },
-    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   raton_perez: {
     id: 'raton_perez',
@@ -330,15 +324,13 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     avatar: 'mouse',
     theme: { headerFrom: '#6a4fb3', headerTo: '#43348a', bg: '#171a45', sky: 'night', ink: '#4a3a99', robe: '#8566d6' },
     expiresDays: 30,
-    busyExcuse: 'El Ratoncito Pérez está recogiendo dientes por las casas',
-    helper: { name: 'Quesito', role: 'ratoncito ayudante' },
+    busyAck: '¡Quic, quic! He recibido tu mensaje, {child}. Ahora estoy recogiendo dientes por las casas, pero te contesto en cuanto pueda.',
     placeLabel: 'la Casita del Ratoncito',
-    crew: 'los ratoncitos',
-    helperEmoji: '🐭',
+    selfIntro: 'Soy el Ratoncito Pérez',
     introEmoji: '🦷',
     avatarTap: '¡Quic, quic!',
     intro: {
-      connecting: 'Los ratoncitos están encendiendo la lucecita de la línea mágica…',
+      connecting: 'Buscando la Casita del Ratoncito…',
       ready: 'La línea con la Casita del Ratoncito está abierta',
       button: 'Abrir mensaje del Ratoncito Pérez',
     },
@@ -374,7 +366,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         label: 'Primer saludo',
         tip: 'Envíalo en cuanto el niño abra el enlace, mejor justo después de que se le caiga el diente.',
         replies: [
-          `¡Quic, quic! ¿{child}? ¡Me ha dicho Quesito que se te ha caído un diente! Se me han puesto los bigotes de punta de la emoción.`,
+          `¡Quic, quic! ¿{child}? ¡Me ha dicho un pajarito que se te ha caído un diente! Se me han puesto los bigotes de punta de la emoción.`,
           `Estoy en mi casita, con mis gafitas y mi saquito de monedas, preparándolo todo. ¿Me cuentas cómo ha sido, {child}?`,
           `¡Enhorabuena, {child}! Un diente que se cae es un niño que crece. ¡Qué orgulloso estoy!`,
         ],
@@ -420,7 +412,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         label: 'Charla',
         replies: [
           `¡Quic, quic! Hola, {child}. Aquí en mi casita huele a queso y a galletas. ¿Y por tu casa?`,
-          `Quesito me ha contado que eres un niño muy valiente, {child}. Seguro que el próximo diente también te sale fenomenal.`,
+          `Un pajarito me ha contado que eres un niño muy valiente, {child}. Seguro que el próximo diente también te sale fenomenal.`,
           `Hoy he recogido muchísimos dientes. Mi palacio ya tiene hasta tres torres, {child}.`,
         ],
       },

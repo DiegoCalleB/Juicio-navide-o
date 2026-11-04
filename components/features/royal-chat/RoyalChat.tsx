@@ -150,10 +150,10 @@ export function RoyalChat({
 
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-6 max-w-[86%] text-center text-[15px] leading-relaxed text-[#fff6dc]/85">
-              <p className="anim-float text-4xl" aria-hidden>{character.helperEmoji}</p>
+              <p className="anim-float text-4xl" aria-hidden>{character.introEmoji}</p>
               <p className="mt-2 font-serif text-xl text-[#f6d77a]">¡Hola, {childName}!</p>
-              <p className="mt-2">{character.helper.name}, {character.helper.role}, ha abierto la línea mágica. {kingShort} vendrá en cuanto pueda.</p>
-              <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Mientras, escríbele, mándale un dibujo o mantén pulsado el botón dorado para hablarle.` : `Mientras, escríbele o mándale una foto o un dibujo.`}</p>
+              <p className="mt-2">{character.selfIntro}. Me alegra mucho que me escribas.</p>
+              <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Escríbeme, mándame un dibujo o mantén pulsado el botón dorado para hablarme.` : `Escríbeme o mándame una foto o un dibujo.`}</p>
             </div>
           )}
 
@@ -187,7 +187,7 @@ export function RoyalChat({
 
         {reconnecting && (
           <p role="status" className="relative z-10 mx-3 mb-1 flex items-center justify-center gap-2 rounded-xl bg-[#f6d77a]/15 px-3 py-1.5 text-center text-[12.5px] text-[#f6d77a]">
-            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… {character.crew} la están arreglando ✨
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… ¡enseguida vuelve! ✨
           </p>
         )}
         {banner && (
@@ -217,7 +217,7 @@ export function RoyalChat({
                   maxLength={MAX_TEXT}
                   enterKeyHint="send"
                   autoComplete="off"
-                  placeholder={sending ? `${character.helper.name} lo lleva volando…` : `Escribe a ${kingShort}…`}
+                  placeholder={sending ? 'Enviando tu mensaje…' : `Escribe a ${kingShort}…`}
                   className="kid-font min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
                 />
                 {onPhoto && (
@@ -292,9 +292,11 @@ export function RoyalChat({
 function Bubble({ message, character, onOpenPhoto, followUps }: { message: ChatMessage; character: Character; onOpenPhoto: (src: string) => void; followUps?: { id: string; src: string }[] }) {
   if (message.from === 'system' && message.kind === 'text') {
     return (
-      <div className="mx-auto flex w-fit max-w-[90%] animate-pop items-start gap-2 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/10 px-3 py-2 text-left text-[13.5px] leading-snug text-[#fff1c2]">
-        <span aria-hidden className="mt-0.5 text-lg leading-none">{character.helperEmoji}</span>
-        <span>{message.text}</span>
+      <div className="flex animate-pop justify-start">
+        <div className="relative mr-auto max-w-[82%] rounded-2xl rounded-bl-md bg-[#fbf5e6] px-3 py-2 text-[#2b1b0e] shadow-md ring-1 ring-[#f6d77a]/60">
+          <p className="whitespace-pre-line text-[16.5px] leading-snug">{message.text}</p>
+          <span className="mt-0.5 flex justify-end text-[10.5px] text-[#5b3a1e]/55">{message.time}</span>
+        </div>
       </div>
     );
   }

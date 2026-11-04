@@ -36,7 +36,7 @@ function markSeen(token: string): void {
  */
 export function NorthPoleIntro({ token, character, childName, onOpen }: { token: string; character: Character; childName: string; onOpen: () => void }) {
   const [phase, setPhase] = useState<'connecting' | 'ready' | 'leaving'>('connecting');
-  const { theme, intro, helper } = character;
+  const { theme, intro } = character;
 
   useEffect(() => {
     if (wasSeen(token)) {
@@ -80,9 +80,6 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
               <span aria-hidden className="anim-float text-5xl">{character.introEmoji}</span>
             </div>
             <p className="mt-6 max-w-[17rem] font-serif text-[22px] leading-snug text-[#fff6dc]">{intro.connecting}</p>
-            <p className="mt-3 text-[14px] text-[#f6d77a]/80">
-              {helper.name}, {helper.role}, te está conectando…
-            </p>
             <div aria-hidden className="mt-5 flex gap-2">
               {[0, 1, 2].map((i) => (
                 <IconStar key={i} className="anim-twinkle size-4 text-[#f6d77a]" style={{ animationDelay: `${i * 0.35}s` }} />

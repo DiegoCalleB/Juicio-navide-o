@@ -28,13 +28,13 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await child.screenshot({ path: S + '/rp2-intro.png' });
   await child.getByRole('button', { name: 'Abrir mensaje del Ratoncito Pérez' }).click();
   await child.waitForSelector('#royal-draft');
-  check('cabecera y ayudante: Quesito, ratoncito ayudante', await child.getByText('Quesito, ratoncito ayudante').isVisible());
+  check('sala vacía: habla el propio Ratoncito ("Soy el Ratoncito Pérez"), sin ayudantes', await child.getByText('Soy el Ratoncito Pérez').isVisible());
   check('cabecera: "desde la Casita del Ratoncito"', await child.getByText('desde la Casita del Ratoncito').isVisible());
   await child.screenshot({ path: S + '/rp3-chat.png' });
   await child.fill('#royal-draft', '¡Se me ha caído un diente!'); await child.keyboard.press('Enter');
   await parent.waitForSelector('text=Se me ha caído un diente');
-  await child.waitForSelector('text=vuela hacia la Casita del Ratoncito', { timeout: 8000 }).then(() => check('aviso de Quesito sin mencionar a Papá Noel', true)).catch(() => check('aviso de Quesito', false));
-  check('el niño nunca ve "Papá Noel" ni "Polo Norte"', (await child.locator('body').innerText()).match(/Papá Noel|Polo Norte|duende/i) === null);
+  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('acuse automático en la voz del propio Ratoncito', true)).catch(() => check('acuse automático del Ratoncito', false));
+  check('el niño nunca ve "Papá Noel" ni "Polo Norte"', (await child.locator('body').innerText()).match(/Papá Noel|Polo Norte|duende|Quesito|ayudante/i) === null);
   await parent.getByRole('tab', { name: 'Primer saludo' }).click();
   await parent.getByRole('button', { name: /Quic, quic! ¿Lucía\?/ }).first().click();
   await parent.getByRole('button', { name: /Enviar como Ratoncito Pérez/ }).click();

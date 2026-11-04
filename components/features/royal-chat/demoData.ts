@@ -16,7 +16,7 @@ export const DEMO_NOEL: ChatMessage[] = [
 ];
 
 export const DEMO_RATON: ChatMessage[] = [
-  { id: '1', from: 'king', kind: 'text', time: '20:15', text: '¡Quic, quic! ¿Lucía? ¡Me ha dicho Quesito que se te ha caído un diente! 🦷' },
+  { id: '1', from: 'king', kind: 'text', time: '20:15', text: '¡Quic, quic! ¿Lucía? ¡Me ha dicho un pajarito que se te ha caído un diente! 🦷' },
   { id: '2', from: 'child', kind: 'text', time: '20:16', text: '¡Sí! Se me ha caído jugando. ¿Vendrás esta noche?' },
   { id: '3', from: 'king', kind: 'text', time: '20:16', text: 'Pon el diente bajo la almohada y duérmete prontito. Yo paso por los tejados con mi saquito de monedas.' },
 ];
