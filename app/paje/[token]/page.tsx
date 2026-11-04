@@ -9,7 +9,7 @@ import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Panel de los padres', robots: { index: false, follow: false } };
-export const viewport: Viewport = { themeColor: '#1d0b3a' };
+export const viewport: Viewport = { themeColor: '#0a1220' };
 
 export default async function PajePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

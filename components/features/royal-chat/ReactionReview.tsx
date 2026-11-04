@@ -41,36 +41,36 @@ export function ReactionReview({ result, childName, onDiscard }: ReactionReviewP
   const mb = (result.blob.size / 1_048_576).toFixed(1);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Tu vídeo" className="absolute inset-0 z-40 flex flex-col bg-[#0d0618]">
+    <div role="dialog" aria-modal="true" aria-label="Tu vídeo" className="absolute inset-0 z-40 flex flex-col bg-[#060b14]">
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <h2 className="text-center font-serif text-2xl text-[#fff6dc]">¡Vídeo grabado!</h2>
-        <p className="mt-1 text-center text-[13px] text-[#fff6dc]/60">{Math.round(result.seconds)} s · {mb} MB · .{result.ext}</p>
+        <h2 className="text-center font-serif text-2xl text-[#e8f1ff]">¡Vídeo grabado!</h2>
+        <p className="mt-1 text-center text-[13px] text-[#e8f1ff]/60">{Math.round(result.seconds)} s · {mb} MB · .{result.ext}</p>
         <video src={result.url} controls playsInline preload="metadata" className="mx-auto mt-4 max-h-[52dvh] w-full rounded-2xl bg-black object-contain" />
 
-        <p className="mt-4 rounded-xl bg-[#f6d77a]/10 p-3 text-center text-[12.5px] leading-snug text-[#f6d77a]">
+        <p className="mt-4 rounded-xl bg-[#5eead4]/10 p-3 text-center text-[12.5px] leading-snug text-[#5eead4]">
           Este vídeo está solo en tu móvil: no lo hemos subido a ningún sitio. Si cierras esta pantalla sin guardarlo, se pierde.
         </p>
         {result.ext === 'webm' && (
-          <p className="mt-2 text-center text-[12px] leading-snug text-[#fff6dc]/50">
+          <p className="mt-2 text-center text-[12px] leading-snug text-[#e8f1ff]/50">
             Tu navegador graba en WebM. Algunas redes no lo aceptan; si te pasa, grábalo con el modo “otro móvil”.
           </p>
         )}
         {shareError && <p role="alert" className="mt-2 text-center text-[13px] text-[#ff8a8c]">{shareError}</p>}
       </div>
 
-      <div className="space-y-2 border-t border-white/10 bg-[#1d0b3a] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+      <div className="space-y-2 border-t border-white/10 bg-[#121d33] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
         {canShare && (
-          <button type="button" onClick={share} className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] active:scale-[0.99]">
+          <button type="button" onClick={share} className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#5eead4] to-[#14b8a6] font-bold text-[#04302b] active:scale-[0.99]">
             Compartir
           </button>
         )}
-        <button type="button" onClick={save} className={`flex min-h-12 w-full items-center justify-center rounded-2xl font-bold active:scale-[0.99] ${canShare ? 'border border-[#f6d77a]/50 text-[#f6d77a]' : 'bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#2a0f4a]'}`}>
+        <button type="button" onClick={save} className={`flex min-h-12 w-full items-center justify-center rounded-2xl font-bold active:scale-[0.99] ${canShare ? 'border border-[#5eead4]/50 text-[#5eead4]' : 'bg-gradient-to-b from-[#5eead4] to-[#14b8a6] text-[#04302b]'}`}>
           Guardar en el móvil
         </button>
         <button
           type="button"
           onClick={() => (confirmDiscard ? onDiscard() : setConfirmDiscard(true))}
-          className={`flex min-h-11 w-full items-center justify-center rounded-2xl text-[14px] font-semibold ${confirmDiscard ? 'bg-[#e5383b]/20 text-[#ff8a8c]' : 'text-[#fff6dc]/60'}`}
+          className={`flex min-h-11 w-full items-center justify-center rounded-2xl text-[14px] font-semibold ${confirmDiscard ? 'bg-[#e5383b]/20 text-[#ff8a8c]' : 'text-[#e8f1ff]/60'}`}
         >
           {confirmDiscard ? 'Pulsa otra vez para descartar el vídeo' : 'Descartar'}
         </button>

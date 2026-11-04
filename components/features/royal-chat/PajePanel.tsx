@@ -327,22 +327,22 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
 
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black">
-      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#120822] text-[#fff6dc]">
-        <header
-          className="flex items-center gap-3 border-b border-white/10 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
-          style={{ background: character.theme.headerTo }}
-        >
+      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff]">
+        <div className="flex items-center justify-center gap-2 bg-[#5eead4] px-3 pb-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] text-[10.5px] font-bold uppercase tracking-[.08em] text-[#04302b]">
+          <span aria-hidden>🔒</span> Zona secreta de los padres · {childName} no ve esta pantalla
+        </div>
+        <header className="flex items-center gap-3 border-b border-[#5eead4]/20 bg-[#121d33] px-4 pb-3 pt-3">
           <RoyalAvatar character={character} size={40} />
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]">
+            <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-[#5eead4]">
               <IconSeal className="size-3.5" /> Panel de los padres
             </p>
             <p className="truncate text-[15px] font-semibold">Contestas como {character.name} a {childName}</p>
           </div>
-          {!connected && <span className="text-[11px] font-semibold text-[#f6d77a]">Reconectando…</span>}
+          {!connected && <span className="text-[11px] font-semibold text-[#5eead4]">Reconectando…</span>}
           <span
             title={connected ? 'Conectado en tiempo real' : 'Reconectando…'}
-            className={`size-2.5 shrink-0 rounded-full ${connected ? 'bg-[#7ee2a8]' : 'animate-pulse bg-[#f6d77a]'}`}
+            className={`size-2.5 shrink-0 rounded-full ${connected ? 'bg-[#7ee2a8]' : 'animate-pulse bg-[#5eead4]'}`}
             role="status"
             aria-label={connected ? 'Conectado en tiempo real' : 'Reconectando'}
           />
@@ -351,7 +351,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         {presence && (
           <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-2 text-[13px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
             <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
-            <p className="min-w-0 flex-1 leading-snug text-[#fff6dc]/85">
+            <p className="min-w-0 flex-1 leading-snug text-[#e8f1ff]/85">
               {presence.openedAt
                 ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en la sala'}</>
                 : presence.online
@@ -359,7 +359,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                   : <>{childName} aún no ha abierto el enlace</>}
             </p>
             {presence.openedAt && messages.length === 0 && (
-              <button type="button" onClick={() => setMomentId('primero')} className="shrink-0 rounded-full bg-[#f6d77a] px-3 py-1 text-[12px] font-bold text-[#2a0f4a] active:scale-95">
+              <button type="button" onClick={() => setMomentId('primero')} className="shrink-0 rounded-full bg-[#5eead4] px-3 py-1 text-[12px] font-bold text-[#04302b] active:scale-95">
                 Primer saludo
               </button>
             )}
@@ -372,25 +372,25 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             aria-expanded={setupVisible}
             aria-controls="panel-setup"
             onClick={() => setSetupOpen(!setupVisible)}
-            className="flex min-h-11 w-full items-center gap-2 rounded-2xl border border-white/15 bg-white/[.04] px-3.5 text-left text-[13px] font-semibold text-[#f6d77a]"
+            className="flex min-h-11 w-full items-center gap-2 rounded-2xl border border-white/15 bg-white/[.04] px-3.5 text-left text-[13px] font-semibold text-[#5eead4]"
           >
             <span className="flex-1">Preparativos · enlace del niño y grabar su reacción</span>
             <span aria-hidden className={`transition-transform ${setupVisible ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
           <div id="panel-setup" hidden={!setupVisible} className="space-y-3">
-          <section className="rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.07] p-3.5 text-[13px] leading-relaxed">
-            <p className="font-semibold text-[#f6d77a]">Enlace para el móvil de {childName}</p>
-            <p className="mt-1 text-[#fff6dc]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
+          <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
+            <p className="font-semibold text-[#5eead4]">Enlace para el móvil de {childName}</p>
+            <p className="mt-1 text-[#e8f1ff]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
             <div className="mt-2.5 flex gap-2">
-              <button type="button" onClick={copyLink} className="min-h-10 flex-1 rounded-xl bg-[#f6d77a] px-3 font-bold text-[#2a0f4a] active:scale-[0.98]">
+              <button type="button" onClick={copyLink} className="min-h-10 flex-1 rounded-xl bg-[#5eead4] px-3 font-bold text-[#04302b] active:scale-[0.98]">
                 {copied ? '¡Copiado!' : 'Copiar enlace'}
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(childLink)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="grid min-h-10 flex-1 place-items-center rounded-xl border border-[#f6d77a]/40 px-3 font-bold text-[#f6d77a] active:scale-[0.98]"
+                className="grid min-h-10 flex-1 place-items-center rounded-xl border border-[#5eead4]/40 px-3 font-bold text-[#5eead4] active:scale-[0.98]"
               >
                 Enviármelo
               </a>
@@ -398,7 +398,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           </section>
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
-            <p className="flex items-center gap-2 font-semibold text-[#f6d77a]">
+            <p className="flex items-center gap-2 font-semibold text-[#5eead4]">
               <IconFilm className="size-5" /> Graba su reacción
             </p>
             <div role="radiogroup" aria-label="Cómo grabar" className="mt-2 flex gap-1 rounded-xl bg-white/5 p-1">
@@ -413,13 +413,13 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                   aria-checked={recordHere === o.v}
                   onClick={() => setRecordHere(o.v)}
                   disabled={o.v && !rec.supported}
-                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-40 ${recordHere === o.v ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#fff6dc]/70'}`}
+                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-40 ${recordHere === o.v ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
                 >
                   {o.label}
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[#fff6dc]/75">
+            <p className="mt-2 text-[#e8f1ff]/75">
               {recordHere ? (
                 <>Se graba con la <strong>cámara trasera de este móvil</strong>. Apúntalo al niño y verás la imagen mientras contestas. El vídeo se queda en tu móvil: no se sube a ningún sitio.</>
               ) : (
@@ -427,7 +427,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               )}
             </p>
             {rec.error && <p role="alert" className="mt-2 text-[12.5px] text-[#ff8a8c]">{rec.error}</p>}
-            <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[#fff6dc]/70">
+            <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[#e8f1ff]/70">
               <li>Escribe abajo el mensaje de la sorpresa.</li>
               <li>Pulsa “Empezar la sorpresa”.</li>
               <li>{recordHere ? `Tienes ${COUNTDOWN_SECONDS} segundos para apuntar la cámara al niño.` : `Quien graba tiene ${COUNTDOWN_SECONDS} segundos para enfocar al niño.`}</li>
@@ -436,16 +436,16 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               type="button"
               onClick={startSurprise}
               disabled={!text.trim() || photo !== null || countdown !== null || rec.phase === 'preparing' || rec.phase === 'recording'}
-              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#f6d77a]/50 font-bold text-[#f6d77a] disabled:opacity-40 active:scale-[0.98]"
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] disabled:opacity-40 active:scale-[0.98]"
             >
               <IconFilm className="size-5" /> {rec.phase === 'preparing' ? 'Abriendo la cámara…' : 'Empezar la sorpresa'}
             </button>
-            {!text.trim() && <p className="mt-1.5 text-center text-[11.5px] text-[#fff6dc]/45">Primero escribe el mensaje de abajo.</p>}
+            {!text.trim() && <p className="mt-1.5 text-center text-[11.5px] text-[#e8f1ff]/45">Primero escribe el mensaje de abajo.</p>}
             {surpriseSent && (
               <div role="status" className="mt-3 animate-pop rounded-xl bg-[#7ee2a8]/10 p-3 text-center">
                 <p className="font-semibold text-[#7ee2a8]">¡Sorpresa enviada! Sigue grabando.</p>
-                <p className="mt-1 text-[12.5px] text-[#fff6dc]/70">Si te ha salido bien, súbelo y enseña la app a otros padres:</p>
-                <button type="button" onClick={shareApp} className="mt-2 min-h-10 rounded-xl bg-[#f6d77a] px-4 font-bold text-[#2a0f4a] active:scale-[0.98]">
+                <p className="mt-1 text-[12.5px] text-[#e8f1ff]/70">Si te ha salido bien, súbelo y enseña la app a otros padres:</p>
+                <button type="button" onClick={shareApp} className="mt-2 min-h-10 rounded-xl bg-[#5eead4] px-4 font-bold text-[#04302b] active:scale-[0.98]">
                   {shared ? '¡Listo!' : 'Compartir la app'}
                 </button>
               </div>
@@ -454,7 +454,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           </div>
 
           {messages.length === 0 && (
-            <p className="py-8 text-center text-[14px] text-[#fff6dc]/60">
+            <p className="py-8 text-center text-[14px] text-[#e8f1ff]/60">
               Aún no hay mensajes. Cuando {childName} escriba, lo verás aquí al instante.
             </p>
           )}
@@ -464,14 +464,14 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           ))}
 
           {childTyping && (
-            <p role="status" className="animate-pop text-[13px] italic text-[#f6d77a]">
+            <p role="status" className="animate-pop text-[13px] italic text-[#5eead4]">
               {childName} está escribiendo…
             </p>
           )}
           <div ref={endRef} />
         </div>
 
-        <footer className="space-y-2.5 border-t border-white/10 bg-[#1d0b3a] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+        <footer className="space-y-2.5 border-t border-white/10 bg-[#121d33] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
           <div role="tablist" aria-label="Momento" className="-mx-3 flex gap-1.5 overflow-x-auto px-3 [scrollbar-width:none]">
             {character.moments.map((mo) => (
               <button
@@ -480,7 +480,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                 role="tab"
                 aria-selected={momentId === mo.id}
                 onClick={() => setMomentId(mo.id)}
-                className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${momentId === mo.id ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'bg-white/8 text-[#fff6dc]/70'}`}
+                className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${momentId === mo.id ? 'bg-[#5eead4] text-[#04302b]' : 'bg-white/8 text-[#e8f1ff]/70'}`}
               >
                 {mo.label}
               </button>
@@ -488,21 +488,21 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             <button
               type="button"
               onClick={() => setPlanner(true)}
-              className="shrink-0 rounded-full border border-[#f6d77a]/50 px-3 py-1 text-[12px] font-bold text-[#f6d77a]"
+              className="shrink-0 rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
             >
               📅 Programar
             </button>
           </div>
           {photoWaiting && (
-            <div className="rounded-2xl border border-[#f6d77a]/35 bg-[#f6d77a]/[.08] p-2.5">
-              <p className="px-1 text-[12px] font-bold text-[#f6d77a]">📸 {childName} ha enviado una foto o dibujo. Responde con ilusión:</p>
+            <div className="rounded-2xl border border-[#5eead4]/35 bg-[#5eead4]/[.08] p-2.5">
+              <p className="px-1 text-[12px] font-bold text-[#5eead4]">📸 {childName} ha enviado una foto o dibujo. Responde con ilusión:</p>
               <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none]">
                 {character.photoReplies.map((tpl) => fillChild(tpl, childName)).map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => setText(q.slice(0, MAX_CHARS))}
-                    className="max-w-[14rem] shrink-0 truncate rounded-full border border-[#f6d77a]/40 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#fff6dc] active:bg-white/10"
+                    className="max-w-[14rem] shrink-0 truncate rounded-full border border-[#5eead4]/40 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#e8f1ff] active:bg-white/10"
                   >
                     {q}
                   </button>
@@ -510,14 +510,14 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               </div>
             </div>
           )}
-          {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#f6d77a]/80">💡 {activeMoment.tip}</p>}
+          {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#5eead4]/80">💡 {activeMoment.tip}</p>}
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
             {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => setText(q.slice(0, MAX_CHARS))}
-                className="max-w-[14rem] shrink-0 truncate rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#fff6dc]/85 active:bg-white/10"
+                className="max-w-[14rem] shrink-0 truncate rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#e8f1ff]/85 active:bg-white/10"
               >
                 {q}
               </button>
@@ -528,7 +528,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photo.url} alt="Foto adjunta" className="size-14 rounded-xl object-cover" />
-              <p className="flex-1 text-[13px] text-[#fff6dc]/80">Foto lista. El texto de abajo irá como pie de foto.</p>
+              <p className="flex-1 text-[13px] text-[#e8f1ff]/80">Foto lista. El texto de abajo irá como pie de foto.</p>
               <button type="button" aria-label="Quitar la foto" onClick={() => setPhoto(null)} className="grid size-9 place-items-center rounded-full bg-white/10">
                 <IconClose className="size-5" />
               </button>
@@ -547,21 +547,21 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                 signalTyping();
               }}
               placeholder={photo ? 'Pie de foto (opcional)…' : `Escribe el mensaje de ${short}…`}
-              className="w-full resize-none rounded-2xl border border-white/15 bg-[#120822] px-3.5 py-3 pr-12 text-[15px] text-[#fff6dc] placeholder:text-[#fff6dc]/35 focus:border-[#f6d77a] focus:outline-none"
+              className="w-full resize-none rounded-2xl border border-white/15 bg-[#0a1220] px-3.5 py-3 pr-12 text-[15px] text-[#e8f1ff] placeholder:text-[#e8f1ff]/35 focus:border-[#5eead4] focus:outline-none"
             />
             <div className="absolute right-2 top-2">
               <PhotoPicker
                 onPick={pickPhotoFile}
                 label="Adjuntar una foto"
-                className="grid size-9 place-items-center rounded-full text-[#f6d77a] active:bg-white/10"
+                className="grid size-9 place-items-center rounded-full text-[#5eead4] active:bg-white/10"
               />
             </div>
-            <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#fff6dc]/40">{text.length}/{MAX_CHARS}</span>
+            <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#e8f1ff]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
           {KING_VOICE_ENABLED && !photo && (
             <div className="flex items-center gap-2">
-              <span className="w-14 text-[12px] text-[#fff6dc]/60">Como</span>
+              <span className="w-14 text-[12px] text-[#e8f1ff]/60">Como</span>
               <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
                 {(['voice', 'text'] as const).map((m) => (
                   <button
@@ -570,7 +570,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                     role="radio"
                     aria-checked={mode === m}
                     onClick={() => setMode(m)}
-                    className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#fff6dc]/70'}`}
+                    className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
                   >
                     {m === 'voice' ? 'Nota de voz' : 'Por escrito'}
                   </button>
@@ -580,7 +580,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           )}
 
           <div className="flex items-center gap-2">
-            <span className="w-14 text-[12px] text-[#fff6dc]/60">Llega en</span>
+            <span className="w-14 text-[12px] text-[#e8f1ff]/60">Llega en</span>
             <div role="radiogroup" aria-label="Cuándo llega la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
               {REPLY_DELAYS.map((d) => (
                 <button
@@ -589,7 +589,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                   role="radio"
                   aria-checked={delay === d}
                   onClick={() => setDelay(d)}
-                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${delay === d ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#fff6dc]/70'}`}
+                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${delay === d ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
                 >
                   {DELAY_LABEL[d]}
                 </button>
@@ -597,13 +597,13 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             </div>
           </div>
 
-          {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#f6d77a]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
+          {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#5eead4]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
 
           <button
             type="button"
             onClick={send}
             disabled={!canSend}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg disabled:opacity-50 active:scale-[0.99]"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#5eead4] to-[#14b8a6] font-bold text-[#04302b] shadow-lg disabled:opacity-50 active:scale-[0.99]"
           >
             {sending
               ? voiceNow ? `Grabando la voz de ${short}…` : 'Enviando…'
@@ -649,10 +649,10 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         {countdown !== null && !(recordHere && rec.phase !== 'idle') && (
           <div role="alertdialog" aria-modal="true" aria-label="Cuenta atrás" className="absolute inset-0 z-40 grid place-items-center bg-black/95 p-6 text-center">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[.2em] text-[#f6d77a]">Empieza a grabar</p>
-              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#fff6dc]">{countdown > 0 ? countdown : '✨'}</p>
-              <p className="text-[15px] text-[#fff6dc]/70">Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</p>
-              <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#fff6dc]/80">
+              <p className="text-sm font-bold uppercase tracking-[.2em] text-[#5eead4]">Empieza a grabar</p>
+              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '✨'}</p>
+              <p className="text-[15px] text-[#e8f1ff]/70">Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</p>
+              <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#e8f1ff]/80">
                 Cancelar
               </button>
             </div>
@@ -689,12 +689,12 @@ function PanelMessage({
   followUps?: { id: string; src: string }[];
 }) {
   if (m.from === 'system') {
-    return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#fff6dc]/50">Aviso automático enviado: “{m.text}”</p>;
+    return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#e8f1ff]/50">Aviso automático enviado: “{m.text}”</p>;
   }
   const child = m.from === 'child';
   return (
     <div className={`flex ${child ? 'justify-start' : 'justify-end'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#f8e08e] text-[#2b1b0e]' : 'rounded-br-md bg-[#fbf5e6] text-[#2b1b0e]'}`}>
+      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#fde68a] text-[#2b1b0e]' : 'rounded-br-md bg-[#eaf2ff] text-[#2b1b0e]'}`}>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : character.name}</p>
         {m.kind === 'voice' && <VoiceNote id={m.id} followUps={followUps} duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />}
         {m.kind === 'photo' && m.imageUrl && (
