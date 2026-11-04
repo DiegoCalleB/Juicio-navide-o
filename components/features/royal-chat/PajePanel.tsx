@@ -8,7 +8,10 @@ import { compressForChat } from '@/lib/image';
 import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, type ApiResult } from './mapping';
+import { ReactionCamera } from './ReactionCamera';
+import { ReactionReview } from './ReactionReview';
 import { RoyalAvatar } from './RoyalAvatar';
+import { useReactionRecorder } from './useReactionRecorder';
 import { useRoomEvents } from './useRoomEvents';
 import { VoiceNote } from './VoiceNote';
 
@@ -40,6 +43,9 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [countdown, setCountdown] = useState<number | null>(null);
   const [surpriseSent, setSurpriseSent] = useState(false);
   const [shared, setShared] = useState(false);
+  const [recordHere, setRecordHere] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const rec = useReactionRecorder();
   const [momentId, setMomentId] = useState(character.moments[0]?.id ?? 'charla');
 
   const childCount = useRef(-1);
@@ -199,23 +205,59 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   }, [token, refresh]);
 
   const surpriseText = useRef('');
+  const recRef = useRef(rec);
+  const firedRef = useRef(false);
   useEffect(() => {
-    if (countdown === null) return;
+    recRef.current = rec;
+  });
+
+  // Cuenta atrás: al llegar a cero se dispara UNA sola vez (grabación local + envío de la sorpresa).
+  useEffect(() => {
+    if (countdown === null) {
+      firedRef.current = false;
+      return;
+    }
     if (countdown <= 0) {
+      if (firedRef.current) return;
+      firedRef.current = true;
+      if (recordHere && recRef.current.phase === 'ready') {
+        setMinimized(false);
+        recRef.current.start();
+      }
       void sendSurprise(surpriseText.current);
       return;
     }
     const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000);
     return () => clearTimeout(t);
-  }, [countdown, sendSurprise]);
+  }, [countdown, sendSurprise, recordHere]);
 
-  const startSurprise = () => {
+  const startSurprise = async () => {
     if (!text.trim() || photo) return;
     surpriseText.current = text.trim();
     setSurpriseSent(false);
     setNotice(null);
+    if (recordHere) {
+      const ok = await rec.prepare();
+      if (!ok) return; // el error se muestra en la tarjeta
+    }
     setCountdown(COUNTDOWN_SECONDS);
   };
+
+  const cancelCountdown = () => {
+    setCountdown(null);
+    if (rec.phase === 'ready') rec.cancelPrepared();
+  };
+
+  // Aviso del navegador si se intenta salir con un vídeo grabándose o sin guardar.
+  useEffect(() => {
+    if (rec.phase !== 'recording' && rec.phase !== 'review') return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [rec.phase]);
 
   const shareApp = async () => {
     const url = window.location.origin;
@@ -288,21 +330,44 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             <p className="flex items-center gap-2 font-semibold text-[#f6d77a]">
               <IconFilm className="size-5" /> Graba su reacción
             </p>
-            <p className="mt-1 text-[#fff6dc]/75">
-              Lo mejor: que otra persona grabe con <strong>otro móvil</strong>. Así tú no tocas nada, sale buena imagen y se oye al niño.
+            <div role="radiogroup" aria-label="Cómo grabar" className="mt-2 flex gap-1 rounded-xl bg-white/5 p-1">
+              {[
+                { v: false, label: 'Con otro móvil' },
+                { v: true, label: 'Con este móvil' },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={recordHere === o.v}
+                  onClick={() => setRecordHere(o.v)}
+                  disabled={o.v && !rec.supported}
+                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-40 ${recordHere === o.v ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#fff6dc]/70'}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[#fff6dc]/75">
+              {recordHere ? (
+                <>Se graba con la <strong>cámara trasera de este móvil</strong>. Apúntalo al niño y verás la imagen mientras contestas. El vídeo se queda en tu móvil: no se sube a ningún sitio.</>
+              ) : (
+                <>Lo mejor para la calidad: que otra persona grabe con <strong>otro móvil</strong>. Así tú no tocas nada y sale buena imagen.</>
+              )}
             </p>
+            {rec.error && <p role="alert" className="mt-2 text-[12.5px] text-[#ff8a8c]">{rec.error}</p>}
             <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[#fff6dc]/70">
               <li>Escribe abajo el mensaje de la sorpresa.</li>
               <li>Pulsa “Empezar la sorpresa”.</li>
-              <li>Quien graba tiene {COUNTDOWN_SECONDS} segundos para enfocar al niño.</li>
+              <li>{recordHere ? `Tienes ${COUNTDOWN_SECONDS} segundos para apuntar la cámara al niño.` : `Quien graba tiene ${COUNTDOWN_SECONDS} segundos para enfocar al niño.`}</li>
             </ol>
             <button
               type="button"
               onClick={startSurprise}
-              disabled={!text.trim() || photo !== null || countdown !== null}
+              disabled={!text.trim() || photo !== null || countdown !== null || rec.phase === 'preparing' || rec.phase === 'recording'}
               className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#f6d77a]/50 font-bold text-[#f6d77a] disabled:opacity-40 active:scale-[0.98]"
             >
-              <IconFilm className="size-5" /> Empezar la sorpresa
+              <IconFilm className="size-5" /> {rec.phase === 'preparing' ? 'Abriendo la cámara…' : 'Empezar la sorpresa'}
             </button>
             {!text.trim() && <p className="mt-1.5 text-center text-[11.5px] text-[#fff6dc]/45">Primero escribe el mensaje de abajo.</p>}
             {surpriseSent && (
@@ -452,13 +517,33 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           </button>
         </footer>
 
-        {countdown !== null && (
+        {recordHere && (rec.phase === 'ready' || rec.phase === 'recording') && (
+          <ReactionCamera
+            stream={rec.stream}
+            phase={rec.phase}
+            facing={rec.facing}
+            countdown={countdown}
+            elapsed={rec.elapsed}
+            minimized={minimized && rec.phase === 'recording'}
+            onToggleMinimize={() => setMinimized((m) => !m)}
+            onFlip={() => void rec.flip()}
+            onStop={() => {
+              rec.stop();
+              setMinimized(false);
+            }}
+            onCancel={cancelCountdown}
+          />
+        )}
+
+        {rec.phase === 'review' && rec.result && <ReactionReview result={rec.result} childName={childName} onDiscard={rec.discard} />}
+
+        {countdown !== null && !(recordHere && rec.phase !== 'idle') && (
           <div role="alertdialog" aria-modal="true" aria-label="Cuenta atrás" className="absolute inset-0 z-40 grid place-items-center bg-black/95 p-6 text-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-[#f6d77a]">Empieza a grabar</p>
               <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#fff6dc]">{countdown > 0 ? countdown : '✨'}</p>
               <p className="text-[15px] text-[#fff6dc]/70">Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</p>
-              <button type="button" onClick={() => setCountdown(null)} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#fff6dc]/80">
+              <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#fff6dc]/80">
                 Cancelar
               </button>
             </div>
