@@ -127,7 +127,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     theme: { headerFrom: '#9b1c24', headerTo: '#6b1218', bg: '#0e2418', sky: 'snow', ink: '#8a1a1f', robe: '#c62828' },
     expiresDays: 45,
     busyExcuse: 'Papá Noel está en el taller con los duendes',
-    helper: { name: 'Pipo', role: 'duende de las comunicaciones' },
+    helper: { name: 'Cascabel', role: 'duende de las comunicaciones' },
     placeLabel: 'el Polo Norte',
     crew: 'los duendes',
     avatarTap: '¡Jo, jo, jo!',
@@ -143,7 +143,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         label: 'Primer saludo',
         tip: 'El primero es el que más cuenta: envíalo en cuanto el niño abra el enlace.',
         replies: [
-          `¡Jo, jo, jo! ¿{child}? ¿Eres tú de verdad? ¡Pipo me dijo que me ibas a escribir y casi se me cae el chocolate caliente!`,
+          `¡Jo, jo, jo! ¿{child}? ¿Eres tú de verdad? ¡Cascabel me dijo que me ibas a escribir y casi se me cae el chocolate caliente!`,
           `Estoy sentado en mi sillón del taller, con las botas calentitas y los duendes empaquetando a mi alrededor. ¿Qué tal estás, {child}?`,
           `Tengo tu nombre apuntado en mi libro grande, {child}. Y te cuento un secreto: está en la página de los que se portan bien.`,
         ],
@@ -152,7 +152,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
         id: 'taller',
         label: 'Cosas del taller',
         replies: [
-          `¡Jo, jo, jo! Pipo ha probado un caramelo del taller y se le ha puesto la lengua verde. No para de reírse, {child}.`,
+          `¡Jo, jo, jo! Cascabel ha probado un caramelo del taller y se le ha puesto la lengua verde. No para de reírse, {child}.`,
           `Se me ha enredado la barba con una guirnalda, {child}. Los duendes llevan un rato intentando desenredarme. ¡Jo, jo, jo!`,
           `Los duendes me han dejado las botas llenas de purpurina. Dejo brillitos por todo el Polo Norte, {child}.`,
           `Rodolfo se ha puesto celoso porque hoy te escribo a ti. Le he dado una zanahoria extra para que se le pase, {child}.`,
