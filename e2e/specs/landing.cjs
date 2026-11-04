@@ -40,7 +40,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await panel.waitForTimeout(500);
   check('el panel pide mantener la pantalla encendida', (await panel.evaluate(() => window.__wl)) >= 1);
   const tabs = await panel.getByRole('tab').allInnerTexts();
-  check('momentos de Papá Noel: Primer saludo, Cosas del taller, Charla, Nochebuena, Mañana de Navidad', tabs.join('|') === 'Primer saludo|Cosas del taller|Charla|Nochebuena|Mañana de Navidad', tabs.join('|'));
+  check('momentos de Papá Noel: Primer saludo, Cosas del taller, Preguntas, Charla, Nochebuena, Mañana de Navidad', tabs.join('|') === 'Primer saludo|Cosas del taller|Preguntas|Charla|Nochebuena|Mañana de Navidad', tabs.join('|'));
   await panel.getByRole('tab', { name: 'Mañana de Navidad' }).click();
   check('aparece el consejo del modo sorpresa', await panel.getByText(/modo sorpresa para el mensaje de abrir los regalos/).isVisible());
   await panel.getByRole('button', { name: /Ya puedes abrir los regalos, Lucía/ }).click();

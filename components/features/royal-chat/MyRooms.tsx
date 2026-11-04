@@ -10,6 +10,7 @@ import { RoyalAvatar } from './RoyalAvatar';
 export function MyRooms() {
   const [rooms, setRooms] = useState<SavedRoom[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => setRooms(loadRooms()), []);
   if (rooms.length === 0) return null;
@@ -23,6 +24,19 @@ export function MyRooms() {
       /* sin permisos */
     }
   };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mb-8 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] px-4 text-left text-[14px] font-semibold text-[#f6d77a]"
+      >
+        <span>Ya tengo salas en este móvil ({rooms.length})</span>
+        <span aria-hidden>▾</span>
+      </button>
+    );
+  }
 
   return (
     <section aria-labelledby="my-rooms" className="mb-8 rounded-3xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] p-4">

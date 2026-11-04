@@ -142,6 +142,19 @@ const kingMoments: CharacterMoment[] = [
       `Tu nombre está en nuestro libro de oro, {child}. Cuéntame, ¿qué tal estás?`,
     ],
   },
+  {
+    id: 'preguntas',
+    label: 'Preguntas',
+    tip: 'Pregunta con curiosidad, sin interrogar. Lo que cuente es para ayudarle, nunca para regañarle: si se siente juzgado, dejará de contártelo.',
+    replies: [
+      `¿Cuál ha sido el mejor momento de tu año, {child}? Mis pajes lo apuntan en el libro de oro.`,
+      `Cuéntanos, {child}: ¿qué es lo que más te gusta hacer cuando juegas? Así sabremos qué regalos te harían más feliz.`,
+      `¿Quién ha sido tu mejor amigo o amiga este año, {child}? Seguro que es muy afortunado de tenerte.`,
+      `¿Has ayudado a alguien este año, {child}? Los Reyes admiramos mucho a los niños generosos.`,
+      `Si pudieras pedir un deseo que no fuera un juguete, ¿cuál sería, {child}?`,
+      `¿Hay algo que te preocupe o te dé un poquito de miedo? Puedes contárnoslo, y también a mamá y papá, que te quieren muchísimo.`,
+    ],
+  },
   { id: 'charla', label: 'Charla', replies: kingChat },
   {
     id: 'noche',
@@ -232,6 +245,19 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
           `Se me ha enredado la barba con una guirnalda, {child}. Los duendes llevan un rato intentando desenredarme. ¡Jo, jo, jo!`,
           `Los duendes me han dejado las botas llenas de purpurina. Dejo brillitos por todo el Polo Norte, {child}.`,
           `Rodolfo se ha puesto celoso porque hoy te escribo a ti. Le he dado una zanahoria extra para que se le pase, {child}.`,
+        ],
+      },
+      {
+        id: 'preguntas',
+        label: 'Preguntas',
+        tip: 'Pregunta con curiosidad, sin interrogar. Lo que cuente es para ayudarle, nunca para regañarle: si se siente juzgado, dejará de contártelo.',
+        replies: [
+          `¿Cuál ha sido el mejor momento de tu año, {child}? Los duendes apuntan los más bonitos en un cuaderno.`,
+          `Cuéntame, ¿qué es lo que más te gusta hacer cuando juegas, {child}? Así sé qué regalos te harían más feliz.`,
+          `¿Quién ha sido tu mejor amigo o amiga este año? Seguro que es muy afortunado de tenerte.`,
+          `¿Has ayudado a alguien este año, {child}? Me encanta saber las cosas buenas que hacen los niños.`,
+          `Si pudieras pedir un deseo que no fuera un juguete, ¿cuál sería, {child}?`,
+          `¿Hay algo que te preocupe o te dé un poquito de miedo? Puedes contármelo, y también a mamá y papá, que te quieren muchísimo.`,
         ],
       },
       {
