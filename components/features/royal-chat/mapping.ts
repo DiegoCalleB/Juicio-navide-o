@@ -18,7 +18,7 @@ export function toChatMessage(m: RoomMessageDTO): ChatMessage | null {
   if (m.kind === 'photo') {
     return m.imageUrl ? { ...base, kind: 'photo', caption: m.text ?? '', src: m.imageUrl } : null;
   }
-  return m.text ? { ...base, kind: 'text', text: m.text } : null;
+  return m.text ? { ...base, kind: 'text', text: m.text, ...(m.effect ? { effect: m.effect } : {}) } : null;
 }
 
 export interface ApiResult<T> {

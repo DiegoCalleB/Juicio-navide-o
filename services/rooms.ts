@@ -67,6 +67,7 @@ export async function listMessages(room: Room, role: Role): Promise<RoomMessageD
     const dto: RoomMessageDTO = { id: m.id, from: m.sender === 'king' ? 'king' : m.sender, kind: m.kind, at: m.deliverAt };
     if (m.audioPath) dto.audioUrl = voiceUrls.get(m.audioPath);
     if (m.imagePath) dto.imageUrl = mediaUrls.get(m.imagePath);
+    if (m.effect) dto.effect = m.effect;
     if (m.durationS !== null) dto.duration = m.durationS;
     // El niño nunca ve el texto de las notas de voz del personaje (solo el audio).
     if (m.body && (role === 'parent' || m.kind !== 'voice')) dto.text = m.body;
@@ -170,12 +171,13 @@ export async function addKingReply(
   text: string,
   delayMinutes: ReplyDelay,
   mode: 'voice' | 'text' = 'text',
+  effect?: 'surprise',
 ): Promise<void> {
   const store = getRoomStore();
   const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
 
   if (mode === 'text' || !KING_VOICE_ENABLED) {
-    const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, deliverAt });
+    const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, effect: effect ?? null, deliverAt });
     notify(room, rec);
     return;
   }

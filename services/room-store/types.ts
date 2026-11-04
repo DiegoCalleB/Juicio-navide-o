@@ -19,6 +19,7 @@ export interface MessageRecord {
   audioPath: string | null;
   imagePath: string | null;
   durationS: number | null;
+  effect: 'surprise' | null;
   deliverAt: string;
   createdAt: string;
 }
@@ -31,6 +32,7 @@ export interface NewMessage {
   audioPath?: string | null;
   imagePath?: string | null;
   durationS?: number | null;
+  effect?: 'surprise' | null;
   deliverAt?: string;
 }
 

@@ -15,6 +15,9 @@ Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y d
 ## Variables de entorno
 Ver `.env.example`. Imprescindibles: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `FINGERPRINT_SALT`, `CRON_SECRET`. Opcionales: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ENABLE_VOICE=1` (+ `ELEVENLABS_API_KEY`, respuesta con voz del personaje), `NEXT_PUBLIC_ENABLE_CHILD_AUDIO=0` (apaga los audios del niño).
 
+## Modo sorpresa (grabar la reacción)
+La app no graba vídeo ni usa la cámara del niño. En el panel de los padres, “Graba su reacción”: quien graba usa **otro móvil**, se pulsa “Empezar la sorpresa” y tras 5 s el mensaje llega al niño con una pantalla especial a pantalla completa (`effect = 'surprise'`).
+
 ## Base de datos
 Aplicar en orden `supabase/migrations/*.sql`. Todas las tablas y buckets están sin acceso público; solo el servidor (clave secreta) accede tras validar el token de la URL.
 

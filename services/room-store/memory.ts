@@ -46,6 +46,7 @@ export class MemoryRoomStore implements RoomStore {
       audioPath: m.audioPath ?? null,
       imagePath: m.imagePath ?? null,
       durationS: m.durationS ?? null,
+      effect: m.effect ?? null,
       deliverAt: m.deliverAt ?? now,
       createdAt: now,
     };

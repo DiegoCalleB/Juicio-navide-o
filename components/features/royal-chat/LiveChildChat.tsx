@@ -6,6 +6,7 @@ import { compressForChat } from '@/lib/image';
 import type { RoomMessageDTO } from '@/lib/royal';
 import { fmtTime, toChatMessage, type ApiResult } from './mapping';
 import { RoyalChat, type KingActivity } from './RoyalChat';
+import { SurpriseReveal } from './SurpriseReveal';
 import type { ChatMessage } from './types';
 import { useRoomEvents } from './useRoomEvents';
 
@@ -21,6 +22,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   const [local, setLocal] = useState<ChatMessage[]>([]);
   const [revealing, setRevealing] = useState<KingActivity>(null);
   const [liveTyping, setLiveTyping] = useState(false);
+  const [surprise, setSurprise] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -46,6 +48,8 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     setRevealing(null);
     setLiveTyping(false);
     if (batch.length === 0) return;
+    const special = batch.find((m) => m.kind === 'text' && m.effect === 'surprise');
+    if (special?.kind === 'text') setSurprise(special.text);
     setShown((s) => [...s, ...batch]);
     navigator.vibrate?.(180);
   }, []);
@@ -57,10 +61,11 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
 
     const all = body.data.messages.map(toChatMessage).filter((m): m is ChatMessage => m !== null);
     const fresh = all.filter((m) => !seen.current.has(m.id));
-    if (fresh.length === 0) return;
 
+    // La primera carga es historial (también si está vacía): lo que llegue después es "en directo".
     const firstLoad = !loaded.current;
     loaded.current = true;
+    if (fresh.length === 0) return;
     const fromCharacter = firstLoad ? [] : fresh.filter((m) => m.from === 'king');
     const immediate = fresh.filter((m) => !fromCharacter.includes(m));
 
@@ -71,7 +76,8 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       // Marcamos ya como vistos para no duplicar mientras llega el efecto.
       fromCharacter.forEach((m) => seen.current.add(m.id));
       pending.current.push(...fromCharacter);
-      if (Date.now() - lastTypingAt.current < RECENT_TYPING_MS) {
+      const hasSurprise = fromCharacter.some((m) => m.kind === 'text' && m.effect === 'surprise');
+      if (hasSurprise || Date.now() - lastTypingAt.current < RECENT_TYPING_MS) {
         flushPending();
       } else if (!revealTimer.current) {
         setRevealing(pending.current[0]?.kind === 'voice' ? 'recording' : 'typing');
@@ -157,6 +163,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   const activity: KingActivity = revealing ?? (liveTyping ? 'typing' : null);
 
   return (
+    <>
     <RoyalChat
       character={character}
       childName={childName}
@@ -169,5 +176,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       notice={notice}
       sending={sending}
     />
+    {surprise && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
+    </>
   );
 }

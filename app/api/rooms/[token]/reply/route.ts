@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     if (!parsed.success) {
       return fail('VALIDATION', parsed.error.flatten().fieldErrors.text?.[0] ?? 'Mensaje no válido.', 400);
     }
-    await addKingReply(found.room, parsed.data.text, parsed.data.delayMinutes, parsed.data.mode);
+    await addKingReply(found.room, parsed.data.text, parsed.data.delayMinutes, parsed.data.mode, parsed.data.surprise ? 'surprise' : undefined);
     return json({ ok: true, data: null }, 201);
   });
 }

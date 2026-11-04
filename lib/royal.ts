@@ -10,6 +10,8 @@ export interface RoomMessageDTO {
   text?: string;
   audioUrl?: string;
   imageUrl?: string;
+  /** Efecto especial en el móvil del niño (modo sorpresa). */
+  effect?: 'surprise';
   duration?: number;
   at: string;
   /** Solo en el panel del Paje: aún no entregado al niño. */

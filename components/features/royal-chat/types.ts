@@ -10,6 +10,6 @@ interface BaseMessage {
 }
 
 export type ChatMessage =
-  | (BaseMessage & { kind: 'text'; text: string })
+  | (BaseMessage & { kind: 'text'; text: string; effect?: 'surprise' })
   | (BaseMessage & { kind: 'voice'; duration: number; seed: number; src?: string })
   | (BaseMessage & { kind: 'photo'; caption: string; /** URL real; sin ella se muestra la ilustración de la demo. */ src?: string });

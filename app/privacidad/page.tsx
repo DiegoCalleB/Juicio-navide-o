@@ -29,6 +29,7 @@ export default function PrivacidadPage() {
           <li>Un identificador técnico anónimo (hash) para limitar abusos. No es reversible.</li>
         </ul>
         <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento.</p>
+        <p>La app no graba vídeo ni usa la cámara del niño. Si los padres graban su reacción, lo hacen con su propio móvil y ese vídeo no pasa por nuestros servidores.</p>
       </Section>
 
       <Section title="Quién puede verlo">

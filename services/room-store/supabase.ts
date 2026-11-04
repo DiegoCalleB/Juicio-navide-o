@@ -15,11 +15,12 @@ interface MessageRow {
   audio_path: string | null;
   image_path: string | null;
   duration_s: number | null;
+  effect: 'surprise' | null;
   deliver_at: string;
   created_at: string;
 }
 
-const MESSAGE_COLUMNS = 'id, room_id, sender, kind, body, audio_path, image_path, duration_s, deliver_at, created_at';
+const MESSAGE_COLUMNS = 'id, room_id, sender, kind, body, audio_path, image_path, duration_s, effect, deliver_at, created_at';
 
 const isRateLimit = (err: { message: string } | null) => !!err && err.message.includes('RATE_LIMIT');
 
@@ -32,6 +33,7 @@ const toRecord = (r: MessageRow): MessageRecord => ({
   audioPath: r.audio_path,
   imagePath: r.image_path,
   durationS: r.duration_s === null ? null : Number(r.duration_s),
+  effect: r.effect,
   deliverAt: r.deliver_at,
   createdAt: r.created_at,
 });
@@ -76,6 +78,7 @@ export class SupabaseRoomStore implements RoomStore {
       audio_path: m.audioPath ?? null,
       image_path: m.imagePath ?? null,
       duration_s: m.durationS ?? null,
+      effect: m.effect ?? null,
     };
     if (m.deliverAt) row.deliver_at = m.deliverAt;
     const { data, error } = await getAdminClient()

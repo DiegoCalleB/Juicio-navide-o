@@ -5,13 +5,14 @@ import { fillChild, type CharacterProfile } from '@/lib/characters';
 import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
 import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
-import { IconCamera, IconClose, IconSeal } from './icons';
+import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, type ApiResult } from './mapping';
 import { RoyalAvatar } from './RoyalAvatar';
 import { useRoomEvents } from './useRoomEvents';
 import { VoiceNote } from './VoiceNote';
 
 const MAX_CHARS = 300;
+const COUNTDOWN_SECONDS = 5;
 const TYPING_SIGNAL_EVERY_MS = 2500;
 const DELAY_LABEL: Record<ReplyDelay, string> = { 0: 'Ahora', 2: '2 min', 10: '10 min', 30: '30 min' };
 
@@ -34,6 +35,9 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [copied, setCopied] = useState(false);
   const [childTyping, setChildTyping] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [surpriseSent, setSurpriseSent] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const childCount = useRef(-1);
   const endRef = useRef<HTMLDivElement>(null);
@@ -136,6 +140,58 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
+  /** Envía el mensaje con efecto de sorpresa (lo usa la cuenta atrás). */
+  const sendSurprise = useCallback(async (message: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${token}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: message, delayMinutes: 0, mode: 'text', surprise: true }),
+      });
+      const json = (await res.json()) as ApiResult<null>;
+      if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
+      setText('');
+      setSurpriseSent(true);
+      await refresh();
+    } catch (err) {
+      setNotice({ ok: false, msg: err instanceof Error ? err.message : 'No se pudo enviar la sorpresa.' });
+    } finally {
+      setCountdown(null);
+    }
+  }, [token, refresh]);
+
+  const surpriseText = useRef('');
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      void sendSurprise(surpriseText.current);
+      return;
+    }
+    const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, sendSurprise]);
+
+  const startSurprise = () => {
+    if (!text.trim() || photo) return;
+    surpriseText.current = text.trim();
+    setSurpriseSent(false);
+    setNotice(null);
+    setCountdown(COUNTDOWN_SECONDS);
+  };
+
+  const shareApp = async () => {
+    const url = window.location.origin;
+    const msg = `Mira lo que hemos hecho: ${character.name} le escribe a ${childName} en directo y su cara no tiene precio. Pruébalo gratis:`;
+    try {
+      if (navigator.share) await navigator.share({ title: 'Mensajería Mágica de Navidad', text: msg, url });
+      else await navigator.clipboard.writeText(`${msg} ${url}`);
+      setShared(true);
+      setTimeout(() => setShared(false), 2500);
+    } catch {
+      /* cancelado */
+    }
+  };
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(childLink);
@@ -187,6 +243,38 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                 Enviármelo
               </a>
             </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
+            <p className="flex items-center gap-2 font-semibold text-[#f6d77a]">
+              <IconFilm className="size-5" /> Graba su reacción
+            </p>
+            <p className="mt-1 text-[#fff6dc]/75">
+              Lo mejor: que otra persona grabe con <strong>otro móvil</strong>. Así tú no tocas nada, sale buena imagen y se oye al niño.
+            </p>
+            <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[#fff6dc]/70">
+              <li>Escribe abajo el mensaje de la sorpresa.</li>
+              <li>Pulsa “Empezar la sorpresa”.</li>
+              <li>Quien graba tiene {COUNTDOWN_SECONDS} segundos para enfocar al niño.</li>
+            </ol>
+            <button
+              type="button"
+              onClick={startSurprise}
+              disabled={!text.trim() || photo !== null || countdown !== null}
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#f6d77a]/50 font-bold text-[#f6d77a] disabled:opacity-40 active:scale-[0.98]"
+            >
+              <IconFilm className="size-5" /> Empezar la sorpresa
+            </button>
+            {!text.trim() && <p className="mt-1.5 text-center text-[11.5px] text-[#fff6dc]/45">Primero escribe el mensaje de abajo.</p>}
+            {surpriseSent && (
+              <div role="status" className="mt-3 animate-pop rounded-xl bg-[#7ee2a8]/10 p-3 text-center">
+                <p className="font-semibold text-[#7ee2a8]">¡Sorpresa enviada! Sigue grabando.</p>
+                <p className="mt-1 text-[12.5px] text-[#fff6dc]/70">Si te ha salido bien, súbelo y enseña la app a otros padres:</p>
+                <button type="button" onClick={shareApp} className="mt-2 min-h-10 rounded-xl bg-[#f6d77a] px-4 font-bold text-[#2a0f4a] active:scale-[0.98]">
+                  {shared ? '¡Listo!' : 'Compartir la app'}
+                </button>
+              </div>
+            )}
           </section>
 
           {messages.length === 0 && (
@@ -309,6 +397,19 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               : photo ? `Enviar foto como ${short}` : voiceNow ? `Enviar con la voz de ${short}` : `Enviar como ${short}`}
           </button>
         </footer>
+
+        {countdown !== null && (
+          <div role="alertdialog" aria-modal="true" aria-label="Cuenta atrás" className="absolute inset-0 z-40 grid place-items-center bg-black/95 p-6 text-center">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[.2em] text-[#f6d77a]">Empieza a grabar</p>
+              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#fff6dc]">{countdown > 0 ? countdown : '✨'}</p>
+              <p className="text-[15px] text-[#fff6dc]/70">Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</p>
+              <button type="button" onClick={() => setCountdown(null)} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#fff6dc]/80">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         {lightbox && (
           <div role="dialog" aria-modal="true" aria-label="Foto" className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-3" onClick={() => setLightbox(null)}>
