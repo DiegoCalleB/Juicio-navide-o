@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { VOICE_ENABLED } from '@/lib/features';
+import { CHILD_AUDIO_ENABLED } from '@/lib/features';
 import { MAX_VOICE_SECONDS } from '@/lib/royal';
 import { IconBack, IconCamera, IconClose, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
 import { OrientPhoto } from './OrientPhoto';
@@ -126,7 +126,7 @@ export function RoyalChat({
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-10 max-w-[80%] text-center text-[14px] leading-relaxed text-[#fff6dc]/80">
               <p className="font-serif text-lg text-[#f6d77a]">¡Hola, {childName}!</p>
-              <p className="mt-2">{VOICE_ENABLED ? `Escríbele o mantén pulsado el botón dorado para mandarle un audio a ${kingShort}.` : `Escríbele o mándale una foto o un dibujo a ${kingShort}.`}</p>
+              <p className="mt-2">{CHILD_AUDIO_ENABLED ? `Escríbele, mándale una foto o mantén pulsado el botón dorado para contarle algo a ${kingShort} con tu voz.` : `Escríbele o mándale una foto o un dibujo a ${kingShort}.`}</p>
             </div>
           )}
 
@@ -200,7 +200,7 @@ export function RoyalChat({
               </span>
             )}
           </div>
-          {VOICE_ENABLED && !draft.trim() && !recording ? (
+          {CHILD_AUDIO_ENABLED && !draft.trim() && !recording ? (
             <button
               type="button"
               aria-label="Mantén pulsado para grabar una nota de voz"

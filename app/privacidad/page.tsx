@@ -25,7 +25,7 @@ export default function PrivacidadPage() {
       <Section title="Qué datos guardamos">
         <ul className="list-disc space-y-1 pl-5">
           <li>El nombre de pila del niño (nunca apellidos) y el personaje elegido.</li>
-          <li>Los mensajes escritos y las fotos que se envían en la conversación.</li>
+          <li>Los mensajes escritos, los audios del niño y las fotos que se envían en la conversación. Los audios solo los pueden escuchar los padres.</li>
           <li>Un identificador técnico anónimo (hash) para limitar abusos. No es reversible.</li>
         </ul>
         <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento.</p>
@@ -36,7 +36,7 @@ export default function PrivacidadPage() {
       </Section>
 
       <Section title="Cuánto tiempo lo guardamos">
-        <p>Las conversaciones se borran automáticamente a los 45 días de crearse, junto con sus fotos.</p>
+        <p>Las conversaciones se borran automáticamente a los 45 días de crearse, junto con sus audios y fotos.</p>
       </Section>
 
       <Section title="Tus derechos">

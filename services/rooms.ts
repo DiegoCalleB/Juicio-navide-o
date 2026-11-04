@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
-import { VOICE_ENABLED } from '@/lib/features';
+import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
 import { synthesizeKingVoice } from '@/lib/voice';
@@ -152,7 +152,7 @@ export async function addPhoto(
 }
 
 export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
-  if (!VOICE_ENABLED) throw new Error('La voz está desactivada');
+  if (!CHILD_AUDIO_ENABLED) throw new RoomError('INVALID_FILE');
   const type = normalizeAudioType(mime);
   const spec = type ? AUDIO_TYPES[type] : undefined;
   if (!type || !spec || !spec.magic(audio)) throw new RoomError('INVALID_FILE');
@@ -174,7 +174,7 @@ export async function addKingReply(
   const store = getRoomStore();
   const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
 
-  if (mode === 'text' || !VOICE_ENABLED) {
+  if (mode === 'text' || !KING_VOICE_ENABLED) {
     const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, deliverAt });
     notify(room, rec);
     return;

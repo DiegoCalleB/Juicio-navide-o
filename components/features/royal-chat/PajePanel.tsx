@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fillChild, type CharacterProfile } from '@/lib/characters';
-import { VOICE_ENABLED } from '@/lib/features';
+import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
 import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconCamera, IconClose, IconSeal } from './icons';
@@ -120,7 +120,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         res = await fetch(`/api/rooms/${token}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.trim(), delayMinutes: delay, mode: VOICE_ENABLED ? mode : 'text' }),
+          body: JSON.stringify({ text: text.trim(), delayMinutes: delay, mode: KING_VOICE_ENABLED ? mode : 'text' }),
         });
       }
       const json = (await res.json()) as ApiResult<null>;
@@ -146,7 +146,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
-  const voiceNow = VOICE_ENABLED && mode === 'voice' && !photo;
+  const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
 
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black">
@@ -258,7 +258,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#fff6dc]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
-          {VOICE_ENABLED && !photo && (
+          {KING_VOICE_ENABLED && !photo && (
             <div className="flex items-center gap-2">
               <span className="w-14 text-[12px] text-[#fff6dc]/60">Como</span>
               <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">

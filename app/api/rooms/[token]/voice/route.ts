@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { fail, guarded, json } from '@/lib/http';
-import { VOICE_ENABLED } from '@/lib/features';
+import { CHILD_AUDIO_ENABLED } from '@/lib/features';
 import { MAX_VOICE_BYTES, MAX_VOICE_SECONDS } from '@/lib/royal';
 import { addChildVoice, findRoomByToken, normalizeAudioType } from '@/services/rooms';
 
@@ -13,7 +13,7 @@ const durationSchema = z.coerce.number().min(0.8).max(MAX_VOICE_SECONDS + 2);
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   return guarded('voice', { key: 'voice', max: 12, windowMs: 60_000, scope: token }, async () => {
-    if (!VOICE_ENABLED) return fail('DISABLED', 'Las notas de voz aún no están disponibles.', 403);
+    if (!CHILD_AUDIO_ENABLED) return fail('DISABLED', 'Los audios aún no están disponibles.', 403);
     const length = Number(req.headers.get('content-length') ?? '0');
     if (length > MAX_VOICE_BYTES + 64 * 1024) return fail('TOO_LARGE', 'La nota de voz es demasiado larga.', 413);
 
