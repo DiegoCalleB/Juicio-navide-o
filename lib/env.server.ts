@@ -26,3 +26,9 @@ export function getRoyalEnv(): { SUPABASE_SECRET_KEY: string; ELEVENLABS_API_KEY
   }
   return parsed.data;
 }
+
+/** Secreto del endpoint de limpieza (lo llama un programador externo). */
+export function getCronSecret(): string | null {
+  const v = process.env.CRON_SECRET;
+  return v && v.length >= 16 ? v : null;
+}

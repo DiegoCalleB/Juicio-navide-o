@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { VOICE_ENABLED } from '@/lib/features';
 import { MAX_VOICE_SECONDS } from '@/lib/royal';
-import { IconBack, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
+import { IconBack, IconCamera, IconClose, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
 import { OrientPhoto } from './OrientPhoto';
 import { RoyalAvatar } from './RoyalAvatar';
 import { useVoiceRecorder, type Recording } from './useVoiceRecorder';
@@ -17,6 +18,10 @@ interface RoyalChatProps {
   kingActivity: KingActivity;
   onVoice: (rec: Recording & { blob: Blob }) => void;
   onText: (text: string) => void;
+  /** El niño elige una foto (ya sin comprimir: lo hace el contenedor). */
+  onPhoto?: (file: File) => void;
+  /** Se llama al escribir (para el aviso en vivo al otro lado). */
+  onTyping?: () => void;
   /** Demo sin micrófono real. */
   simulateRecording?: boolean;
   /** Aviso no bloqueante (errores de red, permisos…). */
@@ -36,6 +41,8 @@ export function RoyalChat({
   kingActivity,
   onVoice,
   onText,
+  onPhoto,
+  onTyping,
   simulateRecording = false,
   notice,
   sending = false,
@@ -43,6 +50,8 @@ export function RoyalChat({
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
   const [draft, setDraft] = useState('');
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const kingShort = character.shortName;
   const { theme } = character;
   const place = character.group === 'noel' ? 'Polo Norte' : 'Oriente';
@@ -72,6 +81,12 @@ export function RoyalChat({
   }, [recording, elapsed]);
 
   const banner = error ?? notice;
+
+  const pickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) onPhoto?.(file);
+  };
 
   const submitText = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -111,12 +126,12 @@ export function RoyalChat({
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-10 max-w-[80%] text-center text-[14px] leading-relaxed text-[#fff6dc]/80">
               <p className="font-serif text-lg text-[#f6d77a]">¡Hola, {childName}!</p>
-              <p className="mt-2">Escríbele o mantén pulsado el botón dorado para mandarle un audio a {kingShort}.</p>
+              <p className="mt-2">{VOICE_ENABLED ? `Escríbele o mantén pulsado el botón dorado para mandarle un audio a ${kingShort}.` : `Escríbele o mándale una foto o un dibujo a ${kingShort}.`}</p>
             </div>
           )}
 
           {messages.map((m) => (
-            <Bubble key={m.id} message={m} character={character} />
+            <Bubble key={m.id} message={m} character={character} onOpenPhoto={setLightbox} />
           ))}
 
           {busy && (
@@ -140,7 +155,7 @@ export function RoyalChat({
         )}
 
         <form onSubmit={submitText} className="relative z-10 flex items-end gap-2 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
-          <div className="relative flex min-h-12 flex-1 items-center rounded-3xl bg-[#fbf5e6] px-4 shadow-md">
+          <div className="relative flex min-h-12 flex-1 items-center rounded-3xl bg-[#fbf5e6] pl-4 pr-1 shadow-md">
             {recording ? (
               <p className="flex items-center gap-2 text-[15px] text-[#5b3a1e]">
                 <span className="size-2.5 animate-pulse rounded-full bg-[#e5383b]" />
@@ -153,13 +168,30 @@ export function RoyalChat({
                 <input
                   id="royal-draft"
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    onTyping?.();
+                  }}
                   maxLength={MAX_TEXT}
                   enterKeyHint="send"
                   autoComplete="off"
                   placeholder={sending ? `Enviando al ${place === 'Polo Norte' ? 'Polo Norte' : 'Oriente'}…` : `Escribe a ${kingShort}…`}
-                  className="w-full bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
+                  className="min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
                 />
+                {onPhoto && (
+                  <>
+                    <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} className="sr-only" tabIndex={-1} aria-hidden data-testid="photo-input" />
+                    <button
+                      type="button"
+                      aria-label="Enviar una foto"
+                      disabled={sending}
+                      onClick={() => fileRef.current?.click()}
+                      className="grid size-10 shrink-0 place-items-center rounded-full text-[#5b3a1e]/70 active:bg-black/5 disabled:opacity-50"
+                    >
+                      <IconCamera className="size-6" />
+                    </button>
+                  </>
+                )}
               </>
             )}
             {hint && (
@@ -168,16 +200,7 @@ export function RoyalChat({
               </span>
             )}
           </div>
-          {draft.trim() && !recording ? (
-            <button
-              type="submit"
-              aria-label={`Enviar mensaje a ${character.name}`}
-              disabled={sending}
-              className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform active:scale-95 disabled:opacity-60"
-            >
-              <IconSend className="ml-0.5 size-5" />
-            </button>
-          ) : (
+          {VOICE_ENABLED && !draft.trim() && !recording ? (
             <button
               type="button"
               aria-label="Mantén pulsado para grabar una nota de voz"
@@ -190,18 +213,47 @@ export function RoyalChat({
               onPointerUp={() => void finish()}
               onPointerCancel={() => void finish()}
               onContextMenu={(e) => e.preventDefault()}
-              className={`grid size-12 shrink-0 touch-none select-none place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform duration-150 disabled:opacity-60 ${recording ? 'scale-125' : 'active:scale-95'}`}
+              className="grid size-12 shrink-0 touch-none select-none place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform duration-150 active:scale-95 disabled:opacity-60"
             >
               <IconMic className="size-6" />
             </button>
+          ) : recording ? (
+            <button
+              type="button"
+              aria-label="Soltar para enviar"
+              onPointerUp={() => void finish()}
+              onPointerCancel={() => void finish()}
+              className="grid size-12 shrink-0 touch-none select-none scale-125 place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30"
+            >
+              <IconMic className="size-6" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label={`Enviar mensaje a ${character.name}`}
+              disabled={sending || !draft.trim()}
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[#3a2208] shadow-lg shadow-black/30 transition-transform active:scale-95 disabled:opacity-50"
+            >
+              <IconSend className="ml-0.5 size-5" />
+            </button>
           )}
         </form>
+
+        {lightbox && (
+          <div role="dialog" aria-modal="true" aria-label="Foto" className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-3" onClick={() => setLightbox(null)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightbox} alt="Foto en grande" className="max-h-full max-w-full rounded-xl object-contain" />
+            <button type="button" aria-label="Cerrar" className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-white/15 text-white">
+              <IconClose className="size-6" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Bubble({ message, character }: { message: ChatMessage; character: Character }) {
+function Bubble({ message, character, onOpenPhoto }: { message: ChatMessage; character: Character; onOpenPhoto: (src: string) => void }) {
   if (message.from === 'system' && message.kind === 'text') {
     return (
       <p className="mx-auto w-fit max-w-[88%] animate-pop rounded-2xl bg-[#f6d77a]/12 px-3 py-2 text-center text-[12.5px] leading-snug text-[#f6d77a]">
@@ -221,8 +273,15 @@ function Bubble({ message, character }: { message: ChatMessage; character: Chara
         {message.kind === 'voice' && <VoiceNote duration={message.duration} seed={message.seed} mine={mine} character={character} src={message.src} />}
         {message.kind === 'photo' && (
           <figure className="w-64">
-            <div className="overflow-hidden rounded-xl"><OrientPhoto /></div>
-            <figcaption className="px-2 pb-1 pt-1.5 text-[14px] leading-snug">{message.caption}</figcaption>
+            {message.src ? (
+              <button type="button" onClick={() => onOpenPhoto(message.src!)} className="block w-full overflow-hidden rounded-xl" aria-label="Ver la foto en grande">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={message.src} alt={message.caption || 'Foto'} loading="lazy" decoding="async" className="max-h-72 w-full bg-black/10 object-cover" />
+              </button>
+            ) : (
+              <div className="overflow-hidden rounded-xl"><OrientPhoto /></div>
+            )}
+            {message.caption && <figcaption className="px-2 pb-1 pt-1.5 text-[14px] leading-snug">{message.caption}</figcaption>}
           </figure>
         )}
         <span className={`mt-0.5 flex items-center justify-end gap-1 text-[10.5px] ${mine ? 'text-[#3a2208]/60' : 'text-[#5b3a1e]/55'}`}>

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 /** Mensaje escrito del niño. Solo con el token del niño. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  return guarded('message', { key: 'message', max: 15, windowMs: 60_000 }, async () => {
+  return guarded('message', { key: 'message', max: 20, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
     if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Sala no encontrada', 404);
 

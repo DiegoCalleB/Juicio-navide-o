@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 /** Respuesta del Rey (escrita por el Paje Real → voz del Rey). Solo con el token de padres. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  return guarded('reply', { key: 'reply', max: 10, windowMs: 60_000 }, async () => {
+  return guarded('reply', { key: 'reply', max: 20, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
     if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
 

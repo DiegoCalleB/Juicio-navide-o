@@ -9,7 +9,7 @@ export function RoyalLanding() {
           <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería Mágica de Navidad</p>
           <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Papá Noel y los Reyes Magos contestan a tu hijo</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
-            Tu peque escribe o manda notas de voz a Papá Noel o a su Rey favorito. Tú, desde tu móvil, preparas la respuesta… y le llega con la voz del personaje.
+            Tu peque escribe o manda fotos y dibujos a Papá Noel o a su Rey favorito. Tú, desde tu móvil, preparas la respuesta… y le llega como si la hubiera escrito el personaje, en directo.
           </p>
         </header>
         <div className="rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur">
@@ -18,7 +18,7 @@ export function RoyalLanding() {
         <ol className="mt-8 space-y-3 text-[14px] leading-snug text-[#fff6dc]/75">
           <li><span className="font-bold text-[#f6d77a]">1.</span> Crea la sala con el nombre de tu peque y elige quién le contesta.</li>
           <li><span className="font-bold text-[#f6d77a]">2.</span> Abre su enlace en el móvil o tablet que usará.</li>
-          <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto, escucha lo que dice y contesta como si fueras él.</li>
+          <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto, lee lo que escribe y contesta como si fueras él.</li>
         </ol>
       </div>
     </div>

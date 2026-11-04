@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
@@ -53,7 +54,7 @@ export function CreateRoomForm() {
         <label htmlFor="child" className="block text-sm font-semibold text-[#fff6dc]/85">Nombre del niño o niña</label>
         <input id="child" value={childName} onChange={(e) => setChildName(e.target.value)} maxLength={30} autoComplete="off"
           placeholder="Lucía" className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none" />
-        <p className="text-xs text-[#fff6dc]/50">Solo el nombre de pila. Nunca pedimos apellidos, fotos ni dirección.</p>
+        <p className="text-xs text-[#fff6dc]/50">Solo el nombre de pila. Nunca pedimos apellidos ni dirección.</p>
       </div>
 
       <fieldset className="space-y-3">
@@ -83,7 +84,10 @@ export function CreateRoomForm() {
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
-        <span>Soy su madre, padre o tutor. Acepto que sus notas de voz se guarden de forma privada solo para esta sala y se borren automáticamente después de Reyes.</span>
+        <span>
+          Soy su madre, padre o tutor. Acepto que los mensajes y fotos de esta sala se guarden de forma privada, solo para esta conversación, y se borren automáticamente a los 45 días.{' '}
+          <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
+        </span>
       </label>
 
       <Honeypot value={trap} onChange={setTrap} />

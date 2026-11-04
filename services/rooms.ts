@@ -1,15 +1,18 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { getAdminClient } from '@/lib/supabase/admin';
+import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
+import { VOICE_ENABLED } from '@/lib/features';
+import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
 import { synthesizeKingVoice } from '@/lib/voice';
-import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
-import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
+import { publish, publishRefresh, type Audience } from '@/services/realtime';
+import { RoomError } from '@/services/room-errors';
+import { getRoomStore } from '@/services/room-store';
+import type { MessageRecord } from '@/services/room-store/types';
 
-const BUCKET = 'voices';
-const SIGNED_URL_TTL = 60 * 60;
+export { RoomError };
 
-export type Role = 'child' | 'parent';
+export type Role = Audience;
 
 export interface Room {
   id: string;
@@ -17,33 +20,7 @@ export interface Room {
   character: CharacterId;
 }
 
-interface RoomRow {
-  id: string;
-  child_name: string;
-  character_id: string;
-  child_token_hash: string;
-  parent_token_hash: string;
-}
-
-interface MessageRow {
-  id: string;
-  sender: 'child' | 'king' | 'system';
-  kind: 'text' | 'voice';
-  body: string | null;
-  audio_path: string | null;
-  duration_s: number | null;
-  deliver_at: string;
-}
-
-export class RoomError extends Error {
-  constructor(public readonly code: 'RATE_LIMITED' | 'NOT_FOUND' | 'UNKNOWN') {
-    super(code);
-  }
-}
-
-function isRateLimit(err: { message: string } | null): boolean {
-  return !!err && err.message.includes('RATE_LIMIT');
-}
+// ── Salas ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
   input: { childName: string; characterId: CharacterId },
@@ -51,16 +28,14 @@ export async function createRoom(
 ): Promise<{ childToken: string; parentToken: string }> {
   const parentToken = newToken();
   const childToken = deriveChildToken(parentToken);
-  const { error } = await getAdminClient().from('rooms').insert({
-    child_token_hash: hashToken(childToken),
-    parent_token_hash: hashToken(parentToken),
-    child_name: input.childName,
-    character_id: input.characterId,
-    creator_hash: creatorHash,
-    expires_at: new Date(Date.now() + CHARACTERS[input.characterId].expiresDays * 86_400_000).toISOString(),
+  await getRoomStore().insertRoom({
+    childTokenHash: hashToken(childToken),
+    parentTokenHash: hashToken(parentToken),
+    childName: input.childName,
+    characterId: input.characterId,
+    creatorHash,
+    expiresAt: new Date(Date.now() + CHARACTERS[input.characterId].expiresDays * 86_400_000).toISOString(),
   });
-  if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
-  if (error) throw new Error(`createRoom: ${error.message}`);
   return { childToken, parentToken };
 }
 
@@ -68,49 +43,39 @@ export async function createRoom(
 export async function findRoomByToken(token: string): Promise<{ room: Room; role: Role } | null> {
   if (!TOKEN_REGEX.test(token)) return null;
   const h = hashToken(token);
-  const { data, error } = await getAdminClient()
-    .from('rooms')
-    .select('id, child_name, character_id, child_token_hash, parent_token_hash')
-    .or(`child_token_hash.eq.${h},parent_token_hash.eq.${h}`)
-    .gt('expires_at', new Date().toISOString())
-    .maybeSingle<RoomRow>();
-  if (error || !data || !isCharacterId(data.character_id)) return null;
+  const rec = await getRoomStore().findRoomByTokenHash(h);
+  if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: data.id, childName: data.child_name, character: data.character_id },
-    role: data.child_token_hash === h ? 'child' : 'parent',
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId },
+    role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
 
-export async function listMessages(room: Room, role: Role): Promise<RoomMessageDTO[]> {
-  const db = getAdminClient();
-  let q = db
-    .from('room_messages')
-    .select('id, sender, kind, body, audio_path, duration_s, deliver_at')
-    .eq('room_id', room.id)
-    .order('deliver_at', { ascending: true })
-    .limit(200);
-  if (role === 'child') q = q.lte('deliver_at', new Date().toISOString());
-  const { data, error } = await q.returns<MessageRow[]>();
-  if (error || !data) throw new Error(`listMessages: ${error?.message ?? 'sin datos'}`);
+// ── Lectura ──────────────────────────────────────────────────────────────
 
-  const paths = data.flatMap((m) => (m.audio_path ? [m.audio_path] : []));
-  const urls = new Map<string, string>();
-  if (paths.length > 0) {
-    const { data: signed } = await db.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL);
-    for (const s of signed ?? []) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl);
-  }
+export async function listMessages(room: Room, role: Role): Promise<RoomMessageDTO[]> {
+  const store = getRoomStore();
+  const records = await store.listMessages(room.id, { deliveredOnly: role === 'child' });
+
+  const [voiceUrls, mediaUrls] = await Promise.all([
+    store.signedUrls('voices', records.flatMap((m) => (m.audioPath ? [m.audioPath] : []))),
+    store.signedUrls('media', records.flatMap((m) => (m.imagePath ? [m.imagePath] : []))),
+  ]);
 
   const now = Date.now();
-  return data.map((m) => {
-    const dto: RoomMessageDTO = { id: m.id, from: m.sender, kind: m.kind, at: m.deliver_at };
-    if (m.audio_path) dto.audioUrl = urls.get(m.audio_path);
-    if (m.duration_s !== null) dto.duration = Number(m.duration_s);
-    // El niño nunca ve el texto de las notas de voz del Rey (solo el audio).
-    if (m.body && (role === 'parent' || m.kind === 'text')) dto.text = m.body;
-    if (role === 'parent' && Date.parse(m.deliver_at) > now) dto.pending = true;
+  return records.map((m) => {
+    const dto: RoomMessageDTO = { id: m.id, from: m.sender === 'king' ? 'king' : m.sender, kind: m.kind, at: m.deliverAt };
+    if (m.audioPath) dto.audioUrl = voiceUrls.get(m.audioPath);
+    if (m.imagePath) dto.imageUrl = mediaUrls.get(m.imagePath);
+    if (m.durationS !== null) dto.duration = m.durationS;
+    // El niño nunca ve el texto de las notas de voz del personaje (solo el audio).
+    if (m.body && (role === 'parent' || m.kind !== 'voice')) dto.text = m.body;
+    if (role === 'parent' && Date.parse(m.deliverAt) > now) dto.pending = true;
     return dto;
   });
 }
+
+// ── Validación de ficheros por firma de bytes ────────────────────────────
 
 const AUDIO_TYPES: Record<string, { ext: string; magic: (b: Buffer) => boolean }> = {
   'audio/webm': { ext: 'webm', magic: (b) => b.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])) },
@@ -119,54 +84,84 @@ const AUDIO_TYPES: Record<string, { ext: string; magic: (b: Buffer) => boolean }
   'audio/ogg': { ext: 'ogg', magic: (b) => b.subarray(0, 4).toString('latin1') === 'OggS' },
 };
 
-export function normalizeAudioType(mime: string): string | null {
-  const base = mime.split(';')[0]?.trim().toLowerCase() ?? '';
-  return base in AUDIO_TYPES ? base : null;
+const IMAGE_TYPES: Record<string, { ext: 'webp' | 'jpg'; magic: (b: Buffer) => boolean }> = {
+  'image/webp': {
+    ext: 'webp',
+    magic: (b) => b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP',
+  },
+  'image/jpeg': { ext: 'jpg', magic: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+};
+
+const baseMime = (mime: string) => mime.split(';')[0]?.trim().toLowerCase() ?? '';
+export const normalizeAudioType = (mime: string) => (baseMime(mime) in AUDIO_TYPES ? baseMime(mime) : null);
+export const normalizeImageType = (mime: string) => (baseMime(mime) in IMAGE_TYPES ? baseMime(mime) : null);
+
+// ── Escritura ────────────────────────────────────────────────────────────
+
+/** Notifica a los conectados y deja constancia del retraso si lo hay. */
+function notify(room: Room, rec: MessageRecord): void {
+  publishRefresh(room.id, rec.deliverAt);
 }
 
-async function insertMessage(row: Record<string, unknown>): Promise<void> {
-  const { error } = await getAdminClient().from('room_messages').insert(row);
-  if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
-  if (error) throw new Error(`insertMessage: ${error.message}`);
-}
-
-/** Acuse automático: "los Reyes están muy ocupados". Máximo uno cada 15 min. */
+/** Acuse automático: "los Reyes/Papá Noel están muy ocupados". Máximo uno cada 15 min. */
 async function maybeAcknowledge(room: Room): Promise<void> {
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
-  const { count } = await getAdminClient()
-    .from('room_messages')
-    .select('id', { count: 'exact', head: true })
-    .eq('room_id', room.id)
-    .eq('sender', 'system')
-    .gte('created_at', since);
-  if ((count ?? 0) > 0) return;
+  if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
   const c = CHARACTERS[room.character];
   const where = c.group === 'noel' ? 'hacia el Polo Norte' : 'hacia Oriente';
-  await insertMessage({
-    room_id: room.id,
+  const rec = await getRoomStore().insertMessage({
+    roomId: room.id,
     sender: 'system',
     kind: 'text',
     body: `Tu mensaje ya vuela ${where} ✨ ${c.busyExcuse}. ¡${c.shortName} te contestará pronto!`,
   });
-}
-
-export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
-  const type = normalizeAudioType(mime);
-  const spec = type ? AUDIO_TYPES[type] : undefined;
-  if (!type || !spec || !spec.magic(audio)) throw new Error('Formato de audio no válido');
-
-  const path = `${room.id}/${randomUUID()}.${spec.ext}`;
-  const { error } = await getAdminClient()
-    .storage.from(BUCKET)
-    .upload(path, audio, { contentType: type, upsert: false });
-  if (error) throw new Error(`upload: ${error.message}`);
-
-  await insertMessage({ room_id: room.id, sender: 'child', kind: 'voice', audio_path: path, duration_s: seconds });
-  await maybeAcknowledge(room);
+  notify(room, rec);
 }
 
 export async function addChildText(room: Room, text: string): Promise<void> {
-  await insertMessage({ room_id: room.id, sender: 'child', kind: 'text', body: text });
+  const rec = await getRoomStore().insertMessage({ roomId: room.id, sender: 'child', kind: 'text', body: text });
+  notify(room, rec);
+  await maybeAcknowledge(room);
+}
+
+export async function addPhoto(
+  room: Room,
+  role: Role,
+  image: Buffer,
+  mime: string,
+  caption: string | null,
+  delayMinutes: ReplyDelay = 0,
+): Promise<void> {
+  const type = normalizeImageType(mime);
+  const spec = type ? IMAGE_TYPES[type] : undefined;
+  if (!type || !spec || !spec.magic(image)) throw new RoomError('INVALID_FILE');
+
+  const path = `${room.id}/${randomUUID()}.${spec.ext}`;
+  const store = getRoomStore();
+  await store.uploadFile('media', path, image, type);
+  const rec = await store.insertMessage({
+    roomId: room.id,
+    sender: role === 'child' ? 'child' : 'king',
+    kind: 'photo',
+    imagePath: path,
+    body: caption,
+    deliverAt: role === 'parent' && delayMinutes > 0 ? new Date(Date.now() + delayMinutes * 60_000).toISOString() : undefined,
+  });
+  notify(room, rec);
+  if (role === 'child') await maybeAcknowledge(room);
+}
+
+export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
+  if (!VOICE_ENABLED) throw new Error('La voz está desactivada');
+  const type = normalizeAudioType(mime);
+  const spec = type ? AUDIO_TYPES[type] : undefined;
+  if (!type || !spec || !spec.magic(audio)) throw new RoomError('INVALID_FILE');
+
+  const path = `${room.id}/${randomUUID()}.${spec.ext}`;
+  const store = getRoomStore();
+  await store.uploadFile('voices', path, audio, type);
+  const rec = await store.insertMessage({ roomId: room.id, sender: 'child', kind: 'voice', audioPath: path, durationS: seconds });
+  notify(room, rec);
   await maybeAcknowledge(room);
 }
 
@@ -174,27 +169,32 @@ export async function addKingReply(
   room: Room,
   text: string,
   delayMinutes: ReplyDelay,
-  mode: 'voice' | 'text' = 'voice',
+  mode: 'voice' | 'text' = 'text',
 ): Promise<void> {
+  const store = getRoomStore();
   const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
-  if (mode === 'text') {
-    await insertMessage({ room_id: room.id, sender: 'king', kind: 'text', body: text, deliver_at: deliverAt });
+
+  if (mode === 'text' || !VOICE_ENABLED) {
+    const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, deliverAt });
+    notify(room, rec);
     return;
   }
   const { audio, seconds } = await synthesizeKingVoice(room.character, text);
   const path = `${room.id}/${randomUUID()}.mp3`;
-  const { error } = await getAdminClient()
-    .storage.from(BUCKET)
-    .upload(path, audio, { contentType: 'audio/mpeg', upsert: false });
-  if (error) throw new Error(`upload: ${error.message}`);
-
-  await insertMessage({
-    room_id: room.id,
+  await store.uploadFile('voices', path, audio, 'audio/mpeg');
+  const rec = await store.insertMessage({
+    roomId: room.id,
     sender: 'king',
     kind: 'voice',
     body: text,
-    audio_path: path,
-    duration_s: Math.min(120, seconds),
-    deliver_at: deliverAt,
+    audioPath: path,
+    durationS: Math.min(120, seconds),
+    deliverAt,
   });
+  notify(room, rec);
+}
+
+/** "Escribiendo…" en vivo hacia el otro lado. No se guarda. */
+export function signalTyping(room: Room, from: Role): void {
+  publish(room.id, { type: 'typing', from }, from === 'parent' ? 'child' : 'parent');
 }

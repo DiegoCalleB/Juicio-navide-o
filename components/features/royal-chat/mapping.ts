@@ -15,6 +15,9 @@ export function toChatMessage(m: RoomMessageDTO): ChatMessage | null {
   if (m.kind === 'voice') {
     return { ...base, kind: 'voice', duration: m.duration ?? 5, seed: seedFrom(m.id), src: m.audioUrl };
   }
+  if (m.kind === 'photo') {
+    return m.imageUrl ? { ...base, kind: 'photo', caption: m.text ?? '', src: m.imageUrl } : null;
+  }
   return m.text ? { ...base, kind: 'text', text: m.text } : null;
 }
 

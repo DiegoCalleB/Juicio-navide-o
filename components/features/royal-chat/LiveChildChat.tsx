@@ -2,56 +2,100 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CharacterProfile } from '@/lib/characters';
+import { compressForChat } from '@/lib/image';
 import type { RoomMessageDTO } from '@/lib/royal';
-import { fmtTime, startPolling, toChatMessage, type ApiResult } from './mapping';
+import { fmtTime, toChatMessage, type ApiResult } from './mapping';
 import { RoyalChat, type KingActivity } from './RoyalChat';
 import type { ChatMessage } from './types';
+import { useRoomEvents } from './useRoomEvents';
 
-const KING_ACTIVITY_MS = 3500;
+/** Si el personaje estaba escribiendo hace menos de esto, su mensaje aparece al instante. */
+const RECENT_TYPING_MS = 12_000;
+/** Si no, se simula un breve "escribiendo…" para que no aparezca de golpe. */
+const FAKE_TYPING_MS = 1800;
+const TYPING_SIGNAL_EVERY_MS = 2500;
 
-/** Chat del niño conectado: envía audios o texto y recibe al Rey (con "grabando…/escribiendo…"). */
+/** Chat del niño conectado en tiempo real: texto, fotos (y voz si está activada). */
 export function LiveChildChat({ token, character, childName }: { token: string; character: CharacterProfile; childName: string }) {
   const [shown, setShown] = useState<ChatMessage[]>([]);
   const [local, setLocal] = useState<ChatMessage[]>([]);
-  const [kingActivity, setKingActivity] = useState<KingActivity>(null);
+  const [revealing, setRevealing] = useState<KingActivity>(null);
+  const [liveTyping, setLiveTyping] = useState(false);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
   const seen = useRef<Set<string>>(new Set());
   const loaded = useRef(false);
-  const revealing = useRef(false);
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastTypingAt = useRef(0);
+  const lastSignalAt = useRef(0);
+  const pending = useRef<ChatMessage[]>([]);
 
-  const poll = useCallback(async () => {
+  useEffect(() => () => {
+    clearTimeout(revealTimer.current);
+    clearTimeout(typingTimer.current);
+  }, []);
+
+  /** Muestra todo lo pendiente del personaje, en orden, sin perder nada si llegan varios seguidos. */
+  const flushPending = useCallback(() => {
+    clearTimeout(revealTimer.current);
+    revealTimer.current = undefined;
+    const batch = pending.current;
+    pending.current = [];
+    setRevealing(null);
+    setLiveTyping(false);
+    if (batch.length === 0) return;
+    setShown((s) => [...s, ...batch]);
+    navigator.vibrate?.(180);
+  }, []);
+
+  const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages`, { cache: 'no-store' });
     const body = (await res.json()) as ApiResult<{ messages: RoomMessageDTO[] }>;
     if (!body.ok || !body.data) throw new Error(body.error?.message ?? 'error');
+
     const all = body.data.messages.map(toChatMessage).filter((m): m is ChatMessage => m !== null);
     const fresh = all.filter((m) => !seen.current.has(m.id));
     if (fresh.length === 0) return;
 
-    const fromKing = loaded.current ? fresh.filter((m) => m.from === 'king') : [];
-    const immediate = fresh.filter((m) => !fromKing.includes(m));
-    immediate.forEach((m) => seen.current.add(m.id));
-    if (immediate.length) setShown((s) => [...s, ...immediate]);
+    const firstLoad = !loaded.current;
     loaded.current = true;
+    const fromCharacter = firstLoad ? [] : fresh.filter((m) => m.from === 'king');
+    const immediate = fresh.filter((m) => !fromCharacter.includes(m));
 
-    const first = fromKing[0];
-    if (first && !revealing.current) {
-      revealing.current = true;
-      setKingActivity(first.kind === 'voice' ? 'recording' : 'typing');
-      setTimeout(() => {
-        fromKing.forEach((m) => seen.current.add(m.id));
-        setShown((s) => [...s, ...fromKing]);
-        setKingActivity(null);
-        revealing.current = false;
-        navigator.vibrate?.(180);
-      }, KING_ACTIVITY_MS);
+    immediate.forEach((m) => seen.current.add(m.id));
+    if (immediate.length > 0) setShown((s) => [...s, ...immediate]);
+
+    if (fromCharacter.length > 0) {
+      // Marcamos ya como vistos para no duplicar mientras llega el efecto.
+      fromCharacter.forEach((m) => seen.current.add(m.id));
+      pending.current.push(...fromCharacter);
+      if (Date.now() - lastTypingAt.current < RECENT_TYPING_MS) {
+        flushPending();
+      } else if (!revealTimer.current) {
+        setRevealing(pending.current[0]?.kind === 'voice' ? 'recording' : 'typing');
+        revealTimer.current = setTimeout(flushPending, FAKE_TYPING_MS);
+      }
     }
-  }, [token]);
+  }, [token, flushPending]);
 
-  useEffect(() => {
-    const stop = startPolling(poll, 5000);
-    return stop;
-  }, [poll]);
+  const onPeerTyping = useCallback(() => {
+    lastTypingAt.current = Date.now();
+    setLiveTyping(true);
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setLiveTyping(false), 4500);
+  }, []);
+
+  useRoomEvents(token, { onRefresh: refresh, onTyping: onPeerTyping });
+
+  /** Aviso (limitado) a los padres de que el niño está escribiendo. */
+  const signalTyping = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSignalAt.current < TYPING_SIGNAL_EVERY_MS) return;
+    lastSignalAt.current = now;
+    void fetch(`/api/rooms/${token}/typing`, { method: 'POST' }).catch(() => undefined);
+  }, [token]);
 
   /** Envío optimista: se muestra al instante y se sustituye por el del servidor. */
   const send = async (optimistic: ChatMessage, request: () => Promise<Response>) => {
@@ -62,7 +106,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       const res = await request();
       const body = (await res.json()) as ApiResult<null>;
       if (!body.ok) throw new Error(body.error?.message ?? 'No se pudo enviar.');
-      await poll();
+      await refresh();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : 'No se pudo enviar. Inténtalo otra vez.');
     } finally {
@@ -72,6 +116,33 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   };
 
   const now = () => fmtTime(new Date().toISOString());
+
+  const onText = (text: string) => {
+    void send(
+      { id: `local-${Date.now()}`, from: 'child', kind: 'text', text, time: now() },
+      () =>
+        fetch(`/api/rooms/${token}/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        }),
+    );
+  };
+
+  const onPhoto = async (file: File) => {
+    setNotice(null);
+    try {
+      const blob = await compressForChat(file);
+      const form = new FormData();
+      form.append('image', blob, 'foto');
+      await send(
+        { id: `local-${Date.now()}`, from: 'child', kind: 'photo', caption: '', src: URL.createObjectURL(blob), time: now() },
+        () => fetch(`/api/rooms/${token}/photo`, { method: 'POST', body: form }),
+      );
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : 'No se pudo preparar la foto.');
+    }
+  };
 
   const onVoice = ({ blob, seconds }: { blob: Blob; seconds: number }) => {
     const form = new FormData();
@@ -83,25 +154,18 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     );
   };
 
-  const onText = (text: string) => {
-    void send(
-      { id: `local-${Date.now()}`, from: 'child', kind: 'text', text, time: now() },
-      () => fetch(`/api/rooms/${token}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      }),
-    );
-  };
+  const activity: KingActivity = revealing ?? (liveTyping ? 'typing' : null);
 
   return (
     <RoyalChat
       character={character}
       childName={childName}
       messages={[...shown, ...local]}
-      kingActivity={kingActivity}
+      kingActivity={activity}
       onVoice={onVoice}
       onText={onText}
+      onPhoto={onPhoto}
+      onTyping={signalTyping}
       notice={notice}
       sending={sending}
     />
