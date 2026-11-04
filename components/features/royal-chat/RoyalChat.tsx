@@ -36,6 +36,10 @@ interface RoyalChatProps {
   embedded?: boolean;
   /** La conexión en directo se ha perdido un rato. */
   reconnecting?: boolean;
+  /** Primeros lectores: todo el texto en MAYÚSCULAS. */
+  caps?: boolean;
+  /** Si se da, aparece el botón para cambiar a MAYÚSCULAS. */
+  onToggleCaps?: () => void;
 }
 
 export type KingActivity = 'recording' | 'typing' | null;
@@ -57,6 +61,8 @@ export function RoyalChat({
   sending = false,
   embedded = false,
   reconnecting = false,
+  caps = false,
+  onToggleCaps,
 }: RoyalChatProps) {
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
@@ -140,10 +146,21 @@ export function RoyalChat({
               {kingActivity === 'recording' ? 'grabando un audio…' : kingActivity === 'typing' ? 'escribiendo…' : `desde ${character.placeLabel}`}
             </p>
           </div>
+          {onToggleCaps && (
+            <button
+              type="button"
+              onClick={onToggleCaps}
+              aria-pressed={caps}
+              aria-label="Letras en mayúsculas"
+              className={`mr-1 grid size-10 shrink-0 place-items-center rounded-full text-[15px] font-extrabold transition-colors ${caps ? 'bg-[#f6d77a] text-[#3a2208]' : 'bg-white/15 text-[#fff6dc]'}`}
+            >
+              {caps ? 'AA' : 'Aa'}
+            </button>
+          )}
           <Garland sky={theme.sky} />
         </header>
 
-        <div ref={logRef} role="log" aria-label="Conversación" className="kid-font relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 pb-4 pt-7">
+        <div ref={logRef} role="log" aria-label="Conversación" className={`kid-font relative z-10 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 pb-4 pt-7 ${caps ? 'uppercase tracking-wide' : ''}`}>
           <p className="mx-auto mb-3 flex w-fit max-w-[88%] items-center gap-1.5 rounded-xl bg-[#f6d77a]/10 px-3 py-1.5 text-center text-[11.5px] leading-snug text-[#f6d77a]">
             <IconStar className="size-3 shrink-0" /> Línea mágica con {character.placeLabel}: solo {childName} y {character.audience} pueden leerla
           </p>
@@ -218,7 +235,7 @@ export function RoyalChat({
                   enterKeyHint="send"
                   autoComplete="off"
                   placeholder={sending ? 'Enviando tu mensaje…' : `Escribe a ${kingShort}…`}
-                  className="kid-font min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
+                  className={`kid-font min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none ${caps ? 'uppercase tracking-wide' : ''}`}
                 />
                 {onPhoto && (
                   <PhotoPicker

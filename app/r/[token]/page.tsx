@@ -14,9 +14,10 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
 }
 export const viewport: Viewport = { themeColor: '#2a0f4a' };
 
-export default async function ChildRoomPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ChildRoomPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ letras?: string }> }) {
   const { token } = await params;
+  const { letras } = await searchParams;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'child') notFound();
-  return <LiveChildChat token={token} character={CHARACTERS[found.room.character]} childName={found.room.childName} />;
+  return <LiveChildChat token={token} character={CHARACTERS[found.room.character]} childName={found.room.childName} initialCaps={letras === 'mayus'} />;
 }

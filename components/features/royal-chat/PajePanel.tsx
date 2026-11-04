@@ -50,6 +50,9 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
   const [planner, setPlanner] = useState(false);
+  /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
+  const [capsLink, setCapsLink] = useState(false);
+  const shareLink = capsLink ? `${childLink}?letras=mayus` : childLink;
   /** null = automático: abierto al principio, plegado cuando el niño ya ha abierto o ha escrito. */
   const [setupOpen, setSetupOpen] = useState<boolean | null>(null);
   const rec = useReactionRecorder();
@@ -296,7 +299,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(childLink);
+      await navigator.clipboard.writeText(shareLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -382,12 +385,18 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#5eead4]">Enlace para el móvil de {childName}</p>
             <p className="mt-1 text-[#e8f1ff]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
+            <label htmlFor="caps-link" className="mt-2.5 flex cursor-pointer items-start gap-2.5 rounded-xl bg-black/20 p-2.5 text-[#e8f1ff]/85">
+              <input id="caps-link" type="checkbox" checked={capsLink} onChange={(e) => setCapsLink(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#5eead4]" />
+              <span>
+                <strong className="font-semibold">Primeros lectores: letra MAYÚSCULA.</strong> El enlace abre con todo el texto en mayúsculas (el niño también puede cambiarlo con el botón «Aa» de la cabecera).
+              </span>
+            </label>
             <div className="mt-2.5 flex gap-2">
               <button type="button" onClick={copyLink} className="min-h-10 flex-1 rounded-xl bg-[#5eead4] px-3 font-bold text-[#04302b] active:scale-[0.98]">
                 {copied ? '¡Copiado!' : 'Copiar enlace'}
               </button>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(childLink)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(shareLink)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="grid min-h-10 flex-1 place-items-center rounded-xl border border-[#5eead4]/40 px-3 font-bold text-[#5eead4] active:scale-[0.98]"

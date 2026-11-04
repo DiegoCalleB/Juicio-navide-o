@@ -23,6 +23,8 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 ## Producto
 
+- **Audio, por decidir**: notas de voz del niño como casilla por sala al crearla (hoy están activadas siempre), retención más corta para ellas (7 días) y voz del personaje como función de pago. Debe valer para niños que aún no leen.
+
 - **Regla**: las voces de los personajes son siempre castellano de España, nunca latinas. Si ninguna candidata convence (Papá Noel y el Ratoncito siguen provisionales), diseñar una voz a medida en ElevenLabs.
 
 - La ruta de los padres sigue llamándose `/paje/…` por dentro (nadie la ve más que los padres). Renombrarla a `/padres/…` exigiría migrar los enlaces ya compartidos.

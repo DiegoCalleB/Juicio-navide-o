@@ -42,7 +42,9 @@ function markSurpriseSeen(token: string, id: string): void {
 class FriendlyError extends Error {}
 
 /** Chat del niño conectado en tiempo real: texto, fotos (y voz si está activada). */
-export function LiveChildChat({ token, character, childName }: { token: string; character: CharacterProfile; childName: string }) {
+const CAPS_KEY = 'magic-caps';
+
+export function LiveChildChat({ token, character, childName, initialCaps = false }: { token: string; character: CharacterProfile; childName: string; initialCaps?: boolean }) {
   const [shown, setShown] = useState<ChatMessage[]>([]);
   const [local, setLocal] = useState<ChatMessage[]>([]);
   const [revealing, setRevealing] = useState<KingActivity>(null);
@@ -51,6 +53,30 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [introOpen, setIntroOpen] = useState(true);
+  const [caps, setCaps] = useState(false);
+
+  // Primeros lectores: MAYÚSCULAS. Viene en el enlace (?letras=mayus) o de la última vez en este dispositivo.
+  useEffect(() => {
+    try {
+      if (initialCaps) {
+        window.localStorage.setItem(CAPS_KEY, '1');
+        setCaps(true);
+      } else {
+        setCaps(window.localStorage.getItem(CAPS_KEY) === '1');
+      }
+    } catch {
+      setCaps(initialCaps);
+    }
+  }, [initialCaps]);
+  const toggleCaps = () =>
+    setCaps((on) => {
+      try {
+        window.localStorage.setItem(CAPS_KEY, on ? '0' : '1');
+      } catch {
+        /* sin almacenamiento */
+      }
+      return !on;
+    });
 
   const seen = useRef<Set<string>>(new Set());
   const loaded = useRef(false);
@@ -235,6 +261,8 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       notice={notice}
       sending={sending}
       reconnecting={offline}
+      caps={caps}
+      onToggleCaps={toggleCaps}
     />
     {introOpen && <NorthPoleIntro token={token} character={character} childName={childName} onOpen={() => setIntroOpen(false)} />}
     {surprise && !introOpen && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
