@@ -63,6 +63,8 @@ export interface RoomStore {
    */
   getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
   countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number>;
+  /** Borra un mensaje del personaje que aún no se ha entregado (programado). Devuelve si existía. */
+  deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean>;
   /** Respuestas con voz del personaje en esa sala desde `sinceIso` (tope por sala). */
   countVoiceRepliesSince(roomId: string, sinceIso: string): Promise<number>;
   /** Caracteres sintetizados en toda la app desde `sinceIso` (tope de coste diario). */

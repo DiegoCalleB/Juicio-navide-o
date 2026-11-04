@@ -28,6 +28,22 @@ export interface CharacterMoment {
   replies: string[];
 }
 
+export interface PlanItem {
+  /** Hora local "HH:MM". */
+  time: string;
+  text: string;
+  /** Pantalla de sorpresa a pantalla completa en el móvil del niño. */
+  surprise?: boolean;
+}
+
+export interface CharacterPlan {
+  id: string;
+  label: string;
+  /** Día del año "MM-DD" (se usa el próximo que llegue). */
+  date: string;
+  items: PlanItem[];
+}
+
 export interface CharacterProfile {
   id: CharacterId;
   /** "Rey Melchor", "Papá Noel" */
@@ -38,8 +54,10 @@ export interface CharacterProfile {
   tagline: string;
   avatar: AvatarKind;
   theme: CharacterTheme;
-  /** Días que vive la sala antes de borrarse. */
+  /** Días mínimos que vive la sala antes de borrarse. */
   expiresDays: number;
+  /** "MM-DD": la sala vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). */
+  holidayEnd: string;
   /** Frase en tercera persona para "{personaje} está ocupado" (el duende o paje avisa al niño). */
   busyExcuse: string;
   /** Quién abre la línea mágica y atiende al niño mientras llega el personaje. */
@@ -54,6 +72,10 @@ export interface CharacterProfile {
   intro: { connecting: string; ready: string; button: string };
   /** Frases graciosas que rotan mientras el personaje escribe. */
   typingQuips: string[];
+  /** Guiones listos para programar con antelación (Nochebuena, mañana de regalos…). */
+  plans: CharacterPlan[];
+  /** Respuestas para cuando el niño manda una foto o un dibujo. */
+  photoReplies: string[];
   /** Mensajes preparados por momento (Nochebuena, mañana de regalos…). `{child}` = nombre del niño. Solo datos. */
   moments: CharacterMoment[];
 }
@@ -74,6 +96,32 @@ const ORIENT_EXTRAS = {
     button: 'Abrir mensaje de los Reyes',
   },
   typingQuips: ['está firmando con su pluma de oro…', 'escribe mientras los camellos miran…', 'se está colocando bien la corona…'],
+  plans: [
+    {
+      id: 'noche',
+      label: 'Noche de Reyes',
+      date: '01-05',
+      items: [
+        { time: '18:30', text: `Estamos preparando los camellos, {child}. Los pajes han cargado los regalos y Zafiro no para de contarlos. ¡Qué nervios!` },
+        { time: '21:30', text: `Estamos ya cerquita de tu ciudad, {child}. Deja los zapatos preparados y un poquito de agua para los camellos.` },
+        { time: '23:00', text: `Los camellos están cansadísimos, pero muy contentos. Acuéstate pronto, {child}, que si estás despierto no podemos entrar.` },
+      ],
+    },
+    {
+      id: 'manana',
+      label: 'Mañana de Reyes',
+      date: '01-06',
+      items: [
+        { time: '08:30', surprise: true, text: `¡Feliz día de Reyes, {child}! Anoche dejamos los regalos en tu casa. Antes de abrirlos, cuéntame: ¿qué tal has dormido?` },
+        { time: '11:00', text: `Esperamos que te estén gustando los regalos, {child}. Cuídalos mucho y dale las gracias a tu familia. ¡Hasta el año que viene!` },
+      ],
+    },
+  ],
+  photoReplies: [
+    `¡Qué bonito, {child}! Se lo he enseñado a los otros Reyes y todos dicen que tienes muchísimo talento.`,
+    `Mis pajes lo han colgado en la pared del palacio. ¡Gracias por enseñárnoslo, {child}!`,
+    `Los camellos también lo han mirado con mucha atención. ¿Me cuentas qué es, {child}?`,
+  ],
 };
 
 const kingChat = [
@@ -126,6 +174,7 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     avatar: 'santa',
     theme: { headerFrom: '#9b1c24', headerTo: '#6b1218', bg: '#0e2418', sky: 'snow', ink: '#8a1a1f', robe: '#c62828' },
     expiresDays: 45,
+    holidayEnd: '01-10',
     busyExcuse: 'Papá Noel está en el taller con los duendes',
     helper: { name: 'Cascabel', role: 'duende de las comunicaciones' },
     placeLabel: 'el Polo Norte',
@@ -137,6 +186,33 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
       button: 'Abrir mensaje de Papá Noel',
     },
     typingQuips: ['se está limpiando las gafitas…', 'teclea despacito con los guantes puestos…', 'escribe con Rodolfo mirándole por encima del hombro…'],
+    plans: [
+      {
+        id: 'nochebuena',
+        label: 'Nochebuena',
+        date: '12-24',
+        items: [
+          { time: '18:30', text: `¡Jo, jo, jo! Ya estoy cargando el trineo, {child}. Los duendes me han ayudado a meter todos los regalos y Rodolfo está nerviosísimo.` },
+          { time: '21:00', text: `Rodolfo y yo despegamos ya del Polo Norte, {child}. ¡Qué frío hace aquí arriba! Prepara las zanahorias y acuéstate prontito.` },
+          { time: '22:30', text: `Ya sobrevuelo tu ciudad, {child}. Se ven las lucecitas de todas las casas. Duérmete pronto, que si estás despierto no puedo pasar. ¡Jo, jo, jo!` },
+        ],
+      },
+      {
+        id: 'navidad',
+        label: 'Mañana de Navidad',
+        date: '12-25',
+        items: [
+          { time: '08:30', surprise: true, text: `¡Feliz Navidad, {child}! Anoche pasé por tu casa y dejé los regalos junto al árbol. Antes de abrirlos, cuéntame: ¿qué tal has dormido?` },
+          { time: '11:00', text: `¿Qué es lo que más te ha gustado, {child}? Cuéntamelo, que los duendes y yo estamos deseando saberlo. ¡Jo, jo, jo!` },
+        ],
+      },
+    ],
+    photoReplies: [
+      `¡Qué dibujo tan bonito, {child}! Lo voy a colgar en la pared de mi taller, junto a los de los demás niños.`,
+      `¡Jo, jo, jo! Los duendes se han quedado con la boca abierta al ver tu foto, {child}. ¡Qué bien te ha salido!`,
+      `Rodolfo dice que le encanta. Me lo guardo en el bolsillo del abrigo para enseñárselo a la Señora Noel.`,
+      `Gracias por enseñármelo, {child}. ¿Me cuentas qué es lo que más te gusta de lo que has hecho?`,
+    ],
     moments: [
       {
         id: 'primero',
@@ -194,21 +270,34 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     id: 'melchor', name: 'Rey Melchor', shortName: 'Melchor', group: 'reyes',
     tagline: 'Cariñoso y abuelete', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#3b1466', headerTo: '#2a0f4a', ink: '#5b2a86', robe: '#7a3fb0' },
-    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   gaspar: {
     id: 'gaspar', name: 'Rey Gaspar', shortName: 'Gaspar', group: 'reyes',
     tagline: 'Sereno y sabio', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#1f5a3d', headerTo: '#153d2a', ink: '#1f5a3d', robe: '#2f6f4f' },
-    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
   baltasar: {
     id: 'baltasar', name: 'Rey Baltasar', shortName: 'Baltasar', group: 'reyes',
     tagline: 'Alegre y bonachón', avatar: 'crown',
     theme: { ...ORIENT, headerFrom: '#8a2330', headerTo: '#5d1620', ink: '#8a2330', robe: '#a8323a' },
-    expiresDays: 45, busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
+    expiresDays: 45, holidayEnd: '01-20', busyExcuse: 'Los Reyes están preparando los regalos con sus pajes', ...ORIENT_EXTRAS, moments: kingMoments,
   },
 };
+
+/**
+ * Cuándo se borra una sala: a los `expiresDays` días o, si es más tarde, pasadas las
+ * fiestas (para que una sala creada en noviembre no desaparezca antes de Navidad).
+ */
+export function roomExpiresAt(character: CharacterProfile, now: Date = new Date()): Date {
+  const min = new Date(now.getTime() + character.expiresDays * 86_400_000);
+  const [m, d] = character.holidayEnd.split('-').map(Number) as [number, number];
+  let end = new Date(Date.UTC(now.getUTCFullYear(), m - 1, d, 23, 59));
+  if (end.getTime() < now.getTime()) end = new Date(Date.UTC(now.getUTCFullYear() + 1, m - 1, d, 23, 59));
+  const within = end.getTime() - now.getTime() <= 120 * 86_400_000;
+  return within && end.getTime() > min.getTime() ? end : min;
+}
 
 export function isCharacterId(value: string): value is CharacterId {
   return (CHARACTER_IDS as readonly string[]).includes(value);

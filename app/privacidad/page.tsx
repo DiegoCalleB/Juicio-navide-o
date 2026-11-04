@@ -29,7 +29,7 @@ export default function PrivacidadPage() {
       </LegalSection>
 
       <LegalSection title="Cuánto tiempo lo guardamos">
-        <p>Las conversaciones se borran automáticamente a los 45 días de crearse, junto con sus audios y fotos.</p>
+        <p>Las conversaciones se borran automáticamente a los 45 días de crearse, o pasadas las fiestas (el 10 de enero; el 20 con los Reyes) si eso es más tarde, junto con sus audios y fotos.</p>
       </LegalSection>
 
       <LegalSection title="Tus derechos">

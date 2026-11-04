@@ -19,6 +19,25 @@ const RECENT_TYPING_MS = 12_000;
 const FAKE_TYPING_MS = 1800;
 const TYPING_SIGNAL_EVERY_MS = 2500;
 
+const surpriseKey = (token: string) => `magic-surprise:${token.slice(-16)}`;
+
+function surpriseSeen(token: string): Set<string> {
+  try {
+    return new Set(JSON.parse(window.localStorage.getItem(surpriseKey(token)) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function markSurpriseSeen(token: string, id: string): void {
+  try {
+    const ids = [...surpriseSeen(token), id].slice(-20);
+    window.localStorage.setItem(surpriseKey(token), JSON.stringify(ids));
+  } catch {
+    /* sin almacenamiento: como mucho se repite la sorpresa */
+  }
+}
+
 /** Error con un mensaje apto para el niño (el resto se sustituye por uno genérico). */
 class FriendlyError extends Error {}
 
@@ -57,11 +76,14 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     setLiveTyping(false);
     if (batch.length === 0) return;
     const special = batch.find((m) => m.kind === 'text' && m.effect === 'surprise');
-    if (special?.kind === 'text') setSurprise(special.text);
+    if (special?.kind === 'text') {
+      setSurprise(special.text);
+      markSurpriseSeen(token, special.id);
+    }
     setShown((s) => [...s, ...batch]);
     vibrate(180);
     playChime();
-  }, []);
+  }, [token]);
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
@@ -80,6 +102,15 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
     // La primera carga es historial (también si está vacía): lo que llegue después es "en directo".
     const firstLoad = !loaded.current;
     loaded.current = true;
+    // Una sorpresa programada que llegó con la sala cerrada: se enseña a pantalla completa la primera vez.
+    if (firstLoad) {
+      const seenIds = surpriseSeen(token);
+      const missed = all.filter((m) => m.kind === 'text' && m.effect === 'surprise' && m.from === 'king' && !seenIds.has(m.id)).pop();
+      if (missed?.kind === 'text') {
+        setSurprise(missed.text);
+        markSurpriseSeen(token, missed.id);
+      }
+    }
     if (fresh.length === 0) return;
     const fromCharacter = firstLoad ? [] : fresh.filter((m) => m.from === 'king');
     const immediate = fresh.filter((m) => !fromCharacter.includes(m));
@@ -206,7 +237,7 @@ export function LiveChildChat({ token, character, childName }: { token: string; 
       reconnecting={offline}
     />
     {introOpen && <NorthPoleIntro token={token} character={character} childName={childName} onOpen={() => setIntroOpen(false)} />}
-    {surprise && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
+    {surprise && !introOpen && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}
     </>
   );
 }

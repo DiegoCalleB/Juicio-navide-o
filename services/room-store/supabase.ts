@@ -132,6 +132,19 @@ export class SupabaseRoomStore implements RoomStore {
     return count ?? 0;
   }
 
+  async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {
+    const { data, error } = await getAdminClient()
+      .from('room_messages')
+      .delete()
+      .eq('id', messageId)
+      .eq('room_id', roomId)
+      .eq('sender', 'king')
+      .gt('deliver_at', nowIso)
+      .select('id');
+    if (error) throw new Error('No se pudo cancelar el mensaje.');
+    return (data?.length ?? 0) > 0;
+  }
+
   async countVoiceRepliesSince(roomId: string, sinceIso: string): Promise<number> {
     const { count } = await getAdminClient()
       .from('room_messages')

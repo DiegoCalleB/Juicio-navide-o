@@ -28,7 +28,7 @@ export default function TerminosPage() {
       </LegalSection>
 
       <LegalSection title="Tus contenidos">
-        <p>Los mensajes, audios y fotos son tuyos. Solo los usamos para que la conversación funcione y los borramos automáticamente a los 45 días.</p>
+        <p>Los mensajes, audios y fotos son tuyos. Solo los usamos para que la conversación funcione y los borramos automáticamente a los 45 días de crearse la sala, o pasadas las fiestas (el 10 de enero; el 20 con los Reyes) si eso es más tarde.</p>
       </LegalSection>
 
       <LegalSection title="Cambios y contacto">

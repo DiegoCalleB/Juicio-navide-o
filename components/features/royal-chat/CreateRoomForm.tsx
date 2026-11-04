@@ -85,7 +85,7 @@ export function CreateRoomForm() {
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
         <span>
-          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos de esta sala se guarden de forma privada, solo para esta conversación, y se borren automáticamente a los 45 días.{' '}
+          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos de esta sala se guarden de forma privada, solo para esta conversación, y se borren automáticamente a los 45 días, o pasadas las fiestas (10 de enero; 20 con los Reyes) si eso es más tarde.{' '}
           <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
         </span>
       </label>

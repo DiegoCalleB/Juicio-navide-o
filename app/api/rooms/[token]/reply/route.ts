@@ -14,9 +14,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     const parsed = kingReplySchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
-      return fail('VALIDATION', parsed.error.flatten().fieldErrors.text?.[0] ?? 'Mensaje no válido.', 400);
+      return fail('VALIDATION', parsed.error.flatten().fieldErrors.text?.[0] ?? parsed.error.flatten().fieldErrors.scheduledAt?.[0] ?? 'Mensaje no válido.', 400);
     }
-    const outcome = await addKingReply(found.room, parsed.data.text, parsed.data.delayMinutes, parsed.data.mode, parsed.data.surprise ? 'surprise' : undefined);
+    const outcome = await addKingReply(found.room, parsed.data.text, parsed.data.delayMinutes, parsed.data.mode, parsed.data.surprise ? 'surprise' : undefined, parsed.data.scheduledAt);
     return json({ ok: true, data: outcome }, 201);
   });
 }

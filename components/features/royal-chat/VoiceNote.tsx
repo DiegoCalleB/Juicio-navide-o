@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import * as player from '@/lib/voicePlayer';
 import { IconPause, IconPlay } from './icons';
 import { RoyalAvatar } from './RoyalAvatar';
 import type { Character } from './types';
@@ -20,6 +21,10 @@ function waveform(seed: number): number[] {
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 interface VoiceNoteProps {
+  /** Identificador estable del mensaje (para que suene una sola nota a la vez). */
+  id?: string;
+  /** Notas seguidas del mismo remitente que sonarán solas al terminar esta. */
+  followUps?: player.Track[];
   duration: number;
   seed: number;
   mine: boolean;
@@ -29,31 +34,33 @@ interface VoiceNoteProps {
 }
 
 /** Nota de voz: onda determinista; con `src` reproduce audio real (progreso vía rAF). */
-export function VoiceNote({ duration, seed, mine, character, src }: VoiceNoteProps) {
+export function VoiceNote({ id, followUps, duration, seed, mine, character, src }: VoiceNoteProps) {
   const bars = useMemo(() => waveform(seed), [seed]);
-  const [playing, setPlaying] = useState(false);
+  const real = Boolean(src && id);
+  const [simPlaying, setSimPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [, force] = useState(0);
   const startRef = useRef(0);
   const rafRef = useRef(0);
 
-  useEffect(() => () => {
-    cancelAnimationFrame(rafRef.current);
-    audioRef.current?.pause();
-  }, []);
+  // Con audio real, el estado vive en el reproductor compartido.
+  useEffect(() => (real ? player.subscribe(() => force((n) => n + 1)) : undefined), [real]);
+
+  const shared = player.getState();
+  const isCurrent = real && shared.id === id;
+  const playing = real ? isCurrent && shared.playing : simPlaying;
+  const failed = real && shared.failedId === id;
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
   useEffect(() => {
     if (!playing) return;
-    const audio = audioRef.current;
     startRef.current = performance.now() - progress * duration * 1000;
     const tick = (now: number) => {
-      const total = audio && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duration;
-      const p = audio ? Math.min(1, audio.currentTime / total) : Math.min(1, (now - startRef.current) / (duration * 1000));
+      const p = real ? player.getProgress(id!, duration) : Math.min(1, (now - startRef.current) / (duration * 1000));
       setProgress(p);
-      const ended = audio ? audio.ended : p >= 1;
-      if (ended) {
-        setPlaying(false);
+      if (!real && p >= 1) {
+        setSimPlaying(false);
         setTimeout(() => setProgress(0), 400);
         return;
       }
@@ -64,23 +71,18 @@ export function VoiceNote({ duration, seed, mine, character, src }: VoiceNotePro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, duration]);
 
+  // Al terminar (o ceder el turno a otra nota) la onda vuelve al principio.
+  useEffect(() => {
+    if (real && !playing && progress > 0 && !(isCurrent && shared.id === id)) {
+      const t = setTimeout(() => setProgress(0), 300);
+      return () => clearTimeout(t);
+    }
+  }, [real, playing, progress, isCurrent, shared.id, id]);
+
   const toggle = async () => {
-    if (!src) return setPlaying((p) => !p);
-    audioRef.current ??= new Audio(src);
-    const audio = audioRef.current;
-    if (playing) {
-      audio.pause();
-      setPlaying(false);
-      return;
-    }
-    try {
-      if (audio.ended) audio.currentTime = 0;
-      await audio.play();
-      setFailed(false);
-      setPlaying(true);
-    } catch {
-      setFailed(true);
-    }
+    if (!real) return setSimPlaying((p) => !p);
+    if (playing) return player.pause();
+    await player.play({ id: id!, src: src! }, followUps ?? []);
   };
 
   const played = Math.round(progress * BARS);

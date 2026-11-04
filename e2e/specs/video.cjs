@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild, pinSetup } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 
 async function setup(browser, { perm }) {
@@ -13,6 +13,7 @@ async function setup(browser, { perm }) {
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
+  await pinSetup(parent);
   await openChild(child, childLink, {});
   await parent.waitForSelector('[aria-label="Conectado en tiempo real"]');
   return { parent, child, errs };

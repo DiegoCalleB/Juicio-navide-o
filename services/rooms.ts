@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { CHARACTERS, isCharacterId, type CharacterId } from '@/lib/characters';
+import { CHARACTERS, isCharacterId, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
@@ -34,7 +34,7 @@ export async function createRoom(
     childName: input.childName,
     characterId: input.characterId,
     creatorHash,
-    expiresAt: new Date(Date.now() + CHARACTERS[input.characterId].expiresDays * 86_400_000).toISOString(),
+    expiresAt: roomExpiresAt(CHARACTERS[input.characterId]).toISOString(),
   });
   return { childToken, parentToken };
 }
@@ -183,9 +183,11 @@ export async function addKingReply(
   delayMinutes: ReplyDelay,
   mode: 'voice' | 'text' = 'text',
   effect?: 'surprise',
+  /** Entrega programada (ISO). Si va, sustituye al retraso en minutos. */
+  scheduledAt?: string,
 ): Promise<ReplyOutcome> {
   const store = getRoomStore();
-  const deliverAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
+  const deliverAt = scheduledAt ?? new Date(Date.now() + delayMinutes * 60_000).toISOString();
 
   const sendText = async (fallback?: ReplyOutcome['fallback']): Promise<ReplyOutcome> => {
     const rec = await store.insertMessage({ roomId: room.id, sender: 'king', kind: 'text', body: text, effect: effect ?? null, deliverAt });
@@ -224,6 +226,13 @@ export async function addKingReply(
   });
   notify(room, rec);
   return { delivered: 'voice' };
+}
+
+/** Cancela un mensaje programado que aún no se ha entregado. */
+export async function cancelPending(room: Room, messageId: string): Promise<boolean> {
+  const ok = await getRoomStore().deletePendingMessage(room.id, messageId, new Date().toISOString());
+  if (ok) publishRefresh(room.id);
+  return ok;
 }
 
 /** "Escribiendo…" en vivo hacia el otro lado. No se guarda. */

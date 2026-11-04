@@ -48,4 +48,12 @@ async function openChild(page, link, opts = {}) {
   await page.waitForSelector('[aria-label="Mensaje de Papá Noel"]', { state: 'detached', timeout: 5000 }).catch(() => {});
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild };
+/** Fija abiertos los "Preparativos" del panel (se pliegan solos cuando el niño abre o escribe). */
+async function pinSetup(page) {
+  const t = page.getByRole('button', { name: /Preparativos/ });
+  await t.waitFor({ timeout: 15000 });
+  if ((await t.getAttribute('aria-expanded')) === 'true') await t.click();
+  await t.click();
+}
+
+module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup };

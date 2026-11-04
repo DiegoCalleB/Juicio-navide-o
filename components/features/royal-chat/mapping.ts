@@ -47,3 +47,16 @@ export function startPolling(fn: () => Promise<void>, everyMs: number): () => vo
     document.removeEventListener('visibilitychange', onVisible);
   };
 }
+
+/** Notas de voz seguidas del mismo remitente que van después de la posición `index` (para reproducirlas en cadena). */
+export function voiceFollowUps<T>(list: T[], index: number, pick: (m: T) => { id: string; from: string; voiceSrc?: string } | null): { id: string; src: string }[] {
+  const first = list[index] ? pick(list[index]) : null;
+  if (!first) return [];
+  const out: { id: string; src: string }[] = [];
+  for (let j = index + 1; j < list.length; j++) {
+    const m = list[j] ? pick(list[j] as T) : null;
+    if (!m || m.from !== first.from || !m.voiceSrc) break;
+    out.push({ id: m.id, src: m.voiceSrc });
+  }
+  return out;
+}

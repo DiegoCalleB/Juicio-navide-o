@@ -7,10 +7,12 @@ import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
 import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
-import { fmtTime, seedFrom, type ApiResult } from './mapping';
+import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
+import { PhotoPicker } from './PhotoPicker';
 import { RoyalAvatar } from './RoyalAvatar';
+import { SchedulePlanner } from './SchedulePlanner';
 import { useReactionRecorder } from './useReactionRecorder';
 import { useRoomEvents } from './useRoomEvents';
 import { VoiceNote } from './VoiceNote';
@@ -47,13 +49,15 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [minimized, setMinimized] = useState(false);
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
+  const [planner, setPlanner] = useState(false);
+  /** null = automático: abierto al principio, plegado cuando el niño ya ha abierto o ha escrito. */
+  const [setupOpen, setSetupOpen] = useState<boolean | null>(null);
   const rec = useReactionRecorder();
   const [momentId, setMomentId] = useState(character.moments[0]?.id ?? 'charla');
 
   const childCount = useRef(-1);
   const versionRef = useRef('');
   const endRef = useRef<HTMLDivElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastSignalAt = useRef(0);
   const short = character.shortName;
@@ -149,10 +153,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     void fetch(`/api/rooms/${token}/typing`, { method: 'POST' }).catch(() => undefined);
   };
 
-  const pickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const pickPhotoFile = async (file: File) => {
     setNotice(null);
     try {
       const blob = await compressForChat(file);
@@ -303,6 +304,24 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
+  const setupVisible = setupOpen ?? (messages.length === 0 && !presence?.openedAt);
+  const lastChild = [...messages].reverse().findIndex((m) => m.from === 'child');
+  const lastKing = [...messages].reverse().findIndex((m) => m.from === 'king');
+  const lastChildMsg = lastChild >= 0 ? [...messages].reverse()[lastChild] : undefined;
+  const photoWaiting = lastChildMsg?.kind === 'photo' && (lastKing < 0 || lastKing > lastChild);
+
+  const cancelPending = async (id: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${token}/pending/${id}`, { method: 'DELETE' });
+      const json = (await res.json()) as ApiResult<null>;
+      if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo cancelar.');
+      setNotice({ tone: 'ok', msg: 'Mensaje programado cancelado.' });
+      await refresh();
+    } catch (err) {
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo cancelar.' });
+    }
+  };
+
   const activeMoment = character.moments.find((m) => m.id === momentId) ?? character.moments[0];
   const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
 
@@ -348,6 +367,18 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         )}
 
         <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <button
+            type="button"
+            aria-expanded={setupVisible}
+            aria-controls="panel-setup"
+            onClick={() => setSetupOpen(!setupVisible)}
+            className="flex min-h-11 w-full items-center gap-2 rounded-2xl border border-white/15 bg-white/[.04] px-3.5 text-left text-[13px] font-semibold text-[#f6d77a]"
+          >
+            <span className="flex-1">Preparativos · enlace del niño y grabar su reacción</span>
+            <span aria-hidden className={`transition-transform ${setupVisible ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+
+          <div id="panel-setup" hidden={!setupVisible} className="space-y-3">
           <section className="rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#f6d77a]">Enlace para el móvil de {childName}</p>
             <p className="mt-1 text-[#fff6dc]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
@@ -420,6 +451,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               </div>
             )}
           </section>
+          </div>
 
           {messages.length === 0 && (
             <p className="py-8 text-center text-[14px] text-[#fff6dc]/60">
@@ -427,8 +459,8 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             </p>
           )}
 
-          {messages.map((m) => (
-            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} />
+          {messages.map((m, i) => (
+            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
           ))}
 
           {childTyping && (
@@ -453,7 +485,31 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                 {mo.label}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setPlanner(true)}
+              className="shrink-0 rounded-full border border-[#f6d77a]/50 px-3 py-1 text-[12px] font-bold text-[#f6d77a]"
+            >
+              📅 Programar
+            </button>
           </div>
+          {photoWaiting && (
+            <div className="rounded-2xl border border-[#f6d77a]/35 bg-[#f6d77a]/[.08] p-2.5">
+              <p className="px-1 text-[12px] font-bold text-[#f6d77a]">📸 {childName} ha enviado una foto o dibujo. Responde con ilusión:</p>
+              <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none]">
+                {character.photoReplies.map((tpl) => fillChild(tpl, childName)).map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setText(q.slice(0, MAX_CHARS))}
+                    className="max-w-[14rem] shrink-0 truncate rounded-full border border-[#f6d77a]/40 bg-white/5 px-3 py-1.5 text-[12.5px] text-[#fff6dc] active:bg-white/10"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#f6d77a]/80">💡 {activeMoment.tip}</p>}
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
             {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
@@ -493,15 +549,13 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               placeholder={photo ? 'Pie de foto (opcional)…' : `Escribe el mensaje de ${short}…`}
               className="w-full resize-none rounded-2xl border border-white/15 bg-[#120822] px-3.5 py-3 pr-12 text-[15px] text-[#fff6dc] placeholder:text-[#fff6dc]/35 focus:border-[#f6d77a] focus:outline-none"
             />
-            <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} className="sr-only" tabIndex={-1} aria-hidden data-testid="photo-input" />
-            <button
-              type="button"
-              aria-label="Adjuntar una foto"
-              onClick={() => fileRef.current?.click()}
-              className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-[#f6d77a] active:bg-white/10"
-            >
-              <IconCamera className="size-6" />
-            </button>
+            <div className="absolute right-2 top-2">
+              <PhotoPicker
+                onPick={pickPhotoFile}
+                label="Adjuntar una foto"
+                className="grid size-9 place-items-center rounded-full text-[#f6d77a] active:bg-white/10"
+              />
+            </div>
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#fff6dc]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
@@ -557,6 +611,21 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           </button>
         </footer>
 
+        {planner && (
+          <SchedulePlanner
+            token={token}
+            character={character}
+            childName={childName}
+            mode={KING_VOICE_ENABLED ? mode : 'text'}
+            onClose={() => setPlanner(false)}
+            onDone={(n) => {
+              setPlanner(false);
+              setNotice({ tone: 'ok', msg: `${n} mensaje${n === 1 ? '' : 's'} programado${n === 1 ? '' : 's'}. ${short} los enviará a su hora.` });
+              void refresh();
+            }}
+          />
+        )}
+
         {recordHere && (rec.phase === 'ready' || rec.phase === 'recording') && (
           <ReactionCamera
             stream={rec.stream}
@@ -609,11 +678,15 @@ function PanelMessage({
   character,
   childName,
   onOpenPhoto,
+  onCancel,
+  followUps,
 }: {
   m: RoomMessageDTO;
   character: CharacterProfile;
   childName: string;
   onOpenPhoto: (src: string) => void;
+  onCancel: (id: string) => void;
+  followUps?: { id: string; src: string }[];
 }) {
   if (m.from === 'system') {
     return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#fff6dc]/50">Aviso automático enviado: “{m.text}”</p>;
@@ -623,7 +696,7 @@ function PanelMessage({
     <div className={`flex ${child ? 'justify-start' : 'justify-end'}`}>
       <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#f8e08e] text-[#2b1b0e]' : 'rounded-br-md bg-[#fbf5e6] text-[#2b1b0e]'}`}>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : character.name}</p>
-        {m.kind === 'voice' && <VoiceNote duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />}
+        {m.kind === 'voice' && <VoiceNote id={m.id} followUps={followUps} duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />}
         {m.kind === 'photo' && m.imageUrl && (
           <button type="button" onClick={() => onOpenPhoto(m.imageUrl!)} className="block w-56 overflow-hidden rounded-xl" aria-label="Ver la foto en grande">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -632,8 +705,23 @@ function PanelMessage({
         )}
         {m.text && (m.kind === 'text' || m.kind === 'photo') && <p className="mt-1 whitespace-pre-line text-[15px] leading-snug">{m.text}</p>}
         {m.kind === 'voice' && !child && m.text && <p className="mt-1.5 border-t border-black/10 pt-1.5 text-[13px] leading-snug text-[#5b3a1e]">“{m.text}”</p>}
-        <p className="mt-1 text-right text-[10.5px] opacity-60">{m.pending ? `Se entregará a las ${fmtTime(m.at)}` : fmtTime(m.at)}</p>
+        <p className="mt-1 text-right text-[10.5px] opacity-60">{m.pending ? `Se entregará ${fmtWhen(m.at)}` : fmtTime(m.at)}</p>
+        {m.pending && !child && (
+          <button type="button" onClick={() => onCancel(m.id)} className="mt-1.5 w-full rounded-lg border border-black/15 py-1 text-[12px] font-semibold text-[#8a1a1f] active:bg-black/5">
+            Cancelar este mensaje
+          </button>
+        )}
       </div>
     </div>
   );
+}
+
+/** "a las 21:30" si es hoy; "el 24 dic a las 21:30" si no. */
+function fmtWhen(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const time = fmtTime(iso);
+  if (d.toDateString() === now.toDateString()) return `a las ${time}`;
+  const day = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '');
+  return `el ${day} a las ${time}`;
 }

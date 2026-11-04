@@ -7,7 +7,9 @@ import { vibrate } from '@/lib/haptics';
 import { MAX_VOICE_SECONDS } from '@/lib/royal';
 import { IconBack, IconCamera, IconClose, IconMic, IconPen, IconSeal, IconSend, IconStar } from './icons';
 import { Garland, MagicScene } from './MagicScene';
+import { voiceFollowUps } from './mapping';
 import { OrientPhoto } from './OrientPhoto';
+import { PhotoPicker } from './PhotoPicker';
 import { RoyalAvatar } from './RoyalAvatar';
 import { useVoiceRecorder, type Recording } from './useVoiceRecorder';
 import { VoiceNote } from './VoiceNote';
@@ -60,7 +62,6 @@ export function RoyalChat({
   const [hint, setHint] = useState(false);
   const [draft, setDraft] = useState('');
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const kingShort = character.shortName;
   const { theme } = character;
   const [tapped, setTapped] = useState(0);
@@ -91,12 +92,6 @@ export function RoyalChat({
   }, [recording, elapsed]);
 
   const banner = error ?? notice;
-
-  const pickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (file) onPhoto?.(file);
-  };
 
   const submitText = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -162,8 +157,14 @@ export function RoyalChat({
             </div>
           )}
 
-          {messages.map((m) => (
-            <Bubble key={m.id} message={m} character={character} onOpenPhoto={setLightbox} />
+          {messages.map((m, i) => (
+            <Bubble
+              key={m.id}
+              message={m}
+              character={character}
+              onOpenPhoto={setLightbox}
+              followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.src : undefined })) : undefined}
+            />
           ))}
 
           {busy && (
@@ -220,18 +221,12 @@ export function RoyalChat({
                   className="kid-font min-w-0 flex-1 bg-transparent py-3 text-[16px] text-[#2b1b0e] placeholder:text-[#5b3a1e]/45 focus:outline-none"
                 />
                 {onPhoto && (
-                  <>
-                    <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} className="sr-only" tabIndex={-1} aria-hidden data-testid="photo-input" />
-                    <button
-                      type="button"
-                      aria-label="Enviar una foto"
-                      disabled={sending}
-                      onClick={() => fileRef.current?.click()}
-                      className="grid size-10 shrink-0 place-items-center rounded-full text-[#5b3a1e]/70 active:bg-black/5 disabled:opacity-50"
-                    >
-                      <IconCamera className="size-6" />
-                    </button>
-                  </>
+                  <PhotoPicker
+                    onPick={onPhoto}
+                    disabled={sending}
+                    label="Enviar una foto"
+                    className="grid size-10 shrink-0 place-items-center rounded-full text-[#5b3a1e]/70 active:bg-black/5 disabled:opacity-50"
+                  />
                 )}
               </>
             )}
@@ -294,7 +289,7 @@ export function RoyalChat({
   );
 }
 
-function Bubble({ message, character, onOpenPhoto }: { message: ChatMessage; character: Character; onOpenPhoto: (src: string) => void }) {
+function Bubble({ message, character, onOpenPhoto, followUps }: { message: ChatMessage; character: Character; onOpenPhoto: (src: string) => void; followUps?: { id: string; src: string }[] }) {
   if (message.from === 'system' && message.kind === 'text') {
     return (
       <div className="mx-auto flex w-fit max-w-[90%] animate-pop items-start gap-2 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/10 px-3 py-2 text-left text-[13.5px] leading-snug text-[#fff1c2]">
@@ -313,7 +308,7 @@ function Bubble({ message, character, onOpenPhoto }: { message: ChatMessage; cha
       <div className={`relative max-w-[82%] shadow-md ${shell} ${message.kind === 'photo' ? 'overflow-hidden p-1' : 'px-3 py-2'}`}>
         {!mine && message.kind === 'text' && <Sparkles />}
         {message.kind === 'text' && <p className={`whitespace-pre-line leading-snug ${mine ? 'text-[15px]' : 'text-[16.5px]'}`}>{message.text}</p>}
-        {message.kind === 'voice' && <VoiceNote duration={message.duration} seed={message.seed} mine={mine} character={character} src={message.src} />}
+        {message.kind === 'voice' && <VoiceNote id={message.id} followUps={followUps} duration={message.duration} seed={message.seed} mine={mine} character={character} src={message.src} />}
         {message.kind === 'photo' && (
           <figure className="w-64">
             {message.src ? (

@@ -25,6 +25,9 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 ## Pendiente de verificar
 
+- Los mensajes programados dependen del servidor: con Supabase real, comprobar que se entregan a su hora y que "cancelar" borra la fila.
+- La política de borrado cambió (mínimo 45 días o pasadas las fiestas): revisar los textos legales con un profesional.
+
 - Supabase real de extremo a extremo (esquema, triggers, permisos, advisors).
 - Móviles reales (iPhone y Android) y WebKit.
 - Voz definitiva de Papá Noel (`ELEVENLABS_VOICE_PAPA_NOEL`).
