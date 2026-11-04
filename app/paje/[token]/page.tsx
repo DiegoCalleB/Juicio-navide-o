@@ -7,7 +7,7 @@ import { deriveChildToken } from '@/lib/tokens';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Panel del Paje Real', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'Panel de los padres', robots: { index: false, follow: false } };
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 
 export default async function PajePage({ params }: { params: Promise<{ token: string }> }) {

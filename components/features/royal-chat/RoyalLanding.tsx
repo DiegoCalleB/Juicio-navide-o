@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CHARACTERS } from '@/lib/characters';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
+import { MyRooms } from './MyRooms';
 import { DEMO_NOEL } from './demoData';
 
 export function RoyalLanding() {
@@ -24,9 +25,11 @@ export function RoyalLanding() {
           <DemoChat embedded character={CHARACTERS.papa_noel} childName="Lucía" initial={DEMO_NOEL} />
         </section>
 
+        <MyRooms />
+
         <div className="mb-3 text-center">
           <h2 className="font-serif text-2xl text-[#fff6dc]">Crea la sala de tu peque</h2>
-          <p className="mt-1 text-[14px] text-[#fff6dc]/60">Gratis, sin registrarte. Tarda un minuto.</p>
+          <p className="mt-1 text-[14px] text-[#fff6dc]/60">Gratis, sin registrarte. Tarda un minuto. Puedes crear una sala por cada peque o personaje.</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur">
           <CreateRoomForm />
@@ -34,7 +37,7 @@ export function RoyalLanding() {
         <ol className="mt-8 space-y-3 text-[14px] leading-snug text-[#fff6dc]/75">
           <li><span className="font-bold text-[#f6d77a]">1.</span> Crea la sala con el nombre de tu peque y elige quién le contesta.</li>
           <li><span className="font-bold text-[#f6d77a]">2.</span> Abre su enlace en el móvil o tablet que usará.</li>
-          <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto, lee lo que escribe y contesta como si fueras él.</li>
+          <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto de padres, lee lo que escribe y contesta como si fueras él. Guarda ese enlace: es la única llave.</li>
         </ol>
 
         <footer className="mt-10 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">

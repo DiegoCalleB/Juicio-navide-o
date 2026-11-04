@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
 import { CHARACTERS, CHARACTER_GROUPS, type CharacterId } from '@/lib/characters';
+import { saveRoom } from '@/lib/myRooms';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
 
@@ -31,19 +32,37 @@ export function CreateRoomForm() {
       const res = await createRoomAction(payload);
       if (!res.ok) return setError(res.error.message);
       const origin = window.location.origin;
+      saveRoom({ childName: childName.trim(), characterId, parentPath: `/paje/${res.data.parentToken}`, childPath: `/r/${res.data.childToken}`, createdAt: new Date().toISOString() });
       setLinks({ child: `${origin}/r/${res.data.childToken}`, parent: `${origin}/paje/${res.data.parentToken}` });
     });
   };
 
   if (links) {
+    const c = CHARACTERS[characterId];
+    const name = childName.trim();
     return (
       <div className="space-y-4 animate-pop">
         <p className="text-center font-serif text-xl text-[#f6d77a]">¡La sala real está lista!</p>
-        <LinkCard title={`1. Móvil de ${childName.trim()}`} text="Ábrelo en el móvil o tablet que usará. Ahí verá el chat con su Rey." url={links.child} />
-        <LinkCard title="2. Tu panel secreto de Paje Real" text="Desde aquí escuchas sus audios y contestas como el Rey. Guárdalo y no lo compartas." url={links.parent} secret />
+        <LinkCard title={`1. Móvil de ${name}`} text={`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`} url={links.child} />
+        <LinkCard title="2. Tu panel secreto de los padres" text={`Desde aquí lees lo que escribe ${name} y contestas como ${c.shortName}. No lo compartas con el peque.`} url={links.parent} secret />
+        <div role="note" className="rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/[.07] p-3.5 text-[13px] leading-snug text-[#fff6dc]/85">
+          <p className="font-semibold text-[#ff8a8c]">Guarda el enlace del panel ahora</p>
+          <p className="mt-1">No hay cuenta ni contraseña: si lo pierdes, no podemos recuperarlo. Mándatelo por WhatsApp o guarda esta página. En este móvil, además, quedará en «Tus salas» de la portada.</p>
+        </div>
         <a href={links.parent} className="flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a]">
-          Abrir mi panel de Paje Real
+          Abrir mi panel de los padres
         </a>
+        <button
+          type="button"
+          onClick={() => {
+            setLinks(null);
+            setChildName('');
+            setConsent(false);
+          }}
+          className="min-h-11 w-full rounded-2xl border border-white/20 font-semibold text-[#fff6dc]/85 active:scale-[0.99]"
+        >
+          Preparar otra sala (otro peque u otro personaje)
+        </button>
       </div>
     );
   }
