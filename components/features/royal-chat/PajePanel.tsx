@@ -45,6 +45,8 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [shared, setShared] = useState(false);
   const [recordHere, setRecordHere] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
+  const openedSeen = useRef<string | undefined>(undefined);
   const rec = useReactionRecorder();
   const [momentId, setMomentId] = useState(character.moments[0]?.id ?? 'charla');
 
@@ -79,7 +81,23 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     typingTimer.current = setTimeout(() => setChildTyping(false), 4500);
   }, []);
 
-  const { connected } = useRoomEvents(token, { onRefresh: refresh, onTyping: onChildTyping });
+  const onPresence = useCallback(
+    (p: { online: boolean; openedAt?: string }) => {
+      setPresence(p);
+      if (p.openedAt && p.openedAt !== openedSeen.current) {
+        const first = openedSeen.current === undefined;
+        openedSeen.current = p.openedAt;
+        // Si los padres entran después de que el niño abriera, no hace falta alarma.
+        if (!first || Date.now() - Date.parse(p.openedAt) < 20_000) {
+          vibrate([200, 100, 200]);
+          document.title = `🎁 ¡${childName} ha abierto el mensaje!`;
+        }
+      }
+    },
+    [childName],
+  );
+
+  const { connected } = useRoomEvents(token, { onRefresh: refresh, onTyping: onChildTyping, onPresence });
 
   useEffect(() => () => clearTimeout(typingTimer.current), []);
 
@@ -310,6 +328,24 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             aria-label={connected ? 'Conectado en tiempo real' : 'Reconectando'}
           />
         </header>
+
+        {presence && (
+          <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-2 text-[13px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
+            <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
+            <p className="min-w-0 flex-1 leading-snug text-[#fff6dc]/85">
+              {presence.openedAt
+                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en la sala'}</>
+                : presence.online
+                  ? <>{childName} está en la sala, esperando a {short} ✨</>
+                  : <>{childName} aún no ha abierto el enlace</>}
+            </p>
+            {presence.openedAt && messages.length === 0 && (
+              <button type="button" onClick={() => setMomentId('primero')} className="shrink-0 rounded-full bg-[#f6d77a] px-3 py-1 text-[12px] font-bold text-[#2a0f4a] active:scale-95">
+                Primer saludo
+              </button>
+            )}
+          </div>
+        )}
 
         <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
           <section className="rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.07] p-3.5 text-[13px] leading-relaxed">

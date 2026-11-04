@@ -54,6 +54,7 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
     playChime();
     vibrate([60, 40, 120]);
     markSeen(token);
+    void fetch(`/api/rooms/${token}/opened`, { method: 'POST' }).catch(() => undefined);
     setPhase('leaving');
     setTimeout(onOpen, 650);
   };

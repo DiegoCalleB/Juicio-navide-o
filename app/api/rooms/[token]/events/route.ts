@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { getClientFingerprint, rateLimit } from '@/lib/security';
 import { fail } from '@/lib/http';
-import { subscribe, type RoomEvent } from '@/services/realtime';
+import { presenceEvent, subscribe, type RoomEvent } from '@/services/realtime';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -61,6 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
       cleanup = close;
       req.signal.addEventListener('abort', close);
       send('retry: 3000\n\nevent: ready\ndata: {}\n\n');
+      if (found.role === 'parent') onEvent(presenceEvent(found.room.id));
     },
     cancel() {
       cleanup?.();

@@ -8,6 +8,8 @@ interface Options {
   onRefresh: () => Promise<void>;
   /** El otro lado está escribiendo. */
   onTyping: () => void;
+  /** Solo los padres: el niño entra/sale de la sala o abre el mensaje de entrada. */
+  onPresence?: (p: { online: boolean; openedAt?: string }) => void;
 }
 
 const POLL_CONNECTED_MS = 60_000;
@@ -18,14 +20,16 @@ const POLL_FALLBACK_MS = 5_000;
  *  - conectado: avisos instantáneos + sondeo lento (cubre entregas diferidas y reinicios)
  *  - sin conexión: sondeo cada 5 s hasta que EventSource reconecte solo.
  */
-export function useRoomEvents(token: string, { onRefresh, onTyping }: Options): { connected: boolean } {
+export function useRoomEvents(token: string, { onRefresh, onTyping, onPresence }: Options): { connected: boolean } {
   const [connected, setConnected] = useState(false);
   const refreshRef = useRef(onRefresh);
   const typingRef = useRef(onTyping);
+  const presenceRef = useRef(onPresence);
 
   useEffect(() => {
     refreshRef.current = onRefresh;
     typingRef.current = onTyping;
+    presenceRef.current = onPresence;
   });
 
   useEffect(() => {
@@ -37,6 +41,13 @@ export function useRoomEvents(token: string, { onRefresh, onTyping }: Options): 
     });
     es.addEventListener('refresh', () => void refreshRef.current().catch(() => undefined));
     es.addEventListener('typing', () => typingRef.current());
+    es.addEventListener('presence', (e) => {
+      try {
+        presenceRef.current?.(JSON.parse((e as MessageEvent<string>).data) as { online: boolean; openedAt?: string });
+      } catch {
+        /* evento mal formado: se ignora */
+      }
+    });
     es.addEventListener('busy', () => {
       setConnected(false);
       es.close();
