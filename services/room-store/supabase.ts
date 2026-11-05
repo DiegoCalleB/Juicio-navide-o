@@ -132,6 +132,23 @@ export class SupabaseRoomStore implements RoomStore {
     return count ?? 0;
   }
 
+  async deleteMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {
+    const { data, error } = await getAdminClient()
+      .from('room_messages')
+      .delete()
+      .eq('id', messageId)
+      .eq('room_id', roomId)
+      .select(MESSAGE_COLUMNS)
+      .maybeSingle<MessageRow>();
+    if (error) throw new Error('No se pudo borrar el mensaje.');
+    return data ? toRecord(data) : null;
+  }
+
+  async removeFile(bucket: Bucket, path: string): Promise<void> {
+    const { error } = await getAdminClient().storage.from(bucket).remove([path]);
+    if (error) throw new Error(`removeFile: ${error.message}`);
+  }
+
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {
     const { data, error } = await getAdminClient()
       .from('room_messages')

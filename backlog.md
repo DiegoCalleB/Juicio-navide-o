@@ -80,3 +80,8 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Si algún día se quiere algo con la ubicación real, solo para los padres, con precisión de ciudad (no de calle), sin persistencia, sin enlace del niño y tras revisión legal y de seguridad.
 
 **Decisión pendiente:** no construir nada de esto antes de la revisión legal.
+
+## Modo audio (activar)
+
+- Hoy la voz del personaje está detrás de `NEXT_PUBLIC_ENABLE_VOICE=1` (se lee al compilar: hay que redeployar). Necesita `ELEVENLABS_API_KEY` en el servidor. Con la variable apagada, el panel no muestra el selector "Nota de voz / Por escrito".
+- Pendiente de decisión: ¿activarla para todas las salas, o elegirla por sala (con cobro)? Con topes actuales: 40 respuestas por sala y día, 150.000 caracteres al día en total.

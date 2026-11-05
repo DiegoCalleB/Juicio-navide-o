@@ -313,6 +313,18 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const lastChildMsg = lastChild >= 0 ? [...messages].reverse()[lastChild] : undefined;
   const photoWaiting = lastChildMsg?.kind === 'photo' && (lastKing < 0 || lastKing > lastChild);
 
+  const eraseMessage = async (id: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${token}/erase/${id}`, { method: 'DELETE' });
+      const json = (await res.json()) as ApiResult<null>;
+      if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo borrar.');
+      setNotice({ tone: 'ok', msg: 'Mensaje borrado. Ya no aparece en ninguno de los dos móviles.' });
+      await refresh();
+    } catch (err) {
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo borrar.' });
+    }
+  };
+
   const cancelPending = async (id: string) => {
     try {
       const res = await fetch(`/api/rooms/${token}/pending/${id}`, { method: 'DELETE' });
@@ -469,7 +481,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           )}
 
           {messages.map((m, i) => (
-            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
+            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} onErase={eraseMessage} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
           ))}
 
           {childTyping && (
@@ -688,6 +700,7 @@ function PanelMessage({
   childName,
   onOpenPhoto,
   onCancel,
+  onErase,
   followUps,
 }: {
   m: RoomMessageDTO;
@@ -695,8 +708,10 @@ function PanelMessage({
   childName: string;
   onOpenPhoto: (src: string) => void;
   onCancel: (id: string) => void;
+  onErase: (id: string) => void;
   followUps?: { id: string; src: string }[];
 }) {
+  const [asking, setAsking] = useState(false);
   if (m.from === 'system') {
     return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#e8f1ff]/50">Aviso automático enviado: “{m.text}”</p>;
   }
@@ -719,6 +734,19 @@ function PanelMessage({
           <button type="button" onClick={() => onCancel(m.id)} className="mt-1.5 w-full rounded-lg border border-black/15 py-1 text-[12px] font-semibold text-[#8a1a1f] active:bg-black/5">
             Cancelar este mensaje
           </button>
+        )}
+        {!m.pending && (
+          asking ? (
+            <div role="alertdialog" aria-label="Confirmar borrado" className="mt-1.5 flex items-center gap-2 rounded-lg bg-black/5 px-2 py-1.5 text-[12px] text-[#8a1a1f]">
+              <span className="flex-1 font-semibold">¿Borrar este mensaje para los dos?</span>
+              <button type="button" onClick={() => { setAsking(false); onErase(m.id); }} className="rounded-md bg-[#8a1a1f] px-2.5 py-1 font-bold text-white">Sí, borrar</button>
+              <button type="button" onClick={() => setAsking(false)} className="rounded-md border border-black/15 px-2.5 py-1 font-semibold">No</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setAsking(true)} className="mt-1.5 w-full rounded-lg py-1 text-[11.5px] font-semibold text-[#5b3a1e]/70 underline-offset-2 hover:underline">
+              Borrar mensaje
+            </button>
+          )
         )}
       </div>
     </div>

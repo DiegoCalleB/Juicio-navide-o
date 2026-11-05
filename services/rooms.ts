@@ -238,3 +238,17 @@ export async function cancelPending(room: Room, messageId: string): Promise<bool
 export function signalTyping(room: Room, from: Role): void {
   publish(room.id, { type: 'typing', from }, from === 'parent' ? 'child' : 'parent');
 }
+
+/**
+ * Borra un mensaje de la sala (lo hacen los padres si hay un error). Desaparece también
+ * para el niño en su próxima actualización, y se borran sus audios o fotos del almacén.
+ */
+export async function eraseMessage(room: Room, messageId: string): Promise<boolean> {
+  const store = getRoomStore();
+  const row = await store.deleteMessage(room.id, messageId);
+  if (!row) return false;
+  if (row.audioPath) await store.removeFile('voices', row.audioPath).catch(() => undefined);
+  if (row.imagePath) await store.removeFile('media', row.imagePath).catch(() => undefined);
+  publishRefresh(room.id);
+  return true;
+}

@@ -63,6 +63,10 @@ export interface RoomStore {
    */
   getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
   countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number>;
+  /** Borra cualquier mensaje de la sala (error de los padres). Devuelve la fila borrada para limpiar sus archivos, o null. */
+  deleteMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
+  /** Borra un archivo del almacén (sin error si no existe). */
+  removeFile(bucket: Bucket, path: string): Promise<void>;
   /** Borra un mensaje del personaje que aún no se ha entregado (programado). Devuelve si existía. */
   deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean>;
   /** Respuestas con voz del personaje en esa sala desde `sinceIso` (tope por sala). */

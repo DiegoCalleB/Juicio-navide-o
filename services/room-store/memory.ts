@@ -86,6 +86,18 @@ export class MemoryRoomStore implements RoomStore {
     return (state().messages.get(roomId) ?? []).filter((m) => m.sender === 'system' && Date.parse(m.createdAt) >= since).length;
   }
 
+  async deleteMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {
+    const list = state().messages.get(roomId) ?? [];
+    const i = list.findIndex((m) => m.id === messageId);
+    if (i < 0) return null;
+    const [row] = list.splice(i, 1);
+    return row ?? null;
+  }
+
+  async removeFile(bucket: Bucket, path: string): Promise<void> {
+    state().files.delete(`${bucket}/${path}`);
+  }
+
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {
     const list = state().messages.get(roomId) ?? [];
     const now = Date.parse(nowIso);

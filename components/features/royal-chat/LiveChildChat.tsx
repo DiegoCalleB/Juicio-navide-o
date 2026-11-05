@@ -125,6 +125,10 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
     const all = body.data.messages.map(toChatMessage).filter((m): m is ChatMessage => m !== null);
     const fresh = all.filter((m) => !seen.current.has(m.id));
 
+    // Lo que los padres han borrado desaparece también del móvil del niño.
+    const present = new Set(all.map((m) => m.id));
+    setShown((s) => (s.some((m) => !present.has(m.id)) ? s.filter((m) => present.has(m.id)) : s));
+
     // La primera carga es historial (también si está vacía): lo que llegue después es "en directo".
     const firstLoad = !loaded.current;
     loaded.current = true;
