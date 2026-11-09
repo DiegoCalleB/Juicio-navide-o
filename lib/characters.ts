@@ -586,10 +586,10 @@ export function isCharacterId(value: string): value is CharacterId {
 
 /** Personajes agrupados para el selector. */
 export const CHARACTER_GROUPS: { id: 'noel' | 'reyes' | 'raton' | 'duende'; label: string; ids: CharacterId[] }[] = [
+  { id: 'duende', label: 'El elfo travieso', ids: ['duende_chispa'] },
   { id: 'noel', label: 'Papá Noel', ids: ['papa_noel'] },
   { id: 'reyes', label: 'Los Reyes Magos', ids: ['melchor', 'gaspar', 'baltasar'] },
   { id: 'raton', label: 'Cuando se cae un diente', ids: ['raton_perez'] },
-  { id: 'duende', label: 'El duende travieso', ids: ['duende_chispa'] },
 ];
 
 /** Rellena las plantillas con el nombre del niño. */
