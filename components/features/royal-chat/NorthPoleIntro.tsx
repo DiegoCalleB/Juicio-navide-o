@@ -93,7 +93,7 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
               <RoyalAvatar character={character} size={118} />
             </div>
             <h1 className="mt-4 font-serif text-[30px] leading-tight text-[#fff6dc]">
-              {childName}, tienes un mensaje {character.group === 'noel' ? 'de' : 'del'} {character.name}
+              {childName}, tienes un mensaje {character.deName}
             </h1>
 
             <button

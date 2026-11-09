@@ -53,6 +53,8 @@ export class SupabaseRoomStore implements RoomStore {
       parent_token_hash: room.parentTokenHash,
       child_name: room.childName,
       character_id: room.characterId,
+      character_alias: room.characterAlias ?? null,
+      character_gender: room.characterGender ?? null,
       creator_hash: room.creatorHash,
       expires_at: room.expiresAt,
     });
@@ -63,15 +65,17 @@ export class SupabaseRoomStore implements RoomStore {
   async findRoomByTokenHash(hash: string): Promise<RoomRecord | null> {
     const { data, error } = await getAdminClient()
       .from('rooms')
-      .select('id, child_name, character_id, child_token_hash, parent_token_hash')
+      .select('id, child_name, character_id, character_alias, character_gender, child_token_hash, parent_token_hash')
       .or(`child_token_hash.eq.${hash},parent_token_hash.eq.${hash}`)
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle<{ id: string; child_name: string; character_id: string; child_token_hash: string; parent_token_hash: string }>();
+      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_token_hash: string; parent_token_hash: string }>();
     if (error || !data) return null;
     return {
       id: data.id,
       childName: data.child_name,
       characterId: data.character_id,
+      characterAlias: data.character_alias,
+      characterGender: data.character_gender,
       childTokenHash: data.child_token_hash,
       parentTokenHash: data.parent_token_hash,
     };
@@ -184,10 +188,12 @@ export class SupabaseRoomStore implements RoomStore {
     return data ? toRecord(data) : null;
   }
 
-  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean> {
-    const update: Record<string, string> = {};
+  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string; characterAlias?: string | null; characterGender?: string | null }): Promise<boolean> {
+    const update: Record<string, string | null> = {};
     if (patch.childName !== undefined) update.child_name = patch.childName;
     if (patch.characterId !== undefined) update.character_id = patch.characterId;
+    if (patch.characterAlias !== undefined) update.character_alias = patch.characterAlias;
+    if (patch.characterGender !== undefined) update.character_gender = patch.characterGender;
     const { data, error } = await getAdminClient().from('rooms').update(update).eq('id', roomId).select('id');
     if (error) throw new Error('No se pudo editar la sala.');
     return (data?.length ?? 0) > 0;

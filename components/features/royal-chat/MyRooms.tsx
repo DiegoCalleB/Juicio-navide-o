@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { CHARACTERS } from '@/lib/characters';
+import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { loadRooms, removeRoom, type SavedRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 
@@ -44,8 +44,9 @@ export function MyRooms() {
       <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/60">Solo para padres: no enseñes esta pantalla a los peques.</p>
       <ul className="mt-3 space-y-2.5">
         {rooms.map((r) => {
-          const c = CHARACTERS[r.characterId];
-          if (!c) return null;
+          const base = CHARACTERS[r.characterId];
+          if (!base) return null;
+          const c = resolveCharacter(base, { alias: r.characterAlias, gender: r.characterGender });
           return (
             <li key={r.parentPath} className="rounded-2xl border border-white/10 bg-black/20 p-3">
               <div className="flex items-center gap-3">

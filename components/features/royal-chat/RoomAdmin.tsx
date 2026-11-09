@@ -2,33 +2,43 @@
 
 import { useState } from 'react';
 import { removeRoom } from '@/lib/myRooms';
-import { CHARACTER_GROUPS, CHARACTERS, type CharacterId } from '@/lib/characters';
+import { CHARACTER_GROUPS, CHARACTERS, resolveCharacter, type CharacterId } from '@/lib/characters';
 import type { ApiResult } from './mapping';
 
 interface Props {
   token: string;
   childName: string;
   characterId: CharacterId;
+  characterAlias?: string | null;
+  characterGender?: string | null;
 }
 
 /** Editar la sala (nombre y personaje) y borrarla por completo. Lo ven solo los padres. */
-export function RoomAdmin({ token, childName, characterId }: Props) {
+export function RoomAdmin({ token, childName, characterId, characterAlias = null, characterGender = null }: Props) {
   const [name, setName] = useState(childName);
   const [character, setCharacter] = useState<CharacterId>(characterId);
+  const [alias, setAlias] = useState(characterAlias ?? '');
+  const [gender, setGender] = useState<'m' | 'f'>(characterGender === 'f' ? 'f' : 'm');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [askDelete, setAskDelete] = useState(false);
 
-  const changed = name.trim() !== childName || character !== characterId;
+  const isElf = character === 'duende_chispa';
+  const elfChanged = isElf && (alias.trim() !== (characterAlias ?? '') || gender !== (characterGender === 'f' ? 'f' : 'm'));
+  const changed = name.trim() !== childName || character !== characterId || elfChanged;
 
   const save = async () => {
     if (!changed || busy) return;
     setBusy(true);
     setMsg(null);
     try {
-      const body: { childName?: string; characterId?: CharacterId } = {};
+      const body: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' } = {};
       if (name.trim() !== childName) body.childName = name.trim();
       if (character !== characterId) body.characterId = character;
+      if (isElf && (character !== characterId || elfChanged)) {
+        if (alias.trim()) body.characterAlias = alias.trim();
+        body.characterGender = gender;
+      }
       const res = await fetch(`/api/rooms/${token}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const json = (await res.json()) as ApiResult<null>;
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo guardar.');
@@ -81,12 +91,40 @@ export function RoomAdmin({ token, childName, characterId }: Props) {
                 onClick={() => setCharacter(id)}
                 className={`rounded-full px-3 py-1.5 text-[12.5px] font-bold ${character === id ? 'bg-[#5eead4] text-[#04302b]' : 'bg-white/10 text-[#e8f1ff]/80'}`}
               >
-                {CHARACTERS[id].name}
+                {resolveCharacter(CHARACTERS[id]).name}
               </button>
             ))}
           </div>
           {character !== characterId && (
             <p className="text-[12px] text-[#5eead4]">Cambiar de personaje cambia también su voz y sus colores. Los mensajes se mantienen.</p>
+          )}
+          {isElf && (
+            <div className="space-y-2 rounded-xl bg-black/20 p-2.5">
+              <label className="block">
+                <span className="text-[12px] text-[#e8f1ff]/70">Nombre de vuestro elfo</span>
+                <input
+                  value={alias}
+                  maxLength={20}
+                  placeholder="Chispa"
+                  onChange={(e) => setAlias(e.target.value)}
+                  className="mt-1 min-h-11 w-full rounded-xl border border-white/15 bg-[#0a1220] px-3 text-[15px] text-[#e8f1ff] focus:border-[#5eead4] focus:outline-none"
+                />
+              </label>
+              <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-1.5">
+                {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
+                  <button
+                    key={g}
+                    type="button"
+                    role="radio"
+                    aria-checked={gender === g}
+                    onClick={() => setGender(g)}
+                    className={`flex-1 rounded-full px-3 py-1.5 text-[12.5px] font-bold ${gender === g ? 'bg-[#5eead4] text-[#04302b]' : 'bg-white/10 text-[#e8f1ff]/80'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
         <button

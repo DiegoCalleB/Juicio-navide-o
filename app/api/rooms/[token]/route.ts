@@ -14,10 +14,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ to
     if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
     const parsed = roomEditSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return fail('VALIDATION', parsed.error.issues[0]?.message ?? 'Datos no válidos.', 400);
-    const { childName, characterId } = parsed.data;
+    const { childName, characterId, characterAlias, characterGender } = parsed.data;
     const patch = {
       childName,
       characterId: characterId && isCharacterId(characterId) ? characterId : undefined,
+      characterAlias,
+      characterGender,
     };
     const ok = await editRoom(found.room, patch);
     return ok ? json({ ok: true, data: null }) : fail('NOT_FOUND', 'Sala no encontrada', 404);

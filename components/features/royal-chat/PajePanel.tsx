@@ -10,7 +10,7 @@ import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
-import { MischiefPlanner } from './MischiefPlanner';
+import { IdeasList } from './IdeasList';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -29,10 +29,13 @@ interface PajePanelProps {
   childLink: string;
   character: CharacterProfile;
   childName: string;
+  /** Solo el elfo: nombre y género que eligió la familia. */
+  characterAlias?: string | null;
+  characterGender?: string | null;
 }
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
-export function PajePanel({ token, childLink, character, childName }: PajePanelProps) {
+export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null }: PajePanelProps) {
   const [messages, setMessages] = useState<RoomMessageDTO[]>([]);
   const [text, setText] = useState('');
   const [delay, setDelay] = useState<ReplyDelay>(0);
@@ -52,7 +55,12 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
   const [planner, setPlanner] = useState(false);
-  const [mischiefOpen, setMischiefOpen] = useState(false);
+  const [ideasOpen, setIdeasOpen] = useState(false);
+  /** Idea de travesura elegida a mano (si no, la de hoy). */
+  const [pickedDay, setPickedDay] = useState<number | null>(null);
+  /** Programar para otro momento (fecha y hora a elegir). */
+  const [whenCustom, setWhenCustom] = useState(false);
+  const [whenValue, setWhenValue] = useState('');
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
   const [capsLink, setCapsLink] = useState(false);
   const shareLink = capsLink ? `${childLink}?letras=mayus` : childLink;
@@ -173,6 +181,15 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
 
   const send = async () => {
     if (!canSend) return;
+    let scheduledAt: string | undefined;
+    if (whenCustom) {
+      const t = whenValue ? new Date(whenValue) : null;
+      if (!t || Number.isNaN(t.getTime()) || t.getTime() < Date.now() + 90_000) {
+        setNotice({ tone: 'error', msg: 'Elige una fecha y hora futuras (al menos dentro de 2 minutos).' });
+        return;
+      }
+      scheduledAt = t.toISOString();
+    }
     setSending(true);
     setNotice(null);
     try {
@@ -181,20 +198,28 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
         const form = new FormData();
         form.append('image', photo.blob, 'foto');
         form.append('caption', text.trim());
-        form.append('delayMinutes', String(delay));
+        form.append('delayMinutes', scheduledAt ? '0' : String(delay));
+        if (scheduledAt) form.append('scheduledAt', scheduledAt);
         res = await fetch(`/api/rooms/${token}/photo`, { method: 'POST', body: form });
       } else {
         res = await fetch(`/api/rooms/${token}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.trim(), delayMinutes: delay, mode: KING_VOICE_ENABLED ? mode : 'text' }),
+          body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: KING_VOICE_ENABLED ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
         });
       }
       const json = (await res.json()) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }>;
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
       setPhoto(null);
-      const when = delay === 0 ? `${short} ya ha contestado.` : `${short} contestará en ${delay} min.`;
+      // Tras programar, el siguiente mensaje vuelve a enviarse al momento (así no se programa otro sin querer).
+      setWhenCustom(false);
+      setWhenValue('');
+      const when = scheduledAt
+        ? `${short} lo enviará ${fmtWhen(scheduledAt)}.`
+        : delay === 0
+          ? `${short} ya ha contestado.`
+          : `${short} contestará en ${delay} min.`;
       const fb = json.data?.fallback;
       if (fb) {
         setNotice({
@@ -310,7 +335,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
-  // Calendario de travesuras: qué toca hoy (solo mientras dura la campaña).
+  // Idea de travesura: la elegida a mano o la de hoy (solo mientras dura la campaña).
   const todayMischief = (() => {
     const cal = character.mischief;
     if (!cal) return null;
@@ -318,7 +343,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     const now = new Date();
     const start = new Date(now.getFullYear(), m - 1, d);
     const n = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - start.getTime()) / 86_400_000) + 1;
-    return cal.days.find((x) => x.day === n) ?? null;
+    return cal.days.find((x) => x.day === (pickedDay ?? n)) ?? null;
   })();
 
   const setupVisible = setupOpen ?? (messages.length === 0 && !presence?.openedAt);
@@ -505,20 +530,26 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             )}
           </section>
 
-          <RoomAdmin token={token} childName={childName} characterId={character.id} />
+          <RoomAdmin token={token} childName={childName} characterId={character.id} characterAlias={characterAlias} characterGender={characterGender} />
           </div>
 
           {todayMischief && (
-            <section aria-label="Travesura de hoy" className="rounded-2xl border border-[#5eead4]/35 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
-              <p className="font-semibold text-[#5eead4]">🧝 Travesura de hoy · día {todayMischief.day}</p>
+            <section aria-label="Idea de travesura" className="rounded-2xl border border-[#5eead4]/35 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
+              <p className="font-semibold text-[#5eead4]">🧝 Idea de travesura · día {todayMischief.day}</p>
               <p className="mt-1 text-[#e8f1ff]/80"><strong className="font-semibold">Monta esta noche:</strong> {todayMischief.idea}</p>
-              <button
-                type="button"
-                onClick={() => setText(fillChild(todayMischief.text, childName).slice(0, MAX_CHARS))}
-                className="mt-2 min-h-10 w-full rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
-              >
-                Usar el mensaje de hoy
-              </button>
+              <p className="mt-1 text-[12px] text-[#e8f1ff]/55">Después haz una foto, escribe lo que quieras y prográmalo para la mañana.</p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => setIdeasOpen(true)} className="min-h-10 flex-1 rounded-xl border border-white/20 font-semibold text-[#e8f1ff]/85 active:scale-[0.98]">
+                  Otras ideas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setText(fillChild(todayMischief.suggestion, childName).slice(0, MAX_CHARS))}
+                  className="min-h-10 flex-1 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
+                >
+                  Ver una sugerencia de mensaje
+                </button>
+              </div>
             </section>
           )}
 
@@ -566,10 +597,10 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             {character.mischief && (
               <button
                 type="button"
-                onClick={() => setMischiefOpen(true)}
+                onClick={() => setIdeasOpen(true)}
                 className="shrink-0 rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
               >
-                📅 Calendario de travesuras
+                💡 Ideas de travesuras
               </button>
             )}
           </div>
@@ -668,14 +699,51 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                   type="button"
                   role="radio"
                   aria-checked={delay === d}
-                  onClick={() => setDelay(d)}
-                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${delay === d ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
+                  onClick={() => {
+                    setDelay(d);
+                    setWhenCustom(false);
+                  }}
+                  className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${!whenCustom && delay === d ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
                 >
                   {DELAY_LABEL[d]}
                 </button>
               ))}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={whenCustom}
+                onClick={() => setWhenCustom(true)}
+                className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${whenCustom ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
+              >
+                Otro día
+              </button>
             </div>
           </div>
+          {whenCustom && (
+            <div className="space-y-1.5 rounded-xl bg-white/5 p-2.5">
+              <label htmlFor="when-custom" className="block text-[12px] text-[#e8f1ff]/70">Cuándo le llega (fecha y hora)</label>
+              <input
+                id="when-custom"
+                type="datetime-local"
+                value={whenValue}
+                onChange={(e) => setWhenValue(e.target.value)}
+                className="min-h-11 w-full rounded-xl border border-white/15 bg-[#0a1220] px-3 text-[15px] text-[#e8f1ff] [color-scheme:dark]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const t = new Date();
+                  t.setDate(t.getDate() + 1);
+                  t.setHours(8, 0, 0, 0);
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  setWhenValue(`${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T08:00`);
+                }}
+                className="rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
+              >
+                Mañana a las 8:00
+              </button>
+            </div>
+          )}
 
           {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#5eead4]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
 
@@ -691,24 +759,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           </button>
         </footer>
 
-        {mischiefOpen && (
-          <MischiefPlanner
-            token={token}
-            character={character}
-            childName={childName}
-            onClose={() => setMischiefOpen(false)}
-            onDone={(n, limited) => {
-              setMischiefOpen(false);
-              setNotice({
-                tone: limited ? 'warn' : 'ok',
-                msg: limited
-                  ? `Se programaron ${n} mensajes; se alcanzó el límite por hora de la sala. Vuelve en un rato para programar el resto.`
-                  : `${n} travesura${n === 1 ? '' : 's'} programada${n === 1 ? '' : 's'}. ${short} las enviará a su hora.`,
-              });
-              void refresh();
-            }}
-          />
-        )}
+        {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onClose={() => setIdeasOpen(false)} />}
 
         {planner && (
           <SchedulePlanner

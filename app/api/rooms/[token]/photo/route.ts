@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { fail, guarded, json } from '@/lib/http';
 import { MAX_PHOTO_BYTES, REPLY_DELAYS, type ReplyDelay } from '@/lib/royal';
+import { scheduledAtSchema } from '@/lib/schemas';
 import { sanitizeText } from '@/lib/sanitize';
 import { addPhoto, findRoomByToken, normalizeImageType } from '@/services/rooms';
 
@@ -28,9 +29,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     const caption = captionSchema.safeParse(form.get('caption') ?? '');
     const delay = delaySchema.safeParse(form.get('delayMinutes') ?? 0);
-    if (!caption.success || !delay.success) return fail('VALIDATION', 'Datos no válidos.', 400);
+    const rawWhen = form.get('scheduledAt');
+    const when = rawWhen ? scheduledAtSchema.safeParse(String(rawWhen)) : null;
+    if (!caption.success || !delay.success || (when && !when.success)) return fail('VALIDATION', 'Datos no válidos (la fecha debe estar entre 1 minuto y 90 días).', 400);
+    // Solo los padres pueden programar; el niño siempre entrega al momento.
+    const scheduledAt = found.role === 'parent' && when?.success ? when.data : undefined;
 
-    await addPhoto(found.room, found.role, Buffer.from(await file.arrayBuffer()), file.type, caption.data || null, delay.data);
+    await addPhoto(found.room, found.role, Buffer.from(await file.arrayBuffer()), file.type, caption.data || null, delay.data, scheduledAt);
     return json({ ok: true, data: null }, 201);
   });
 }

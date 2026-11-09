@@ -27,6 +27,8 @@ export class MemoryRoomStore implements RoomStore {
       id: randomUUID(),
       childName: room.childName,
       characterId: room.characterId,
+      characterAlias: room.characterAlias ?? null,
+      characterGender: room.characterGender ?? null,
       childTokenHash: room.childTokenHash,
       parentTokenHash: room.parentTokenHash,
       expiresAt: room.expiresAt,
@@ -112,11 +114,13 @@ export class MemoryRoomStore implements RoomStore {
     return rec;
   }
 
-  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean> {
+  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string; characterAlias?: string | null; characterGender?: string | null }): Promise<boolean> {
     const row = state().rooms.get(roomId);
     if (!row) return false;
     if (patch.childName !== undefined) row.childName = patch.childName;
     if (patch.characterId !== undefined) row.characterId = patch.characterId;
+    if (patch.characterAlias !== undefined) row.characterAlias = patch.characterAlias;
+    if (patch.characterGender !== undefined) row.characterGender = patch.characterGender;
     return true;
   }
 

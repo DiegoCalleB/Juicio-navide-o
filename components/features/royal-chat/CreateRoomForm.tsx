@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
-import { CHARACTERS, CHARACTER_GROUPS, type CharacterId } from '@/lib/characters';
+import { CHARACTERS, CHARACTER_GROUPS, resolveCharacter, type CharacterId } from '@/lib/characters';
 import { saveRoom } from '@/lib/myRooms';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -13,6 +13,8 @@ export function CreateRoomForm() {
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
   const [characterId, setCharacterId] = useState<CharacterId>('papa_noel');
+  const [alias, setAlias] = useState('');
+  const [gender, setGender] = useState<'m' | 'f'>('m');
   const [consent, setConsent] = useState(false);
   const [trap, setTrap] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,8 @@ export function CreateRoomForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const payload = { childName, characterId, consent, website: trap };
+    const isElf = characterId === 'duende_chispa';
+    const payload = { childName, characterId, consent, website: trap, ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) };
     const check = createRoomSchema.safeParse(payload);
     if (!check.success) {
       const f = check.error.flatten().fieldErrors;
@@ -32,13 +35,13 @@ export function CreateRoomForm() {
       const res = await createRoomAction(payload);
       if (!res.ok) return setError(res.error.message);
       const origin = window.location.origin;
-      saveRoom({ childName: childName.trim(), characterId, parentPath: `/paje/${res.data.parentToken}`, childPath: `/r/${res.data.childToken}`, createdAt: new Date().toISOString() });
+      saveRoom({ childName: childName.trim(), characterId, characterAlias: payload.characterAlias, characterGender: payload.characterGender, parentPath: `/paje/${res.data.parentToken}`, childPath: `/r/${res.data.childToken}`, createdAt: new Date().toISOString() });
       setLinks({ child: `${origin}/r/${res.data.childToken}`, parent: `${origin}/paje/${res.data.parentToken}` });
     });
   };
 
   if (links) {
-    const c = CHARACTERS[characterId];
+    const c = resolveCharacter(CHARACTERS[characterId], { alias, gender });
     const name = childName.trim();
     return (
       <div className="space-y-4 animate-pop">
@@ -83,7 +86,7 @@ export function CreateRoomForm() {
             <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]/80">{group.label}</p>
             <div className={`grid gap-2 ${group.ids.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
               {group.ids.map((id) => {
-                const c = CHARACTERS[id];
+                const c = resolveCharacter(CHARACTERS[id]);
                 const selected = characterId === id;
                 return (
                   <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${group.ids.length === 1 ? 'flex-row' : 'flex-col text-center'} ${selected ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
@@ -100,6 +103,38 @@ export function CreateRoomForm() {
           </div>
         ))}
       </fieldset>
+
+      {characterId === 'duende_chispa' && (
+        <div className="space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
+          <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
+          <div className="space-y-1.5">
+            <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75">Nombre (el que queráis)</label>
+            <input
+              id="elf-alias"
+              value={alias}
+              maxLength={20}
+              onChange={(e) => setAlias(e.target.value)}
+              placeholder="Chispa"
+              autoComplete="off"
+              className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none"
+            />
+          </div>
+          <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-2">
+            {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
+              <button
+                key={g}
+                type="button"
+                role="radio"
+                aria-checked={gender === g}
+                onClick={() => setGender(g)}
+                className={`min-h-11 flex-1 rounded-2xl border text-[14px] font-bold ${gender === g ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />

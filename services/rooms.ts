@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { CHARACTERS, fillChild, isCharacterId, roomExpiresAt, type CharacterId } from '@/lib/characters';
+import { CHARACTERS, fillChild, isCharacterId, resolveCharacter, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
@@ -18,12 +18,15 @@ export interface Room {
   id: string;
   childName: string;
   character: CharacterId;
+  /** Solo el elfo: nombre que le puso la familia y si es chico ('m') o chica ('f'). */
+  characterAlias: string | null;
+  characterGender: string | null;
 }
 
 // ── Salas ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
-  input: { childName: string; characterId: CharacterId },
+  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' },
   creatorHash: string,
 ): Promise<{ childToken: string; parentToken: string }> {
   const parentToken = newToken();
@@ -33,6 +36,8 @@ export async function createRoom(
     parentTokenHash: hashToken(parentToken),
     childName: input.childName,
     characterId: input.characterId,
+    characterAlias: input.characterId === 'duende_chispa' ? (input.characterAlias ?? null) : null,
+    characterGender: input.characterId === 'duende_chispa' ? (input.characterGender ?? null) : null,
     creatorHash,
     expiresAt: roomExpiresAt(CHARACTERS[input.characterId]).toISOString(),
   });
@@ -46,7 +51,7 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId },
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender },
     role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
@@ -113,7 +118,7 @@ function notify(room: Room, rec: MessageRecord): void {
 async function maybeAcknowledge(room: Room): Promise<void> {
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
   if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
-  const c = CHARACTERS[room.character];
+  const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender });
   const rec = await getRoomStore().insertMessage({
     roomId: room.id,
     sender: 'system',
@@ -136,6 +141,7 @@ export async function addPhoto(
   mime: string,
   caption: string | null,
   delayMinutes: ReplyDelay = 0,
+  scheduledAt?: string,
 ): Promise<void> {
   const type = normalizeImageType(mime);
   const spec = type ? IMAGE_TYPES[type] : undefined;
@@ -150,7 +156,8 @@ export async function addPhoto(
     kind: 'photo',
     imagePath: path,
     body: caption,
-    deliverAt: role === 'parent' && delayMinutes > 0 ? new Date(Date.now() + delayMinutes * 60_000).toISOString() : undefined,
+    deliverAt:
+      role === 'parent' ? (scheduledAt ?? (delayMinutes > 0 ? new Date(Date.now() + delayMinutes * 60_000).toISOString() : undefined)) : undefined,
   });
   notify(room, rec);
   if (role === 'child') await maybeAcknowledge(room);
@@ -266,7 +273,10 @@ export async function editMessage(room: Room, messageId: string, text: string): 
 }
 
 /** Cambia el nombre y/o el personaje de la sala. El niño lo verá al volver a abrir su enlace. */
-export async function editRoom(room: Room, patch: { childName?: string; characterId?: CharacterId }): Promise<boolean> {
+export async function editRoom(
+  room: Room,
+  patch: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' },
+): Promise<boolean> {
   const ok = await getRoomStore().updateRoom(room.id, patch);
   if (ok) publishRefresh(room.id);
   return ok;
@@ -283,25 +293,4 @@ export async function eraseRoom(room: Room): Promise<void> {
   }
   await store.deleteRoom(room.id);
   publishRefresh(room.id);
-}
-
-/**
- * Programa varios mensajes de golpe (por escrito: la voz de 24 mensajes gastaría demasiado).
- * Si se alcanza el límite por hora de la sala, se queda en los que ya estaban programados.
- */
-export async function scheduleMessages(
-  room: Room,
-  items: { text: string; scheduledAt: string; surprise?: boolean }[],
-): Promise<{ scheduled: number; limited: boolean }> {
-  let scheduled = 0;
-  for (const it of items) {
-    try {
-      await addKingReply(room, it.text, 0, 'text', it.surprise ? 'surprise' : undefined, it.scheduledAt);
-      scheduled++;
-    } catch (err) {
-      if (err instanceof RoomError && err.code === 'RATE_LIMITED') return { scheduled, limited: true };
-      throw err;
-    }
-  }
-  return { scheduled, limited: false };
 }

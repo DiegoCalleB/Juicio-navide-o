@@ -8,6 +8,9 @@ import type { CharacterId } from '@/lib/characters';
 export interface SavedRoom {
   childName: string;
   characterId: CharacterId;
+  /** Solo el elfo. */
+  characterAlias?: string;
+  characterGender?: 'm' | 'f';
   /** Rutas relativas (/paje/…, /r/…): funcionan con cualquier dominio. */
   parentPath: string;
   childPath: string;

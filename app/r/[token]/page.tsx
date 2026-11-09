@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { LiveChildChat } from '@/components/features/royal-chat/LiveChildChat';
-import { CHARACTERS } from '@/lib/characters';
+import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
   const { token } = await params;
   const found = await findRoomByToken(token);
-  const name = found?.role === 'child' ? CHARACTERS[found.room.character].name : 'Mensaje mágico';
+  const name = found?.role === 'child' ? resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender }).name : 'Mensaje mágico';
   return { title: { absolute: name }, applicationName: name, appleWebApp: { capable: true, title: name, statusBarStyle: 'black-translucent' }, robots: { index: false, follow: false } };
 }
 export const viewport: Viewport = { themeColor: '#2a0f4a' };
@@ -19,5 +19,5 @@ export default async function ChildRoomPage({ params, searchParams }: { params: 
   const { letras } = await searchParams;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'child') notFound();
-  return <LiveChildChat token={token} character={CHARACTERS[found.room.character]} childName={found.room.childName} initialCaps={letras === 'mayus'} />;
+  return <LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender })} childName={found.room.childName} initialCaps={letras === 'mayus'} />;
 }

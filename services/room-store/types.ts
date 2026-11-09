@@ -8,6 +8,10 @@ export interface RoomRecord {
   characterId: string;
   childTokenHash: string;
   parentTokenHash: string;
+  /** Nombre que la familia le pone al personaje (solo el elfo). */
+  characterAlias: string | null;
+  /** 'm' o 'f' (solo el elfo). */
+  characterGender: string | null;
 }
 
 export interface MessageRecord {
@@ -43,6 +47,8 @@ export interface NewRoom {
   parentTokenHash: string;
   childName: string;
   characterId: string;
+  characterAlias?: string | null;
+  characterGender?: string | null;
   creatorHash: string;
   expiresAt: string;
 }
@@ -69,7 +75,7 @@ export interface RoomStore {
   /** Cambia el texto de un mensaje del personaje (texto o pie de foto). Devuelve la fila o null. */
   updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null>;
   /** Cambia el nombre y/o el personaje de la sala. */
-  updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean>;
+  updateRoom(roomId: string, patch: { childName?: string; characterId?: string; characterAlias?: string | null; characterGender?: string | null }): Promise<boolean>;
   /** Rutas de todos los archivos de la sala (también de mensajes no entregados). */
   listFilePaths(roomId: string): Promise<{ bucket: Bucket; path: string }[]>;
   /** Borra la sala y sus mensajes (los archivos se borran antes con removeFile). */
