@@ -46,6 +46,20 @@ export function MagicScene({ sky }: { sky: SkyKind }) {
       </div>
     );
   }
+  if (sky === 'candy') {
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(63,207,122,.22),transparent_60%),linear-gradient(180deg,#0f3140_0%,#0d2b3a_55%,#0a1f2c_100%)]" />
+        {FLAKES.map((f, i) => {
+          const colors = ['#ff5a5f', '#ffd25a', '#4cd98a', '#7ec8ff', '#ffffff'];
+          return (
+            <span key={`g${i}`} className="anim-snow absolute top-0 rounded-sm" style={{ left: f.left, width: f.size + 1, height: f.size + 3, background: colors[i % colors.length], opacity: 0.55, animationDuration: `${f.duration + 4}s`, animationDelay: `${f.delay}s`, transform: `rotate(${(i * 37) % 90}deg)` }} />
+          );
+        })}
+        <div className="absolute inset-x-0 bottom-0 h-3 opacity-80" style={{ background: 'repeating-linear-gradient(135deg,#e5383b 0 14px,#ffffff 14px 28px)' }} />
+      </div>
+    );
+  }
   if (sky === 'night') {
     return (
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -78,7 +92,7 @@ export function MagicScene({ sky }: { sky: SkyKind }) {
 
 /** Guirnalda de luces bajo la cabecera: discreta, con bombillas que respiran. */
 export function Garland({ sky }: { sky: SkyKind }) {
-  const colors = sky === 'snow' ? ['#ff5a5f', '#f6d77a', '#4cd98a', '#6fb7ff'] : sky === 'night' ? ['#ffe08a', '#c9b8ff', '#fff3c4'] : ['#f6d77a', '#fff1b8', '#f2c94c'];
+  const colors = sky === 'snow' ? ['#ff5a5f', '#f6d77a', '#4cd98a', '#6fb7ff'] : sky === 'night' ? ['#ffe08a', '#c9b8ff', '#fff3c4'] : sky === 'candy' ? ['#ff5a5f', '#ffd25a', '#4cd98a', '#7ec8ff'] : ['#f6d77a', '#fff1b8', '#f2c94c'];
   const bulbs: { x: number; y: number; c: string; d: number }[] = [];
   for (let k = 0; k < 3; k++) {
     for (const t of [0.2, 0.5, 0.8]) {

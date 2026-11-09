@@ -16,12 +16,12 @@ export function RoyalAvatar({ character, size = 40 }: { character: CharacterProf
       <defs>
         <radialGradient id={gid} cx="50%" cy="35%" r="70%">
           <stop offset="0%" stopColor={character.theme.robe} />
-          <stop offset="100%" stopColor="#1a0830" stopOpacity={character.avatar === 'santa' ? 0.55 : character.avatar === 'mouse' ? 0.7 : 1} />
+          <stop offset="100%" stopColor="#1a0830" stopOpacity={character.avatar === 'santa' ? 0.55 : character.avatar === 'mouse' || character.avatar === 'elf' ? 0.7 : 1} />
         </radialGradient>
         {GOLD}
       </defs>
       <circle cx="24" cy="24" r="23" fill={`url(#${gid})`} stroke="url(#gold)" strokeWidth="2" />
-      {character.avatar === 'crown' ? <Crown /> : character.avatar === 'mouse' ? <Mouse /> : <Santa />}
+      {character.avatar === 'crown' ? <Crown /> : character.avatar === 'mouse' ? <Mouse /> : character.avatar === 'elf' ? <Elf /> : <Santa />}
     </svg>
   );
 }
@@ -137,6 +137,50 @@ function Mouse() {
       {/* lacito */}
       <path d="M24 40l-3.6-2.4v4.8zM24 40l3.6-2.4v4.8z" fill="#e5383b" />
       <circle cx="24" cy="40" r="1.4" fill="#b32428" />
+    </g>
+  );
+}
+
+function Elf() {
+  return (
+    <g clipPath="url(#elf-clip)">
+      <defs>
+        <clipPath id="elf-clip"><circle cx="24" cy="24" r="22.2" /></clipPath>
+        <linearGradient id="elf-skin" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffdcc0" />
+          <stop offset="100%" stopColor="#f4b996" />
+        </linearGradient>
+        <linearGradient id="elf-hat" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3fcf7a" />
+          <stop offset="100%" stopColor="#168a49" />
+        </linearGradient>
+      </defs>
+      {/* cuerpo */}
+      <path d="M6 50c1-8 8-11 18-11s17 3 18 11z" fill="#d93a3d" />
+      <path d="M17 40l7 5 7-5" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      {/* orejas puntiagudas */}
+      <path d="M12.5 24.5L4 19.5l1.8 8.2 7.2-1.2z" fill="url(#elf-skin)" stroke="#e8a984" strokeWidth=".6" strokeLinejoin="round" />
+      <path d="M35.5 24.5L44 19.5l-1.8 8.2-7.2-1.2z" fill="url(#elf-skin)" stroke="#e8a984" strokeWidth=".6" strokeLinejoin="round" />
+      {/* cara */}
+      <ellipse cx="24" cy="26.5" rx="11.5" ry="11" fill="url(#elf-skin)" />
+      <circle cx="16.4" cy="29.2" r="2.6" fill="#ff8a8f" fillOpacity=".6" />
+      <circle cx="31.6" cy="29.2" r="2.6" fill="#ff8a8f" fillOpacity=".6" />
+      {/* ojos traviesos: uno guiña, una ceja levantada */}
+      <ellipse cx="19.2" cy="25.2" rx="1.9" ry="2.3" fill="#241a3a" />
+      <circle cx="19.8" cy="24.4" r=".7" fill="#fff" />
+      <path d="M26.6 25.4c1.2-1.5 3.4-1.5 4.6 0" fill="none" stroke="#241a3a" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M16.4 21.2c1.6-1.4 3.8-1.5 5.4-.4" fill="none" stroke="#7a4a1f" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M26.8 20.2c1.8-1.7 4-1.8 5.6-.2" fill="none" stroke="#7a4a1f" strokeWidth="1.5" strokeLinecap="round" />
+      {/* nariz y sonrisa de pillo */}
+      <circle cx="24" cy="28.2" r="1.5" fill="#f08a7e" />
+      <path d="M17.5 32.5c2 3.6 10.5 3.6 13 -.4" fill="#fff" stroke="#b04a4a" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+      {/* gorro con cascabel */}
+      <path d="M12.5 19.5c.4-8 6-14 13-15.5 4-.8 7.2.6 9.4 3.4-2.6-.4-4.6.6-5.8 2.6 4 1.4 6.4 5.2 6.9 9.5z" fill="url(#elf-hat)" />
+      <rect x="11.5" y="17.6" width="26.5" height="4.6" rx="2.3" fill="#fff" stroke="#e1e6ee" strokeWidth=".5" />
+      <path d="M29 4.2c3.8-1.6 8-.6 9.6 3" fill="none" stroke="#168a49" strokeWidth="3.4" strokeLinecap="round" />
+      <circle cx="38.6" cy="9" r="3.1" fill="#ffd25a" stroke="#c9961a" strokeWidth=".8" />
+      <path d="M36.8 9.4h3.6" stroke="#c9961a" strokeWidth=".7" />
+      <path d="M17 12c1.4-2.6 3.8-4 6.6-4.2" fill="none" stroke="#fff" strokeOpacity=".35" strokeWidth="1.5" strokeLinecap="round" />
     </g>
   );
 }

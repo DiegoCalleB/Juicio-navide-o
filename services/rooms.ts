@@ -284,3 +284,24 @@ export async function eraseRoom(room: Room): Promise<void> {
   await store.deleteRoom(room.id);
   publishRefresh(room.id);
 }
+
+/**
+ * Programa varios mensajes de golpe (por escrito: la voz de 24 mensajes gastaría demasiado).
+ * Si se alcanza el límite por hora de la sala, se queda en los que ya estaban programados.
+ */
+export async function scheduleMessages(
+  room: Room,
+  items: { text: string; scheduledAt: string; surprise?: boolean }[],
+): Promise<{ scheduled: number; limited: boolean }> {
+  let scheduled = 0;
+  for (const it of items) {
+    try {
+      await addKingReply(room, it.text, 0, 'text', it.surprise ? 'surprise' : undefined, it.scheduledAt);
+      scheduled++;
+    } catch (err) {
+      if (err instanceof RoomError && err.code === 'RATE_LIMITED') return { scheduled, limited: true };
+      throw err;
+    }
+  }
+  return { scheduled, limited: false };
+}

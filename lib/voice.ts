@@ -5,7 +5,7 @@ import { getElevenLabsKey } from '@/lib/env.server';
 /**
  * Voces de la biblioteca de ElevenLabs. Se pueden cambiar SIN tocar código con
  * ELEVENLABS_VOICE_PAPA_NOEL, ELEVENLABS_VOICE_MELCHOR, ELEVENLABS_VOICE_GASPAR,
- * ELEVENLABS_VOICE_BALTASAR y ELEVENLABS_VOICE_RATON_PEREZ (el valor es el voice_id).
+ * ELEVENLABS_VOICE_BALTASAR, ELEVENLABS_VOICE_RATON_PEREZ y ELEVENLABS_VOICE_DUENDE_CHISPA (el valor es el voice_id).
  */
 /**
  * REGLA DEL PROYECTO: solo voces en castellano de España. Nunca acento latinoamericano.
@@ -16,6 +16,7 @@ const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
   melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
   gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
+  duende_chispa: 'xH6DmlUWSqhSmFog5gxa', // Dani – castellano, joven y enérgico (provisional)
   raton_perez: 'ODQQw99uvxi7piSglbBJ', // Carlota – castellana, aguda, dulce y alegre, pensada para niños (provisional)
 };
 

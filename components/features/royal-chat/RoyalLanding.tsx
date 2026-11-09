@@ -14,7 +14,7 @@ export function RoyalLanding() {
           <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería mágica de Navidad</p>
           <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Que antes de abrir los regalos, hable con Papá Noel</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
-            Tu peque le escribe a Papá Noel, a los Reyes Magos o al Ratoncito Pérez y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.
+            Tu peque le escribe a Papá Noel, a los Reyes Magos, al Ratoncito Pérez o a un duende travieso y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.
           </p>
         </header>
 

@@ -40,19 +40,28 @@ export const messageEditSchema = z.object({ text: z.string().max(300).transform(
 
 export const childTextSchema = z.object({ text: text(1, 300) });
 
+const scheduledAtSchema = z
+  .string()
+  .datetime()
+  .refine((v) => {
+    const t = Date.parse(v) - Date.now();
+    return t >= 60_000 && t <= 90 * 24 * 3_600_000;
+  }, 'La fecha debe estar entre dentro de 1 minuto y 90 días.');
+
+/** Varios mensajes programados de una vez (el calendario de travesuras). */
+export const scheduleBatchSchema = z.object({
+  items: z
+    .array(z.object({ text: text(1, 300), scheduledAt: scheduledAtSchema, surprise: z.boolean().optional() }))
+    .min(1)
+    .max(30),
+});
+
 export const kingReplySchema = z.object({
   text: text(1, 300),
   mode: z.enum(['voice', 'text']).default('text'),
   surprise: z.boolean().optional(),
   /** Entrega programada: entre 1 minuto y 90 días desde ahora. */
-  scheduledAt: z
-    .string()
-    .datetime()
-    .refine((v) => {
-      const t = Date.parse(v) - Date.now();
-      return t >= 60_000 && t <= 90 * 24 * 3_600_000;
-    }, 'La fecha debe estar entre dentro de 1 minuto y 90 días.')
-    .optional(),
+  scheduledAt: scheduledAtSchema.optional(),
   delayMinutes: z.union([z.literal(REPLY_DELAYS[0]), z.literal(REPLY_DELAYS[1]), z.literal(REPLY_DELAYS[2]), z.literal(REPLY_DELAYS[3])]),
 });
 

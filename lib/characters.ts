@@ -4,8 +4,8 @@
  * Sin secretos: este archivo viaja al cliente.
  */
 
-export type AvatarKind = 'crown' | 'santa' | 'mouse';
-export type SkyKind = 'orient' | 'snow' | 'night';
+export type AvatarKind = 'crown' | 'santa' | 'mouse' | 'elf';
+export type SkyKind = 'orient' | 'snow' | 'night' | 'candy';
 
 export interface CharacterTheme {
   /** Degradado de la cabecera. */
@@ -44,13 +44,32 @@ export interface CharacterPlan {
   items: PlanItem[];
 }
 
+/** Una travesura del calendario: qué monta la familia y el mensaje del personaje esa mañana. */
+export interface MischiefDay {
+  day: number;
+  /** Para los padres: qué escena montar por la noche. */
+  idea: string;
+  /** Lo que dice el personaje. `{child}` = nombre. */
+  text: string;
+  /** Pantalla de sorpresa a pantalla completa (llegada y despedida). */
+  surprise?: boolean;
+}
+
+export interface MischiefCalendar {
+  /** Día en que empieza ("MM-DD"). */
+  startDate: string;
+  /** Hora de entrega por defecto ("HH:MM"). */
+  time: string;
+  days: MischiefDay[];
+}
+
 export interface CharacterProfile {
   id: CharacterId;
   /** "Rey Melchor", "Papá Noel" */
   name: string;
   /** "Melchor", "Papá Noel" (para frases: "¡{short} te contestará pronto!") */
   shortName: string;
-  group: 'reyes' | 'noel' | 'raton';
+  group: 'reyes' | 'noel' | 'raton' | 'duende';
   /** Con quién habla el niño en frases como "solo X y {audience} pueden leerla". */
   audience: string;
   tagline: string;
@@ -80,9 +99,11 @@ export interface CharacterProfile {
   photoReplies: string[];
   /** Mensajes preparados por momento (Nochebuena, mañana de regalos…). `{child}` = nombre del niño. Solo datos. */
   moments: CharacterMoment[];
+  /** Calendario de travesuras (el duende): un mensaje por mañana con idea de escena para los padres. */
+  mischief?: MischiefCalendar;
 }
 
-export const CHARACTER_IDS = ['papa_noel', 'melchor', 'gaspar', 'baltasar', 'raton_perez'] as const;
+export const CHARACTER_IDS = ['papa_noel', 'melchor', 'gaspar', 'baltasar', 'raton_perez', 'duende_chispa'] as const;
 export type CharacterId = (typeof CHARACTER_IDS)[number];
 
 const ORIENT = { bg: '#160a2b', sky: 'orient' as const, headerFrom: '#3b1466', headerTo: '#2a0f4a' };
@@ -418,6 +439,103 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
       },
     ],
   },
+  duende_chispa: {
+    id: 'duende_chispa',
+    name: 'Duende Chispa',
+    shortName: 'Chispa',
+    group: 'duende',
+    audience: 'Chispa',
+    tagline: 'Un duende muy travieso',
+    avatar: 'elf',
+    theme: { headerFrom: '#1f8f4f', headerTo: '#146b3a', bg: '#0d2b3a', sky: 'candy', ink: '#146b3a', robe: '#e5383b' },
+    expiresDays: 45,
+    holidayEnd: '01-10',
+    busyAck: '¡Chis, chis! He recibido tu mensaje, {child}. Ahora estoy escondido haciendo una travesura, pero te contesto en cuanto salga de mi escondite.',
+    placeLabel: 'el rincón de los duendes',
+    selfIntro: 'Soy Chispa, el duende travieso',
+    introEmoji: '🧝',
+    avatarTap: '¡Ji, ji, ji!',
+    intro: {
+      connecting: 'Buscando a Chispa por toda la casa…',
+      ready: 'Chispa ha salido de su escondite',
+      button: 'Abrir mensaje del Duende Chispa',
+    },
+    typingQuips: ['se está riendo bajito…', 'escribe con los dedos pegajosos de azúcar…', 'se esconde para que no lo veas escribir…'],
+    plans: [],
+    photoReplies: [
+      `¡Ji, ji, ji! ¡Me has pillado, {child}! Eres el mejor buscador de duendes del mundo.`,
+      `¡Qué foto tan buena! Casi no me has dejado tiempo para esconderme, {child}.`,
+      `Prometo que mañana me esconderé mejor. ¡Aunque a lo mejor me encuentras otra vez, {child}!`,
+    ],
+    moments: [
+      {
+        id: 'primero',
+        label: 'Primer saludo',
+        tip: 'Envíalo la mañana que lo "encuentre" por primera vez, o en cuanto el niño abra el enlace.',
+        replies: [
+          `¡Ji, ji, ji! ¿{child}? ¡Me has encontrado! Soy Chispa, un duende muy travieso, y vengo a pasar la Navidad en tu casa.`,
+          `Cada noche haré una travesura distinta y cada mañana me esconderé en un sitio nuevo. ¿Te apuntas a buscarme, {child}?`,
+        ],
+      },
+      {
+        id: 'travesuras',
+        label: 'Travesuras',
+        tip: 'Monta la escena por la noche y envía el mensaje por la mañana, o usa el calendario de travesuras.',
+        replies: [
+          `¡Anoche me comí un montón de galletas de queso y ahora tengo hipo, {child}! ¡Hip! Mira bien dónde estoy hoy.`,
+          `Hoy he hecho una travesura enorme, {child}. Pista: tiene que ver con algo que se puede abrir y cerrar. ¡Hip!`,
+          `Me he puesto a jugar con tus cosas mientras dormías, {child}. ¡Pero las he dejado casi donde estaban!`,
+        ],
+      },
+      {
+        id: 'pillado',
+        label: 'Me has pillado',
+        replies: [
+          `¡Ji, ji, ji! ¡Me has pillado, {child}! Eres más rápido que un duende de carreras.`,
+          `¡Vaya! Pensé que hoy no me encontrabas. Mañana me escondo mejor, {child}.`,
+        ],
+      },
+      {
+        id: 'charla',
+        label: 'Charla',
+        replies: [
+          `¡Chis, chis! Hola, {child}. Estoy escondido pero te escucho. ¿Qué tal has dormido?`,
+          `Aquí en mi escondite huele a turrón y a galletas, {child}. No se lo digas a nadie.`,
+          `Hoy me he quedado dormido en un sitio rarísimo y casi me pilla tu mamá. ¡Menos mal que soy muy ágil!`,
+        ],
+      },
+    ],
+    mischief: {
+      startDate: '12-01',
+      time: '08:00',
+      days: [
+        { day: 1, idea: `Déjalo sentado junto a una carta de bienvenida, como si acabara de llegar.`, text: `¡Hola, {child}! Anoche llegué muy calladito desde el Polo Norte. Me llamo Chispa y me encantan las travesuras. Cada mañana estaré en un sitio distinto: ¡a ver si me encuentras!`, surprise: true },
+        { day: 2, idea: `Sentado en una lámpara o en lo alto de una estantería.`, text: `¡Esta noche he probado la lámpara como si fuera un columpio! Casi me mareo, {child}. ¿Me ves?` },
+        { day: 3, idea: `Dentro de la nevera, junto a la leche.`, text: `Hacía calorcito en el salón y me he metido en la nevera. ¡Brrr! Ahora tengo la nariz helada, {child}.` },
+        { day: 4, idea: `Con un rollo de papel higiénico desenrollado por el pasillo (se recoge fácil).`, text: `¡He hecho una pista de patinaje de papel! Wiiii. Perdona el lío, {child}, ¡no he podido resistirme!` },
+        { day: 5, idea: `Sentado con un peluche del niño, tomando el té.`, text: `Anoche invité a tu peluche a tomar el té. Hemos hablado de ti, {child}. No te cuento qué dijo...` },
+        { day: 6, idea: `Sobre la barra de la cortina o colgado de una percha.`, text: `Hoy me he subido a lo más alto de la cortina para ver tu casa desde arriba. ¡Se ve todo, {child}!` },
+        { day: 7, idea: `Con unas gafas de sol puestas en una foto de la familia.`, text: `¡Mira qué guapo me queda esto! Le he puesto gafas de sol a tu foto. Todos molan más con gafas, {child}.` },
+        { day: 8, idea: `Dentro de una caja de cereales (o de galletas) vacía.`, text: `Me he metido en la caja de los cereales buscando el premio. ¡No había! Me he quedado dormidito, {child}.` },
+        { day: 9, idea: `Escribiendo HOLA con cereales, garbanzos o macarrones en la mesa.`, text: `He escrito un mensaje secreto con macarrones, {child}. Si sabes leerlo, ¡ya sabes lo que dice!` },
+        { day: 10, idea: `Con un calcetín del niño puesto como gorro.`, text: `Se me había caído el gorro y he cogido un calcetín tuyo, {child}. ¿Verdad que me queda genial?` },
+        { day: 11, idea: `Dentro del frutero, entre la fruta.`, text: `Hoy soy una pieza de fruta, {child}. Una mandarina con orejas. ¿Cómo me han salido las rayas?` },
+        { day: 12, idea: `Colgado del árbol de Navidad como si fuera un adorno.`, text: `Anoche me hice pasar por un adorno del árbol. ¡Casi me convierto en la estrella, {child}!` },
+        { day: 13, idea: `Con los zapatos o las zapatillas del niño puestos.`, text: `Me he probado tus zapatillas y me van enormes. He andado como un pato por toda la casa, {child}.` },
+        { day: 14, idea: `Construyendo una cabaña de cojines con otros peluches.`, text: `Hemos construido un fuerte de cojines con tus peluches. ¡El castillo más seguro del mundo, {child}!` },
+        { day: 15, idea: `Sentado en el baño con un cuento o un cómic.`, text: `Estaba leyendo un cuento en el baño y se me ha hecho tarde. Chis, no se lo cuentes a nadie, {child}.` },
+        { day: 16, idea: `Pegado a la pared o a un espejo con cinta (si no la daña).`, text: `Hoy estoy pegado a la pared como una lagartija. ¡Soy un duende ninja, {child}!` },
+        { day: 17, idea: `Con un HOLA dibujado con el dedo en el espejo empañado.`, text: `Mientras os dormíais he dibujado en el espejo con la humedad. ¿Lo has visto, {child}?` },
+        { day: 18, idea: `Dentro de un tarro de galletas (vacío o casi).`, text: `¡Cuántas galletas! Me he metido dentro y no encontraba la salida, {child}. Me ha ayudado una migajita.` },
+        { day: 19, idea: `Montado en un coche o en un juguete con ruedas.`, text: `He conducido tu coche de juguete por todo el pasillo. ¡Brrrum! No he tocado nada, {child}, ¡lo prometo!` },
+        { day: 20, idea: `Con una carta o un dibujo dirigido al niño.`, text: `Esta noche te he escrito una carta. Pero me ha quedado tan bonita que me da vergüenza, {child}.` },
+        { day: 21, idea: `Dentro de una taza o de un vaso grande.`, text: `Me he metido en una taza a tomar un baño de chocolate imaginario. ¡Está calentito, {child}!` },
+        { day: 22, idea: `Un ángel de nieve de harina o azúcar sobre un plato.`, text: `He hecho un ángel de nieve en la harina. Me ha quedado blanco hasta las orejas, {child}. ¡Achís!` },
+        { day: 23, idea: `Colgado de un perchero, boca abajo (con una cuerda segura).`, text: `Hoy me ha dado por dormir boca abajo como un murciélago. ¡Todo se ve al revés, {child}!` },
+        { day: 24, idea: `Sentado con una maleta pequeña y una nota de despedida.`, text: `¡Feliz Nochebuena, {child}! Esta noche vuelvo al Polo Norte para ayudar a Papá Noel con los regalos. Has sido un compañero genial. ¡Hasta el año que viene!`, surprise: true },
+      ],
+    },
+  },
 };
 
 /**
@@ -439,10 +557,11 @@ export function isCharacterId(value: string): value is CharacterId {
 }
 
 /** Personajes agrupados para el selector. */
-export const CHARACTER_GROUPS: { id: 'noel' | 'reyes' | 'raton'; label: string; ids: CharacterId[] }[] = [
+export const CHARACTER_GROUPS: { id: 'noel' | 'reyes' | 'raton' | 'duende'; label: string; ids: CharacterId[] }[] = [
   { id: 'noel', label: 'Papá Noel', ids: ['papa_noel'] },
   { id: 'reyes', label: 'Los Reyes Magos', ids: ['melchor', 'gaspar', 'baltasar'] },
   { id: 'raton', label: 'Cuando se cae un diente', ids: ['raton_perez'] },
+  { id: 'duende', label: 'El duende travieso', ids: ['duende_chispa'] },
 ];
 
 /** Rellena las plantillas con el nombre del niño. */

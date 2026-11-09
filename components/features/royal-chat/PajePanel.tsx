@@ -10,6 +10,7 @@ import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
+import { MischiefPlanner } from './MischiefPlanner';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -51,6 +52,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
   const [planner, setPlanner] = useState(false);
+  const [mischiefOpen, setMischiefOpen] = useState(false);
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
   const [capsLink, setCapsLink] = useState(false);
   const shareLink = capsLink ? `${childLink}?letras=mayus` : childLink;
@@ -308,6 +310,17 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
     }
   };
 
+  // Calendario de travesuras: qué toca hoy (solo mientras dura la campaña).
+  const todayMischief = (() => {
+    const cal = character.mischief;
+    if (!cal) return null;
+    const [m, d] = cal.startDate.split('-').map(Number) as [number, number];
+    const now = new Date();
+    const start = new Date(now.getFullYear(), m - 1, d);
+    const n = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - start.getTime()) / 86_400_000) + 1;
+    return cal.days.find((x) => x.day === n) ?? null;
+  })();
+
   const setupVisible = setupOpen ?? (messages.length === 0 && !presence?.openedAt);
   const lastChild = [...messages].reverse().findIndex((m) => m.from === 'child');
   const lastKing = [...messages].reverse().findIndex((m) => m.from === 'king');
@@ -412,7 +425,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
             <span aria-hidden className={`transition-transform ${setupVisible ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
-          <div id="panel-setup" hidden={!setupVisible} className="space-y-3">
+          <div id="panel-setup" hidden={!setupVisible} className="space-y-3" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#5eead4]">Enlace para el móvil de {childName}</p>
             <p className="mt-1 text-[#e8f1ff]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
@@ -495,6 +508,20 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           <RoomAdmin token={token} childName={childName} characterId={character.id} />
           </div>
 
+          {todayMischief && (
+            <section aria-label="Travesura de hoy" className="rounded-2xl border border-[#5eead4]/35 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
+              <p className="font-semibold text-[#5eead4]">🧝 Travesura de hoy · día {todayMischief.day}</p>
+              <p className="mt-1 text-[#e8f1ff]/80"><strong className="font-semibold">Monta esta noche:</strong> {todayMischief.idea}</p>
+              <button
+                type="button"
+                onClick={() => setText(fillChild(todayMischief.text, childName).slice(0, MAX_CHARS))}
+                className="mt-2 min-h-10 w-full rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
+              >
+                Usar el mensaje de hoy
+              </button>
+            </section>
+          )}
+
           {messages.length === 0 && (
             <p className="py-8 text-center text-[14px] text-[#e8f1ff]/60">
               Aún no hay mensajes. Cuando {childName} escriba, lo verás aquí al instante.
@@ -527,13 +554,24 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
                 {mo.label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => setPlanner(true)}
-              className="shrink-0 rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
-            >
-              📅 Programar
-            </button>
+            {character.plans.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setPlanner(true)}
+                className="shrink-0 rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
+              >
+                📅 Programar
+              </button>
+            )}
+            {character.mischief && (
+              <button
+                type="button"
+                onClick={() => setMischiefOpen(true)}
+                className="shrink-0 rounded-full border border-[#5eead4]/50 px-3 py-1 text-[12px] font-bold text-[#5eead4]"
+              >
+                📅 Calendario de travesuras
+              </button>
+            )}
           </div>
           {photoWaiting && (
             <div className="rounded-2xl border border-[#5eead4]/35 bg-[#5eead4]/[.08] p-2.5">
@@ -652,6 +690,25 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               : photo ? `Enviar foto como ${short}` : voiceNow ? `Enviar con la voz de ${short}` : `Enviar como ${short}`}
           </button>
         </footer>
+
+        {mischiefOpen && (
+          <MischiefPlanner
+            token={token}
+            character={character}
+            childName={childName}
+            onClose={() => setMischiefOpen(false)}
+            onDone={(n, limited) => {
+              setMischiefOpen(false);
+              setNotice({
+                tone: limited ? 'warn' : 'ok',
+                msg: limited
+                  ? `Se programaron ${n} mensajes; se alcanzó el límite por hora de la sala. Vuelve en un rato para programar el resto.`
+                  : `${n} travesura${n === 1 ? '' : 's'} programada${n === 1 ? '' : 's'}. ${short} las enviará a su hora.`,
+              });
+              void refresh();
+            }}
+          />
+        )}
 
         {planner && (
           <SchedulePlanner

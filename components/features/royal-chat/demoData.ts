@@ -21,4 +21,12 @@ export const DEMO_RATON: ChatMessage[] = [
   { id: '3', from: 'king', kind: 'text', time: '20:16', text: 'Pon el diente bajo la almohada y duérmete prontito. Yo paso por los tejados con mi saquito de monedas.' },
 ];
 
-export const demoFor = (group: 'noel' | 'reyes' | 'raton'): ChatMessage[] => (group === 'noel' ? DEMO_NOEL : group === 'raton' ? DEMO_RATON : DEMO_REYES);
+export const DEMO_DUENDE: ChatMessage[] = [
+  { id: '1', from: 'king', kind: 'text', time: '08:01', text: '¡Ji, ji, ji! ¿Lucía? ¡Me has encontrado! Soy Chispa, un duende muy travieso.' },
+  { id: '2', from: 'king', kind: 'text', time: '08:01', text: 'Anoche me metí en la nevera porque hacía calor. ¡Tengo la nariz helada!' },
+  { id: '3', from: 'child', kind: 'text', time: '08:02', text: '¡Te vi! ¡Estabas junto a la leche!' },
+  { id: '4', from: 'king', kind: 'text', time: '08:02', text: '¡Me has pillado! Mañana me escondo mejor. ¡Hip!' },
+];
+
+export const demoFor = (group: 'noel' | 'reyes' | 'raton' | 'duende'): ChatMessage[] =>
+  group === 'noel' ? DEMO_NOEL : group === 'raton' ? DEMO_RATON : group === 'duende' ? DEMO_DUENDE : DEMO_REYES;

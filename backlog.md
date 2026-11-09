@@ -90,3 +90,11 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 - **Aplicar la migración `supabase/migrations/20261109000000_message_edit.sql`** en Supabase ANTES de desplegar el código: el código lee la columna `edited_at`. Sin ella, la app falla al leer mensajes.
 - Retirado el "Juicio Navideño" (`/juicio`). Pendiente de decidir en Supabase: borrar las tablas `trials` y `signatures` y el bucket público `evidence` (son destructivos; hay que confirmarlos).
+
+## Duende travieso (Chispa): pendiente
+
+- La voz (Dani, castellano) es provisional; no la he escuchado.
+- Nombre "Chispa" propuesto por mí: cambiable en `lib/characters.ts`.
+- El calendario programa los mensajes por escrito; la voz de 24 mensajes gastaría demasiado.
+- Marca: evitar el nombre y el aspecto de "Elf on the Shelf". No usar frases de vigilancia o amenaza ("te vigilo para Papá Noel").
+- Ideas siguientes: avisar a los padres por la noche con la escena de mañana, y una página para compartir fotos de travesuras sin la cara del niño.
