@@ -56,6 +56,7 @@ export class MemoryRoomStore implements RoomStore {
       effect: m.effect ?? null,
       deliverAt: m.deliverAt ?? now,
       createdAt: now,
+      editedAt: null,
     };
     const st = state();
     const list = st.messages.get(m.roomId) ?? [];
@@ -78,7 +79,8 @@ export class MemoryRoomStore implements RoomStore {
     const delivered = all.filter((m) => Date.parse(m.deliverAt) <= now);
     const scope = opts.deliveredOnly ? delivered : all;
     const latest = [...scope].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0];
-    return `${scope.length}.${delivered.length}.${latest?.id ?? '-'}`;
+    const edited = all.reduce((max, m) => (m.editedAt && m.editedAt > max ? m.editedAt : max), '');
+    return `${scope.length}.${delivered.length}.${latest?.id ?? '-'}.${edited || '-'}`;
   }
 
   async countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number> {
@@ -96,6 +98,46 @@ export class MemoryRoomStore implements RoomStore {
 
   async removeFile(bucket: Bucket, path: string): Promise<void> {
     state().files.delete(`${bucket}/${path}`);
+  }
+
+  async getMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {
+    return (state().messages.get(roomId) ?? []).find((m) => m.id === messageId) ?? null;
+  }
+
+  async updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null> {
+    const rec = (state().messages.get(roomId) ?? []).find((m) => m.id === messageId && m.sender === 'king' && (m.kind === 'text' || m.kind === 'photo'));
+    if (!rec) return null;
+    rec.body = body;
+    rec.editedAt = nowIso;
+    return rec;
+  }
+
+  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean> {
+    const row = state().rooms.get(roomId);
+    if (!row) return false;
+    if (patch.childName !== undefined) row.childName = patch.childName;
+    if (patch.characterId !== undefined) row.characterId = patch.characterId;
+    return true;
+  }
+
+  async listFilePaths(roomId: string): Promise<{ bucket: Bucket; path: string }[]> {
+    const out: { bucket: Bucket; path: string }[] = [];
+    for (const m of state().messages.get(roomId) ?? []) {
+      if (m.audioPath) out.push({ bucket: 'voices', path: m.audioPath });
+      if (m.imagePath) out.push({ bucket: 'media', path: m.imagePath });
+    }
+    return out;
+  }
+
+  async deleteRoom(roomId: string): Promise<void> {
+    const st = state();
+    const row = st.rooms.get(roomId);
+    if (row) {
+      st.byHash.delete(row.childTokenHash);
+      st.byHash.delete(row.parentTokenHash);
+    }
+    st.rooms.delete(roomId);
+    st.messages.delete(roomId);
   }
 
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {

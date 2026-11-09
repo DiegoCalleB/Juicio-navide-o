@@ -11,6 +11,7 @@ import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
 import { PhotoPicker } from './PhotoPicker';
+import { RoomAdmin } from './RoomAdmin';
 import { RoyalAvatar } from './RoyalAvatar';
 import { SchedulePlanner } from './SchedulePlanner';
 import { useReactionRecorder } from './useReactionRecorder';
@@ -313,6 +314,24 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
   const lastChildMsg = lastChild >= 0 ? [...messages].reverse()[lastChild] : undefined;
   const photoWaiting = lastChildMsg?.kind === 'photo' && (lastKing < 0 || lastKing > lastChild);
 
+  const editMessage = async (id: string, text: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${token}/message/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      const json = (await res.json()) as ApiResult<null>;
+      if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo editar.');
+      setNotice({ tone: 'ok', msg: 'Mensaje corregido. Así lo verá el peque.' });
+      await refresh();
+      return true;
+    } catch (err) {
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo editar.' });
+      return false;
+    }
+  };
+
   const eraseMessage = async (id: string) => {
     try {
       const res = await fetch(`/api/rooms/${token}/erase/${id}`, { method: 'DELETE' });
@@ -472,6 +491,8 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
               </div>
             )}
           </section>
+
+          <RoomAdmin token={token} childName={childName} characterId={character.id} />
           </div>
 
           {messages.length === 0 && (
@@ -481,7 +502,7 @@ export function PajePanel({ token, childLink, character, childName }: PajePanelP
           )}
 
           {messages.map((m, i) => (
-            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} onErase={eraseMessage} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
+            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} onErase={eraseMessage} onEdit={editMessage} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
           ))}
 
           {childTyping && (
@@ -701,6 +722,7 @@ function PanelMessage({
   onOpenPhoto,
   onCancel,
   onErase,
+  onEdit,
   followUps,
 }: {
   m: RoomMessageDTO;
@@ -709,9 +731,13 @@ function PanelMessage({
   onOpenPhoto: (src: string) => void;
   onCancel: (id: string) => void;
   onErase: (id: string) => void;
+  onEdit: (id: string, text: string) => Promise<boolean>;
   followUps?: { id: string; src: string }[];
 }) {
   const [asking, setAsking] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(m.text ?? '');
+  const editable = m.from !== 'child' && !m.pending && (m.kind === 'text' || m.kind === 'photo');
   if (m.from === 'system') {
     return <p className="mx-auto w-fit max-w-[90%] rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11.5px] text-[#e8f1ff]/50">Aviso automático enviado: “{m.text}”</p>;
   }
@@ -734,6 +760,35 @@ function PanelMessage({
           <button type="button" onClick={() => onCancel(m.id)} className="mt-1.5 w-full rounded-lg border border-black/15 py-1 text-[12px] font-semibold text-[#8a1a1f] active:bg-black/5">
             Cancelar este mensaje
           </button>
+        )}
+        {editable && !editing && (
+          <button type="button" onClick={() => { setDraft(m.text ?? ''); setEditing(true); }} className="mt-1.5 w-full rounded-lg py-1 text-[11.5px] font-semibold text-[#5b3a1e]/80 underline-offset-2 hover:underline">
+            Corregir texto
+          </button>
+        )}
+        {editable && editing && (
+          <div className="mt-1.5 space-y-1.5">
+            <label className="sr-only" htmlFor={`edit-${m.id}`}>Texto corregido</label>
+            <textarea
+              id={`edit-${m.id}`}
+              value={draft}
+              maxLength={300}
+              rows={3}
+              onChange={(e) => setDraft(e.target.value)}
+              className="w-full resize-none rounded-lg border border-black/20 bg-white px-2 py-1.5 text-[14px] text-[#2b1b0e]"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={m.kind === 'text' && draft.trim().length === 0}
+                onClick={async () => { if (await onEdit(m.id, draft.trim())) setEditing(false); }}
+                className="flex-1 rounded-md bg-[#8a1a1f] py-1 text-[12px] font-bold text-white disabled:opacity-40"
+              >
+                Guardar corrección
+              </button>
+              <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-black/15 px-2.5 py-1 text-[12px] font-semibold">Cancelar</button>
+            </div>
+          </div>
         )}
         {!m.pending && (
           asking ? (

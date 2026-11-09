@@ -22,6 +22,8 @@ export interface MessageRecord {
   effect: 'surprise' | null;
   deliverAt: string;
   createdAt: string;
+  /** Última edición del texto (los padres); null si nunca se ha editado. */
+  editedAt: string | null;
 }
 
 export interface NewMessage {
@@ -63,6 +65,15 @@ export interface RoomStore {
    */
   getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
   countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number>;
+  getMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
+  /** Cambia el texto de un mensaje del personaje (texto o pie de foto). Devuelve la fila o null. */
+  updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null>;
+  /** Cambia el nombre y/o el personaje de la sala. */
+  updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean>;
+  /** Rutas de todos los archivos de la sala (también de mensajes no entregados). */
+  listFilePaths(roomId: string): Promise<{ bucket: Bucket; path: string }[]>;
+  /** Borra la sala y sus mensajes (los archivos se borran antes con removeFile). */
+  deleteRoom(roomId: string): Promise<void>;
   /** Borra cualquier mensaje de la sala (error de los padres). Devuelve la fila borrada para limpiar sus archivos, o null. */
   deleteMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
   /** Borra un archivo del almacén (sin error si no existe). */

@@ -15,30 +15,10 @@ const text = (min: number, max: number) =>
         .max(max, `Máximo ${max} caracteres`),
     );
 
-export const SHORT_ID_REGEX = /^[A-Za-z0-9]{8}$/;
-export const PHOTO_PATH_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/;
 
-export const shortIdSchema = z.string().regex(SHORT_ID_REGEX);
 
 /** Honeypot: los humanos lo dejan vacío. */
 const honeypot = z.string().max(0).optional();
-
-export const createTrialSchema = z.object({
-  defendantName: text(2, 40),
-  charge: text(5, 140),
-  sentence: text(5, 140),
-  photoPath: z.string().regex(PHOTO_PATH_REGEX).nullable().optional(),
-  website: honeypot,
-});
-
-export const signTrialSchema = z.object({
-  shortId: shortIdSchema,
-  signerName: text(2, 30),
-  website: honeypot,
-});
-
-export type CreateTrialInput = z.infer<typeof createTrialSchema>;
-export type SignTrialInput = z.infer<typeof signTrialSchema>;
 
 export const createRoomSchema = z.object({
   childName: text(1, 30),
@@ -46,6 +26,17 @@ export const createRoomSchema = z.object({
   consent: z.literal(true, { errorMap: () => ({ message: 'Necesitamos tu consentimiento' }) }),
   website: honeypot,
 });
+
+/** Los padres cambian el nombre y/o el personaje de la sala. */
+export const roomEditSchema = z
+  .object({
+    childName: text(1, 30).optional(),
+    characterId: z.enum(CHARACTER_IDS).optional(),
+  })
+  .refine((v) => v.childName !== undefined || v.characterId !== undefined, 'Nada que cambiar.');
+
+/** Texto nuevo de un mensaje del personaje (vacío solo vale para un pie de foto). */
+export const messageEditSchema = z.object({ text: z.string().max(300).transform((s) => s.trim()) });
 
 export const childTextSchema = z.object({ text: text(1, 300) });
 

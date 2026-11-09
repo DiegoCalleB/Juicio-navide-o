@@ -1,22 +1,5 @@
 /** Tipos globales de dominio. */
 
-export interface Trial {
-  id: string;
-  shortId: string;
-  defendantName: string;
-  charge: string;
-  sentence: string;
-  photoUrl: string | null;
-  signatureCount: number;
-  createdAt: string;
-}
-
-export interface Signature {
-  id: string;
-  signerName: string;
-  createdAt: string;
-}
-
 export type ErrorCode =
   | 'VALIDATION'
   | 'RATE_LIMITED'

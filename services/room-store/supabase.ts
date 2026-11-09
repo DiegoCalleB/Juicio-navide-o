@@ -18,9 +18,10 @@ interface MessageRow {
   effect: 'surprise' | null;
   deliver_at: string;
   created_at: string;
+  edited_at: string | null;
 }
 
-const MESSAGE_COLUMNS = 'id, room_id, sender, kind, body, audio_path, image_path, duration_s, effect, deliver_at, created_at';
+const MESSAGE_COLUMNS = 'id, room_id, sender, kind, body, audio_path, image_path, duration_s, effect, deliver_at, created_at, edited_at';
 
 const isRateLimit = (err: { message: string } | null) => !!err && err.message.includes('RATE_LIMIT');
 
@@ -36,6 +37,7 @@ const toRecord = (r: MessageRow): MessageRecord => ({
   effect: r.effect,
   deliverAt: r.deliver_at,
   createdAt: r.created_at,
+  editedAt: r.edited_at,
 });
 
 /** URLs firmadas en caché: evitan llamar a Storage en cada cambio (caducan a los 50 min; el TTL real es 60). */
@@ -119,7 +121,15 @@ export class SupabaseRoomStore implements RoomStore {
       base().lte('deliver_at', nowIso),
       db.from('room_messages').select('id').eq('room_id', roomId).order('created_at', { ascending: false }).limit(1).maybeSingle<{ id: string }>(),
     ]);
-    return `${total.count ?? 0}.${delivered.count ?? 0}.${latest.data?.id ?? '-'}`;
+    const edited = await db
+      .from('room_messages')
+      .select('edited_at')
+      .eq('room_id', roomId)
+      .not('edited_at', 'is', null)
+      .order('edited_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<{ edited_at: string }>();
+    return `${total.count ?? 0}.${delivered.count ?? 0}.${latest.data?.id ?? '-'}.${edited.data?.edited_at ?? '-'}`;
   }
 
   async countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number> {
@@ -147,6 +157,56 @@ export class SupabaseRoomStore implements RoomStore {
   async removeFile(bucket: Bucket, path: string): Promise<void> {
     const { error } = await getAdminClient().storage.from(bucket).remove([path]);
     if (error) throw new Error(`removeFile: ${error.message}`);
+  }
+
+  async getMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {
+    const { data, error } = await getAdminClient()
+      .from('room_messages')
+      .select(MESSAGE_COLUMNS)
+      .eq('id', messageId)
+      .eq('room_id', roomId)
+      .maybeSingle<MessageRow>();
+    if (error) throw new Error('No se pudo leer el mensaje.');
+    return data ? toRecord(data) : null;
+  }
+
+  async updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null> {
+    const { data, error } = await getAdminClient()
+      .from('room_messages')
+      .update({ body, edited_at: nowIso })
+      .eq('id', messageId)
+      .eq('room_id', roomId)
+      .eq('sender', 'king')
+      .in('kind', ['text', 'photo'])
+      .select(MESSAGE_COLUMNS)
+      .maybeSingle<MessageRow>();
+    if (error) throw new Error('No se pudo editar el mensaje.');
+    return data ? toRecord(data) : null;
+  }
+
+  async updateRoom(roomId: string, patch: { childName?: string; characterId?: string }): Promise<boolean> {
+    const update: Record<string, string> = {};
+    if (patch.childName !== undefined) update.child_name = patch.childName;
+    if (patch.characterId !== undefined) update.character_id = patch.characterId;
+    const { data, error } = await getAdminClient().from('rooms').update(update).eq('id', roomId).select('id');
+    if (error) throw new Error('No se pudo editar la sala.');
+    return (data?.length ?? 0) > 0;
+  }
+
+  async listFilePaths(roomId: string): Promise<{ bucket: Bucket; path: string }[]> {
+    const { data, error } = await getAdminClient().from('room_messages').select('audio_path, image_path').eq('room_id', roomId);
+    if (error) throw new Error('No se pudieron listar los archivos.');
+    const out: { bucket: Bucket; path: string }[] = [];
+    for (const r of (data ?? []) as { audio_path: string | null; image_path: string | null }[]) {
+      if (r.audio_path) out.push({ bucket: 'voices', path: r.audio_path });
+      if (r.image_path) out.push({ bucket: 'media', path: r.image_path });
+    }
+    return out;
+  }
+
+  async deleteRoom(roomId: string): Promise<void> {
+    const { error } = await getAdminClient().from('rooms').delete().eq('id', roomId);
+    if (error) throw new Error('No se pudo borrar la sala.');
   }
 
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {

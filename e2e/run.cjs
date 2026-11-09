@@ -16,7 +16,7 @@ const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
-const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'raton', 'rooms', 'media', 'plan', 'phase1', ...(withVoice ? ['voice'] : [])];
+const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'rooms', 'media', 'plan', 'phase1', ...(withVoice ? ['voice'] : [])];
 const selected = SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {

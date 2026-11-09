@@ -85,3 +85,8 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 - Hoy la voz del personaje está detrás de `NEXT_PUBLIC_ENABLE_VOICE=1` (se lee al compilar: hay que redeployar). Necesita `ELEVENLABS_API_KEY` en el servidor. Con la variable apagada, el panel no muestra el selector "Nota de voz / Por escrito".
 - Pendiente de decisión: ¿activarla para todas las salas, o elegirla por sala (con cobro)? Con topes actuales: 40 respuestas por sala y día, 150.000 caracteres al día en total.
+
+## Antes de desplegar (orden obligatorio)
+
+- **Aplicar la migración `supabase/migrations/20261109000000_message_edit.sql`** en Supabase ANTES de desplegar el código: el código lee la columna `edited_at`. Sin ella, la app falla al leer mensajes.
+- Retirado el "Juicio Navideño" (`/juicio`). Pendiente de decidir en Supabase: borrar las tablas `trials` y `signatures` y el bucket público `evidence` (son destructivos; hay que confirmarlos).

@@ -11,6 +11,7 @@ import { NorthPoleIntro } from './NorthPoleIntro';
 import { RoyalChat, type KingActivity } from './RoyalChat';
 import { SurpriseReveal } from './SurpriseReveal';
 import type { ChatMessage } from './types';
+import { StateScreen } from './StateScreen';
 import { useRoomEvents } from './useRoomEvents';
 
 /** Si el personaje estaba escribiendo hace menos de esto, su mensaje aparece al instante. */
@@ -53,6 +54,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [introOpen, setIntroOpen] = useState(true);
+  const [gone, setGone] = useState(false);
   const [caps, setCaps] = useState(false);
 
   // Primeros lectores: MAYÚSCULAS. Viene en el enlace (?letras=mayus) o de la última vez en este dispositivo.
@@ -113,6 +115,11 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
+    if (res.status === 404) {
+      // Los padres han borrado la sala: dejamos de sondear y mostramos el aviso.
+      setGone(true);
+      return;
+    }
     const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[] }>;
     if (!body.ok || !body.data) throw new Error(body.error?.message ?? 'error');
     versionRef.current = body.data.version;
@@ -125,9 +132,27 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
     const all = body.data.messages.map(toChatMessage).filter((m): m is ChatMessage => m !== null);
     const fresh = all.filter((m) => !seen.current.has(m.id));
 
-    // Lo que los padres han borrado desaparece también del móvil del niño.
+    // Lo que los padres han borrado desaparece del móvil del niño, y lo corregido se actualiza en su sitio.
     const present = new Set(all.map((m) => m.id));
-    setShown((s) => (s.some((m) => !present.has(m.id)) ? s.filter((m) => present.has(m.id)) : s));
+    const byId = new Map(all.map((m) => [m.id, m]));
+    setShown((s) => {
+      let changed = false;
+      const next: ChatMessage[] = [];
+      for (const m of s) {
+        if (!present.has(m.id)) {
+          changed = true;
+          continue;
+        }
+        const latest = byId.get(m.id);
+        if (latest && JSON.stringify(latest) !== JSON.stringify(m)) {
+          changed = true;
+          next.push(latest);
+        } else {
+          next.push(m);
+        }
+      }
+      return changed ? next : s;
+    });
 
     // La primera carga es historial (también si está vacía): lo que llegue después es "en directo".
     const firstLoad = !loaded.current;
@@ -250,6 +275,14 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
   };
 
   const activity: KingActivity = revealing ?? (liveTyping ? 'typing' : null);
+
+  if (gone) {
+    return (
+      <StateScreen title="Esta sala ya no existe">
+        <p>Los padres la han borrado. Si crees que es un error, pregúntales a ellos.</p>
+      </StateScreen>
+    );
+  }
 
   return (
     <>

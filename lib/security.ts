@@ -1,20 +1,7 @@
 import 'server-only';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { headers } from 'next/headers';
 import { getServerEnv } from '@/lib/env.server';
-
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-
-/** ID corto de 8 caracteres, criptográficamente aleatorio (sin sesgo de módulo). */
-export function generateShortId(): string {
-  let out = '';
-  while (out.length < 8) {
-    for (const b of randomBytes(16)) {
-      if (b < 256 - (256 % ALPHABET.length) && out.length < 8) out += ALPHABET[b % ALPHABET.length];
-    }
-  }
-  return out;
-}
 
 export async function getClientFingerprint(): Promise<string> {
   const h = await headers();

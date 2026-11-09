@@ -252,3 +252,35 @@ export async function eraseMessage(room: Room, messageId: string): Promise<boole
   publishRefresh(room.id);
   return true;
 }
+
+/** Cambia el texto de un mensaje del personaje (solo texto o pie de foto, nunca audios). */
+export async function editMessage(room: Room, messageId: string, text: string): Promise<'ok' | 'not_found' | 'invalid'> {
+  const store = getRoomStore();
+  const rec = await store.getMessage(room.id, messageId);
+  if (!rec || rec.sender !== 'king' || (rec.kind !== 'text' && rec.kind !== 'photo')) return 'not_found';
+  if (rec.kind === 'text' && !text) return 'invalid';
+  const updated = await store.updateMessageBody(room.id, messageId, text || null, new Date().toISOString());
+  if (!updated) return 'not_found';
+  publishRefresh(room.id);
+  return 'ok';
+}
+
+/** Cambia el nombre y/o el personaje de la sala. El niño lo verá al volver a abrir su enlace. */
+export async function editRoom(room: Room, patch: { childName?: string; characterId?: CharacterId }): Promise<boolean> {
+  const ok = await getRoomStore().updateRoom(room.id, patch);
+  if (ok) publishRefresh(room.id);
+  return ok;
+}
+
+/**
+ * Borra la sala por completo: mensajes, audios y fotos. Es irreversible.
+ * El niño verá "esta sala ya no existe" en su siguiente actualización.
+ */
+export async function eraseRoom(room: Room): Promise<void> {
+  const store = getRoomStore();
+  for (const f of await store.listFilePaths(room.id)) {
+    await store.removeFile(f.bucket, f.path).catch(() => undefined);
+  }
+  await store.deleteRoom(room.id);
+  publishRefresh(room.id);
+}
