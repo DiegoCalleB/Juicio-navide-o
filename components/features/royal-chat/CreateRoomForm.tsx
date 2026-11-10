@@ -100,41 +100,40 @@ export function CreateRoomForm() {
                 );
               })}
             </div>
+          {group.id === 'duende' && characterId === 'duende_chispa' && (
+            <div className="mt-2 space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
+              <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
+              <div className="space-y-1.5">
+                <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75">Nombre (el que queráis)</label>
+                <input
+                  id="elf-alias"
+                  value={alias}
+                  maxLength={20}
+                  onChange={(e) => setAlias(e.target.value)}
+                  placeholder="Chispa"
+                  autoComplete="off"
+                  className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none"
+                />
+              </div>
+              <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-2">
+                {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
+                  <button
+                    key={g}
+                    type="button"
+                    role="radio"
+                    aria-checked={gender === g}
+                    onClick={() => setGender(g)}
+                    className={`min-h-11 flex-1 rounded-2xl border text-[14px] font-bold ${gender === g ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           </div>
         ))}
       </fieldset>
-
-      {characterId === 'duende_chispa' && (
-        <div className="space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
-          <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
-          <div className="space-y-1.5">
-            <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75">Nombre (el que queráis)</label>
-            <input
-              id="elf-alias"
-              value={alias}
-              maxLength={20}
-              onChange={(e) => setAlias(e.target.value)}
-              placeholder="Chispa"
-              autoComplete="off"
-              className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none"
-            />
-          </div>
-          <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-2">
-            {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
-              <button
-                key={g}
-                type="button"
-                role="radio"
-                aria-checked={gender === g}
-                onClick={() => setGender(g)}
-                className={`min-h-11 flex-1 rounded-2xl border text-[14px] font-bold ${gender === g ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
