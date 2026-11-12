@@ -13,6 +13,12 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Más adelante: Ratoncito Pérez ~2,99 €/año.
 - Requisitos de Diego antes de cobrar: alta de autónomo o sociedad, condiciones de venta con IVA y casilla de renuncia al desistimiento (revisión de un abogado o una gestoría), cuenta de Stripe. Validar el precio con ~20 padres.
 
+### Estado (13-nov): HECHO, falta activar
+- Código listo y probado (E2E `--billing`, 27/27 con Stripe simulado): prueba de 3 días, bloqueo suave (el niño ve "se ha ido a preparar la magia", nunca precios), Pase con Stripe Checkout, webhook firmado e idempotente, pase guardado en el móvil, "Usar mi pase en esta sala", pase de regalo por WhatsApp, tope de 2 pruebas por móvil y mes.
+- Pregunta "¿Ya lee?" al crear la sala (y editable en el panel): mayúsculas automáticas y consejos al escribir.
+- Para activarlo: migración `20261113000000_reading_trial_passes.sql`, variables `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PASS_SECRET` en Railway, y el webhook en Stripe. Probar primero con claves `sk_test_`.
+- Pendiente: limpiar pases caducados en el cron; el Ratoncito fuera de temporada usa el mismo "Pase de Navidad" (decidir nombre y precio propios); factura o recibo con datos fiscales (gestoría); revisar las condiciones de /terminos#pase con un abogado.
+
 ## Monetización: notas previas
 
 - **Cobro solo en el panel de los padres** (`/paje/…`). El niño nunca ve avisos de pago:

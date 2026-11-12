@@ -11,10 +11,14 @@ interface Props {
   characterId: CharacterId;
   characterAlias?: string | null;
   characterGender?: string | null;
+  readingLevel?: Reading;
 }
 
+type Reading = 'yes' | 'learning' | 'no';
+
 /** Editar la sala (nombre y personaje) y borrarla por completo. Lo ven solo los padres. */
-export function RoomAdmin({ token, childName, characterId, characterAlias = null, characterGender = null }: Props) {
+export function RoomAdmin({ token, childName, characterId, characterAlias = null, characterGender = null, readingLevel = 'yes' }: Props) {
+  const [reading, setReading] = useState<Reading>(readingLevel);
   const [name, setName] = useState(childName);
   const [character, setCharacter] = useState<CharacterId>(characterId);
   const [alias, setAlias] = useState(characterAlias ?? '');
@@ -25,14 +29,15 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
 
   const isElf = character === 'duende_chispa';
   const elfChanged = isElf && (alias.trim() !== (characterAlias ?? '') || gender !== (characterGender === 'f' ? 'f' : 'm'));
-  const changed = name.trim() !== childName || character !== characterId || elfChanged;
+  const changed = name.trim() !== childName || character !== characterId || elfChanged || reading !== readingLevel;
 
   const save = async () => {
     if (!changed || busy) return;
     setBusy(true);
     setMsg(null);
     try {
-      const body: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' } = {};
+      const body: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: Reading } = {};
+      if (reading !== readingLevel) body.readingLevel = reading;
       if (name.trim() !== childName) body.childName = name.trim();
       if (character !== characterId) body.characterId = character;
       if (isElf && (character !== characterId || elfChanged)) {
@@ -126,6 +131,23 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
               </div>
             </div>
           )}
+        </div>
+        <div role="radiogroup" aria-label="¿Ya lee?" className="space-y-1.5">
+          <p className="text-[12px] font-semibold text-[#e8f1ff]/70">¿{childName} ya lee?</p>
+          <div className="flex gap-1.5">
+            {([['yes', 'Sí'], ['learning', 'Empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={reading === v}
+                onClick={() => setReading(v)}
+                className={`flex-1 rounded-full px-2 py-1.5 text-[12.5px] font-bold ${reading === v ? 'bg-[#5eead4] text-[#04302b]' : 'bg-white/10 text-[#e8f1ff]/80'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           type="button"

@@ -1,7 +1,25 @@
 import 'server-only';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { RoomError } from '@/services/room-errors';
-import type { Bucket, MessageRecord, NewMessage, NewRoom, RoomRecord, RoomStore } from './types';
+import type { Bucket, MessageRecord, NewMessage, NewPass, NewRoom, PassRecord, RoomRecord, RoomStore } from './types';
+
+interface PassRow {
+  id: string;
+  kind: 'paid' | 'gift';
+  stripe_session_id: string | null;
+  parent_pass_id: string | null;
+  rooms_limit: number;
+  expires_at: string;
+}
+const PASS_COLUMNS = 'id, kind, stripe_session_id, parent_pass_id, rooms_limit, expires_at';
+const toPass = (r: PassRow): PassRecord => ({
+  id: r.id,
+  kind: r.kind,
+  stripeSessionId: r.stripe_session_id,
+  parentPassId: r.parent_pass_id,
+  roomsLimit: r.rooms_limit,
+  expiresAt: r.expires_at,
+});
 
 const SIGNED_URL_TTL = 60 * 60;
 const BUCKETS: Bucket[] = ['voices', 'media'];
@@ -57,6 +75,9 @@ export class SupabaseRoomStore implements RoomStore {
       character_gender: room.characterGender ?? null,
       creator_hash: room.creatorHash,
       expires_at: room.expiresAt,
+      reading_level: room.readingLevel ?? 'yes',
+      trial_ends_at: room.trialEndsAt ?? null,
+      pass_id: room.passId ?? null,
     });
     if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
     if (error) throw new Error(`insertRoom: ${error.message}`);
@@ -65,10 +86,10 @@ export class SupabaseRoomStore implements RoomStore {
   async findRoomByTokenHash(hash: string): Promise<RoomRecord | null> {
     const { data, error } = await getAdminClient()
       .from('rooms')
-      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, child_token_hash, parent_token_hash')
+      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, child_token_hash, parent_token_hash')
       .or(`child_token_hash.eq.${hash},parent_token_hash.eq.${hash}`)
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; child_token_hash: string; parent_token_hash: string }>();
+      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; reading_level: string | null; trial_ends_at: string | null; pass_id: string | null; child_token_hash: string; parent_token_hash: string }>();
     if (error || !data) return null;
     return {
       id: data.id,
@@ -77,6 +98,9 @@ export class SupabaseRoomStore implements RoomStore {
       characterAlias: data.character_alias,
       characterGender: data.character_gender,
       childLinkVersion: data.child_link_version ?? 0,
+      readingLevel: data.reading_level ?? 'yes',
+      trialEndsAt: data.trial_ends_at,
+      passId: data.pass_id,
       childTokenHash: data.child_token_hash,
       parentTokenHash: data.parent_token_hash,
     };
@@ -288,6 +312,79 @@ export class SupabaseRoomStore implements RoomStore {
       if (cache.size > URL_CACHE_MAX) for (const [k, v] of cache) if (v.exp <= now) cache.delete(k);
     }
     return urls;
+  }
+
+  async countTrialRoomsByCreatorSince(creatorHash: string, sinceIso: string): Promise<number> {
+    const { count, error } = await getAdminClient()
+      .from('rooms')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_hash', creatorHash)
+      .is('pass_id', null)
+      .not('trial_ends_at', 'is', null)
+      .gte('created_at', sinceIso);
+    if (error) throw new Error(`countTrialRooms: ${error.message}`);
+    return count ?? 0;
+  }
+
+  async insertPass(p: NewPass): Promise<PassRecord> {
+    if (p.stripeSessionId) {
+      const existing = await this.findPassByStripeSession(p.stripeSessionId);
+      if (existing) return existing;
+    }
+    const { data, error } = await getAdminClient()
+      .from('passes')
+      .insert({
+        token_hash: p.tokenHash,
+        kind: p.kind,
+        stripe_session_id: p.stripeSessionId ?? null,
+        parent_pass_id: p.parentPassId ?? null,
+        amount_cents: p.amountCents ?? null,
+        expires_at: p.expiresAt,
+      })
+      .select(PASS_COLUMNS)
+      .single<PassRow>();
+    if (error || !data) {
+      // Carrera entre el webhook y la página de éxito: el otro ya lo creó.
+      if (p.stripeSessionId) {
+        const again = await this.findPassByStripeSession(p.stripeSessionId);
+        if (again) return again;
+      }
+      throw new Error(`insertPass: ${error?.message ?? 'sin datos'}`);
+    }
+    return toPass(data);
+  }
+
+  async findPassByTokenHash(hash: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('token_hash', hash).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
+  async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_session_id', sessionId).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
+  async findGiftOf(passId: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('parent_pass_id', passId).limit(1).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
+  async countRoomsByPass(passId: string): Promise<number> {
+    const { count, error } = await getAdminClient().from('rooms').select('id', { count: 'exact', head: true }).eq('pass_id', passId);
+    if (error) throw new Error(`countRoomsByPass: ${error.message}`);
+    return count ?? 0;
+  }
+
+  async attachPass(roomId: string, passId: string): Promise<boolean> {
+    const { data, error } = await getAdminClient().from('rooms').update({ pass_id: passId }).eq('id', roomId).select('id');
+    if (error) throw new Error(`attachPass: ${error.message}`);
+    return (data?.length ?? 0) > 0;
+  }
+
+  async updateReadingLevel(roomId: string, level: string): Promise<boolean> {
+    const { data, error } = await getAdminClient().from('rooms').update({ reading_level: level }).eq('id', roomId).select('id');
+    if (error) throw new Error(`updateReadingLevel: ${error.message}`);
+    return (data?.length ?? 0) > 0;
   }
 
   async deleteExpired(nowIso: string): Promise<{ rooms: number; files: number }> {

@@ -19,5 +19,5 @@ export default async function ChildRoomPage({ params, searchParams }: { params: 
   const { letras } = await searchParams;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'child') notFound();
-  return <LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender })} childName={found.room.childName} initialCaps={letras === 'mayus'} />;
+  return <LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender })} childName={found.room.childName} initialCaps={letras === 'mayus' || found.room.readingLevel !== 'yes'} />;
 }

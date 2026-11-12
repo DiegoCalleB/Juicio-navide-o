@@ -9,6 +9,8 @@ import { publish, publishRefresh, type Audience } from '@/services/realtime';
 import { RoomError } from '@/services/room-errors';
 import { getRoomStore } from '@/services/room-store';
 import type { MessageRecord } from '@/services/room-store/types';
+import { paymentsEnabled, trialMs, TRIAL_WINDOW_DAYS, TRIALS_PER_CREATOR } from '@/lib/billing';
+import { checkPass } from '@/services/passes';
 
 export { RoomError };
 
@@ -23,14 +25,52 @@ export interface Room {
   characterGender: string | null;
   /** Cuántas veces se ha cambiado el enlace del niño. */
   childLinkVersion: number;
+  readingLevel: ReadingLevel;
+  trialEndsAt: string | null;
+  passId: string | null;
+}
+
+export type ReadingLevel = 'yes' | 'learning' | 'no';
+const asReading = (v: string): ReadingLevel => (v === 'learning' || v === 'no' ? v : 'yes');
+
+/** Estado de pago de la sala, tal como lo ven el panel y el niño. */
+export interface RoomAccess {
+  /** 'free' = sin límites (cobros apagados o sala antigua) · 'trial' = prueba · 'pass' = con pase. */
+  plan: 'free' | 'trial' | 'pass';
+  trialEndsAt: string | null;
+  /** La prueba ha terminado y no hay pase: no se pueden enviar mensajes nuevos. */
+  locked: boolean;
+}
+
+export function roomAccess(room: Room, now = Date.now()): RoomAccess {
+  if (room.passId) return { plan: 'pass', trialEndsAt: null, locked: false };
+  if (!room.trialEndsAt || !paymentsEnabled()) return { plan: 'free', trialEndsAt: null, locked: false };
+  return { plan: 'trial', trialEndsAt: room.trialEndsAt, locked: Date.parse(room.trialEndsAt) <= now };
+}
+
+/** Bloquea mensajes nuevos cuando la prueba ha terminado (el niño puede seguir leyendo). */
+function assertOpen(room: Room): void {
+  if (roomAccess(room).locked) throw new RoomError('TRIAL_ENDED');
 }
 
 // ── Salas ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
-  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' },
+  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string },
   creatorHash: string,
-): Promise<{ childToken: string; parentToken: string }> {
+): Promise<{ childToken: string; parentToken: string; plan: RoomAccess['plan'] }> {
+  // Con un pase válido: sin límite. Si no, prueba gratis (con tope suave por dispositivo/conexión).
+  let passId: string | null = null;
+  let trialEndsAt: string | null = null;
+  if (paymentsEnabled()) {
+    const pass = input.passToken ? await checkPass(input.passToken) : null;
+    if (pass?.state === 'ok' && pass.pass) passId = pass.pass.id;
+    else {
+      const since = new Date(Date.now() - TRIAL_WINDOW_DAYS * 86_400_000).toISOString();
+      if ((await getRoomStore().countTrialRoomsByCreatorSince(creatorHash, since)) >= TRIALS_PER_CREATOR) throw new RoomError('TRIAL_USED');
+      trialEndsAt = new Date(Date.now() + trialMs()).toISOString();
+    }
+  }
   const parentToken = newToken();
   const childToken = deriveChildToken(parentToken);
   await getRoomStore().insertRoom({
@@ -42,8 +82,11 @@ export async function createRoom(
     characterGender: input.characterId === 'duende_chispa' ? (input.characterGender ?? null) : null,
     creatorHash,
     expiresAt: roomExpiresAt(CHARACTERS[input.characterId]).toISOString(),
+    readingLevel: input.readingLevel ?? 'yes',
+    trialEndsAt,
+    passId,
   });
-  return { childToken, parentToken };
+  return { childToken, parentToken, plan: passId ? 'pass' : trialEndsAt ? 'trial' : 'free' };
 }
 
 /** Resuelve token → sala + rol. El token se compara por hash; nunca se guarda en claro. */
@@ -53,7 +96,7 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion },
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId },
     role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
@@ -131,6 +174,7 @@ async function maybeAcknowledge(room: Room): Promise<void> {
 }
 
 export async function addChildText(room: Room, text: string): Promise<void> {
+  assertOpen(room);
   const rec = await getRoomStore().insertMessage({ roomId: room.id, sender: 'child', kind: 'text', body: text });
   notify(room, rec);
   await maybeAcknowledge(room);
@@ -145,6 +189,7 @@ export async function addPhoto(
   delayMinutes: ReplyDelay = 0,
   scheduledAt?: string,
 ): Promise<void> {
+  assertOpen(room);
   const type = normalizeImageType(mime);
   const spec = type ? IMAGE_TYPES[type] : undefined;
   if (!type || !spec || !spec.magic(image)) throw new RoomError('INVALID_FILE');
@@ -167,6 +212,7 @@ export async function addPhoto(
 
 export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
   if (!CHILD_AUDIO_ENABLED) throw new RoomError('INVALID_FILE');
+  assertOpen(room);
   const type = normalizeAudioType(mime);
   const spec = type ? AUDIO_TYPES[type] : undefined;
   if (!type || !spec || !spec.magic(audio)) throw new RoomError('INVALID_FILE');
@@ -194,6 +240,7 @@ export async function addKingReply(
   /** Entrega programada (ISO). Si va, sustituye al retraso en minutos. */
   scheduledAt?: string,
 ): Promise<ReplyOutcome> {
+  assertOpen(room);
   const store = getRoomStore();
   const deliverAt = scheduledAt ?? new Date(Date.now() + delayMinutes * 60_000).toISOString();
 
@@ -277,9 +324,13 @@ export async function editMessage(room: Room, messageId: string, text: string): 
 /** Cambia el nombre y/o el personaje de la sala. El niño lo verá al volver a abrir su enlace. */
 export async function editRoom(
   room: Room,
-  patch: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f' },
+  patch: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel },
 ): Promise<boolean> {
-  const ok = await getRoomStore().updateRoom(room.id, patch);
+  const { readingLevel, ...rest } = patch;
+  const store = getRoomStore();
+  let ok = true;
+  if (Object.keys(rest).length > 0) ok = await store.updateRoom(room.id, rest);
+  if (readingLevel) ok = (await store.updateReadingLevel(room.id, readingLevel)) && ok;
   if (ok) publishRefresh(room.id);
   return ok;
 }

@@ -56,6 +56,16 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
   const [introOpen, setIntroOpen] = useState(true);
   const [gone, setGone] = useState(false);
   const [caps, setCaps] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  // Si la prueba termina con la sala abierta, se cierra en ese momento (sin esperar a otro mensaje).
+  useEffect(() => {
+    if (!trialEndsAt || locked) return;
+    const ms = Date.parse(trialEndsAt) - Date.now();
+    if (ms > 2_147_000_000) return;
+    const t = setTimeout(() => setLocked(true), Math.max(0, ms) + 1000);
+    return () => clearTimeout(t);
+  }, [trialEndsAt, locked]);
 
   // Primeros lectores: MAYÚSCULAS. Viene en el enlace (?letras=mayus) o de la última vez en este dispositivo.
   useEffect(() => {
@@ -120,8 +130,10 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
       setGone(true);
       return;
     }
-    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[] }>;
+    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[]; access?: { locked: boolean; trialEndsAt?: string | null } }>;
     if (!body.ok || !body.data) throw new Error(body.error?.message ?? 'error');
+    setLocked(!!body.data.access?.locked);
+    setTrialEndsAt(body.data.access?.trialEndsAt ?? null);
     versionRef.current = body.data.version;
     if (body.data.unchanged || !body.data.messages) {
       // Nada nuevo, pero la primera carga (aunque esté vacía) cuenta como historial.
@@ -224,6 +236,11 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
     setSending(true);
     try {
       const res = await request();
+      // Fin de la prueba: el niño nunca ve avisos de pago, solo la nota del personaje.
+      if (res.status === 402) {
+        setLocked(true);
+        return;
+      }
       const body = (await res.json()) as ApiResult<null>;
       if (!body.ok) throw new FriendlyError(body.error?.message ?? oops);
       await refresh();
@@ -300,6 +317,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
       reconnecting={offline}
       caps={caps}
       onToggleCaps={toggleCaps}
+      closedNote={locked ? `${character.shortName} se ha ido a preparar la magia. ¡Muy pronto volverá a escribirte! ✨` : null}
     />
     {introOpen && <NorthPoleIntro token={token} character={character} childName={childName} onOpen={() => setIntroOpen(false)} />}
     {surprise && !introOpen && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}

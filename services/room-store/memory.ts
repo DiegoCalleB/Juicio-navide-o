@@ -1,8 +1,9 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import type { Bucket, MessageRecord, NewMessage, NewRoom, RoomRecord, RoomStore } from './types';
+import type { Bucket, MessageRecord, NewMessage, NewPass, NewRoom, PassRecord, RoomRecord, RoomStore } from './types';
 
-type RoomRow = RoomRecord & { expiresAt: string };
+type RoomRow = RoomRecord & { expiresAt: string; creatorHash: string; createdAt: number };
+type PassRow = PassRecord & { tokenHash: string };
 
 /** Con índices: las pruebas de carga miden la aplicación, no un barrido lineal del almacén. */
 interface State {
@@ -10,10 +11,11 @@ interface State {
   byHash: Map<string, RoomRow>; // hash de token → sala
   messages: Map<string, MessageRecord[]>; // roomId → mensajes (orden de inserción)
   files: Map<string, { data: Buffer; contentType: string }>;
+  passes: Map<string, PassRow>; // id → pase
 }
 
 const g = globalThis as unknown as { __roomMemory?: State };
-const state = (): State => (g.__roomMemory ??= { rooms: new Map(), byHash: new Map(), messages: new Map(), files: new Map() });
+const state = (): State => (g.__roomMemory ??= { rooms: new Map(), byHash: new Map(), messages: new Map(), files: new Map(), passes: new Map() });
 
 /** Lee un archivo del almacén en memoria (lo sirve la ruta de desarrollo). */
 export function readMemoryFile(bucket: string, path: string) {
@@ -30,6 +32,11 @@ export class MemoryRoomStore implements RoomStore {
       characterAlias: room.characterAlias ?? null,
       characterGender: room.characterGender ?? null,
       childLinkVersion: 0,
+      readingLevel: room.readingLevel ?? 'yes',
+      trialEndsAt: room.trialEndsAt ?? null,
+      passId: room.passId ?? null,
+      creatorHash: room.creatorHash,
+      createdAt: Date.now(),
       childTokenHash: room.childTokenHash,
       parentTokenHash: room.parentTokenHash,
       expiresAt: room.expiresAt,
@@ -101,6 +108,64 @@ export class MemoryRoomStore implements RoomStore {
 
   async removeFile(bucket: Bucket, path: string): Promise<void> {
     state().files.delete(`${bucket}/${path}`);
+  }
+
+  async countTrialRoomsByCreatorSince(creatorHash: string, sinceIso: string): Promise<number> {
+    const since = Date.parse(sinceIso);
+    let n = 0;
+    for (const r of state().rooms.values()) if (r.creatorHash === creatorHash && !r.passId && r.trialEndsAt && r.createdAt >= since) n++;
+    return n;
+  }
+
+  async insertPass(p: NewPass): Promise<PassRecord> {
+    const st = state();
+    if (p.stripeSessionId) {
+      const existing = [...st.passes.values()].find((x) => x.stripeSessionId === p.stripeSessionId);
+      if (existing) return existing;
+    }
+    const row: PassRow = {
+      id: randomUUID(),
+      tokenHash: p.tokenHash,
+      kind: p.kind,
+      stripeSessionId: p.stripeSessionId ?? null,
+      parentPassId: p.parentPassId ?? null,
+      roomsLimit: 10,
+      expiresAt: p.expiresAt,
+    };
+    st.passes.set(row.id, row);
+    return row;
+  }
+
+  async findPassByTokenHash(hash: string): Promise<PassRecord | null> {
+    return [...state().passes.values()].find((x) => x.tokenHash === hash) ?? null;
+  }
+
+  async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
+    return [...state().passes.values()].find((x) => x.stripeSessionId === sessionId) ?? null;
+  }
+
+  async findGiftOf(passId: string): Promise<PassRecord | null> {
+    return [...state().passes.values()].find((x) => x.parentPassId === passId) ?? null;
+  }
+
+  async countRoomsByPass(passId: string): Promise<number> {
+    let n = 0;
+    for (const r of state().rooms.values()) if (r.passId === passId) n++;
+    return n;
+  }
+
+  async attachPass(roomId: string, passId: string): Promise<boolean> {
+    const row = state().rooms.get(roomId);
+    if (!row) return false;
+    row.passId = passId;
+    return true;
+  }
+
+  async updateReadingLevel(roomId: string, level: string): Promise<boolean> {
+    const row = state().rooms.get(roomId);
+    if (!row) return false;
+    row.readingLevel = level;
+    return true;
   }
 
   async updateChildLink(roomId: string, version: number, childTokenHash: string): Promise<boolean> {

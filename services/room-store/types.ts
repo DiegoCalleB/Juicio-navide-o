@@ -14,6 +14,30 @@ export interface RoomRecord {
   characterGender: string | null;
   /** Cuántas veces se ha cambiado el enlace del niño (0 = nunca). */
   childLinkVersion: number;
+  /** ¿Lee ya el niño? 'yes' | 'learning' | 'no'. */
+  readingLevel: string;
+  /** Fin de la prueba gratuita (null = sin límite). */
+  trialEndsAt: string | null;
+  /** Pase de Navidad que desbloquea la sala (null = sin pase). */
+  passId: string | null;
+}
+
+export interface PassRecord {
+  id: string;
+  kind: 'paid' | 'gift';
+  stripeSessionId: string | null;
+  parentPassId: string | null;
+  roomsLimit: number;
+  expiresAt: string;
+}
+
+export interface NewPass {
+  tokenHash: string;
+  kind: 'paid' | 'gift';
+  stripeSessionId?: string | null;
+  parentPassId?: string | null;
+  amountCents?: number | null;
+  expiresAt: string;
 }
 
 export interface MessageRecord {
@@ -53,6 +77,9 @@ export interface NewRoom {
   characterGender?: string | null;
   creatorHash: string;
   expiresAt: string;
+  readingLevel?: string;
+  trialEndsAt?: string | null;
+  passId?: string | null;
 }
 
 /**
@@ -98,4 +125,19 @@ export interface RoomStore {
   signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>>;
   /** Borra salas caducadas (y sus mensajes y archivos). */
   deleteExpired(nowIso: string): Promise<{ rooms: number; files: number }>;
+
+  // ── Prueba gratuita y pases ──
+  /** Salas de prueba (sin pase) creadas desde ese dispositivo/conexión desde `sinceIso`. */
+  countTrialRoomsByCreatorSince(creatorHash: string, sinceIso: string): Promise<number>;
+  /** Crea el pase; si ya existe uno con ese stripeSessionId, devuelve el existente (idempotente). */
+  insertPass(pass: NewPass): Promise<PassRecord>;
+  findPassByTokenHash(hash: string): Promise<PassRecord | null>;
+  findPassByStripeSession(sessionId: string): Promise<PassRecord | null>;
+  /** El pase regalado por otro pase (si existe). */
+  findGiftOf(passId: string): Promise<PassRecord | null>;
+  countRoomsByPass(passId: string): Promise<number>;
+  /** Asocia un pase a la sala (quita el límite de la prueba). */
+  attachPass(roomId: string, passId: string): Promise<boolean>;
+  /** Cambia el nivel de lectura de la sala. */
+  updateReadingLevel(roomId: string, level: string): Promise<boolean>;
 }

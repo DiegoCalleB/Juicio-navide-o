@@ -6,6 +6,7 @@ export type ErrorCode =
   | 'DUPLICATE'
   | 'NOT_FOUND'
   | 'SPAM'
+  | 'TRIAL_USED'
   | 'UNKNOWN';
 
 export interface AppError {

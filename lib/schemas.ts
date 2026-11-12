@@ -26,6 +26,10 @@ export const createRoomSchema = z.object({
   /** Solo el elfo: nombre que le pone la familia y si es chico o chica. */
   characterAlias: text(1, 20).optional(),
   characterGender: z.enum(['m', 'f']).optional(),
+  /** ¿Ya lee? Ajusta mayúsculas y consejos para los padres. */
+  readingLevel: z.enum(['yes', 'learning', 'no']).optional(),
+  /** Enlace de pase guardado en este móvil (propio o regalado). */
+  passToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   consent: z.literal(true, { errorMap: () => ({ message: 'Necesitamos tu consentimiento' }) }),
   website: honeypot,
 });
@@ -37,6 +41,7 @@ export const roomEditSchema = z
     characterId: z.enum(CHARACTER_IDS).optional(),
     characterAlias: text(1, 20).optional(),
     characterGender: z.enum(['m', 'f']).optional(),
+    readingLevel: z.enum(['yes', 'learning', 'no']).optional(),
   })
   .refine((v) => Object.values(v).some((x) => x !== undefined), 'Nada que cambiar.');
 

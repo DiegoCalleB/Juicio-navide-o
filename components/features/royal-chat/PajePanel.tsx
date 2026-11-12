@@ -13,6 +13,7 @@ import { ReactionReview } from './ReactionReview';
 import { IdeasList } from './IdeasList';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
+import { PassOffer, type BillingInfo } from './PassOffer';
 import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 import { SchedulePlanner } from './SchedulePlanner';
@@ -33,10 +34,38 @@ interface PajePanelProps {
   /** Solo el elfo: nombre y género que eligió la familia. */
   characterAlias?: string | null;
   characterGender?: string | null;
+  /** ¿Lee ya el niño? Ajusta consejos y mayúsculas. */
+  readingLevel?: 'yes' | 'learning' | 'no';
+  billing?: BillingInfo;
+}
+
+interface Access {
+  plan: 'free' | 'trial' | 'pass';
+  trialEndsAt: string | null;
+  locked: boolean;
+}
+
+/** "quedan 2 días" / "quedan 5 horas" */
+function timeLeft(iso: string): string {
+  const ms = Date.parse(iso) - Date.now();
+  const h = Math.max(1, Math.ceil(ms / 3_600_000));
+  if (h < 24) return h === 1 ? 'queda menos de 1 hora' : `quedan ${h} horas`;
+  const d = Math.ceil(h / 24);
+  return d === 1 ? 'queda 1 día' : `quedan ${d} días`;
 }
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
-export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null }: PajePanelProps) {
+export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing }: PajePanelProps) {
+  const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
+  const [offerOpen, setOfferOpen] = useState(false);
+  // Si la prueba termina con el panel abierto, se muestra la oferta en ese momento.
+  useEffect(() => {
+    if (access.plan !== 'trial' || access.locked || !access.trialEndsAt) return;
+    const ms = Date.parse(access.trialEndsAt) - Date.now();
+    if (ms > 2_147_000_000) return;
+    const t = setTimeout(() => setAccess((a) => ({ ...a, locked: true })), Math.max(0, ms) + 1000);
+    return () => clearTimeout(t);
+  }, [access]);
   const [messages, setMessages] = useState<RoomMessageDTO[]>([]);
   const [text, setText] = useState('');
   const [delay, setDelay] = useState<ReplyDelay>(0);
@@ -63,7 +92,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const [whenCustom, setWhenCustom] = useState(false);
   const [whenValue, setWhenValue] = useState('');
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
-  const [capsLink, setCapsLink] = useState(false);
+  const [capsLink, setCapsLink] = useState(readingLevel !== 'yes');
   const [askRotate, setAskRotate] = useState(false);
   const [rotating, setRotating] = useState(false);
   const shareLink = capsLink ? `${childLink}?letras=mayus` : childLink;
@@ -81,8 +110,12 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
-    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[] }>;
+    const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[]; access?: Access }>;
     if (!body.ok || !body.data) return;
+    if (body.data.access) {
+      const a = body.data.access;
+      setAccess((prev) => (prev.plan === a.plan && prev.locked === a.locked && prev.trialEndsAt === a.trialEndsAt ? prev : a));
+    }
     versionRef.current = body.data.version;
     if (body.data.unchanged || !body.data.messages) return;
     const list = body.data.messages;
@@ -450,6 +483,22 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           />
         </header>
 
+        {access.plan === 'trial' && !access.locked && access.trialEndsAt && billing?.enabled && (
+          <div className="flex items-center gap-2 border-b border-white/10 bg-[#f6d77a]/[.07] px-4 py-1.5 text-[12.5px]">
+            <p className="min-w-0 flex-1 text-[#e8f1ff]/80">
+              Prueba gratis · {timeLeft(access.trialEndsAt)}
+            </p>
+            <button type="button" onClick={() => setOfferOpen((v) => !v)} className="shrink-0 rounded-full border border-[#f6d77a]/60 px-3 py-0.5 text-[12px] font-bold text-[#f6d77a]">
+              {offerOpen ? 'Cerrar' : `Pase ${billing.price}`}
+            </button>
+          </div>
+        )}
+        {offerOpen && !access.locked && billing?.enabled && access.plan === 'trial' && (
+          <div className="border-b border-white/10 bg-[#0d1628] p-3">
+            <PassOffer billing={billing} roomToken={token} childName={childName} title="Pase de Navidad" onUnlocked={() => { setOfferOpen(false); versionRef.current = ''; void refresh(); }} />
+          </div>
+        )}
+
         {presence && (
           <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-2 text-[13px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
             <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
@@ -596,7 +645,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
           </section>
 
-          <RoomAdmin token={token} childName={childName} characterId={character.id} characterAlias={characterAlias} characterGender={characterGender} />
+          <RoomAdmin token={token} childName={childName} characterId={character.id} characterAlias={characterAlias} characterGender={characterGender} readingLevel={readingLevel} />
           </div>
 
           {todayMischief && (
@@ -637,6 +686,21 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           <div ref={endRef} />
         </div>
 
+        {access.locked && billing ? (
+        <footer className="space-y-2 border-t border-white/10 bg-[#121d33] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+          <PassOffer
+            billing={billing}
+            roomToken={token}
+            childName={childName}
+            title="La prueba gratis ha terminado"
+            onUnlocked={() => {
+              versionRef.current = '';
+              void refresh();
+            }}
+          />
+          <p className="text-center text-[11.5px] text-[#e8f1ff]/55">{childName} puede seguir leyendo todo lo que ya le habéis escrito. Ve que {short} «ha ido a preparar la magia».</p>
+        </footer>
+        ) : (
         <footer className="space-y-2.5 border-t border-white/10 bg-[#121d33] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
           <div role="tablist" aria-label="Momento" className="-mx-3 flex gap-1.5 overflow-x-auto px-3 [scrollbar-width:none]">
             {character.moments.map((mo) => (
@@ -688,6 +752,12 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
           )}
           {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#5eead4]/80">💡 {activeMoment.tip}</p>}
+          {readingLevel === 'learning' && (
+            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">✏️ Está aprendiendo a leer: frases cortas y palabras sencillas. Lo verá en MAYÚSCULAS.</p>
+          )}
+          {readingLevel === 'no' && (
+            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">📖 Todavía no lee: que se lo lea en voz alta quien esté a su lado. Las fotos ayudan mucho.</p>
+          )}
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
             {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button
@@ -824,6 +894,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               : photo ? `Enviar foto como ${short}` : voiceNow ? `Enviar con la voz de ${short}` : `Enviar como ${short}`}
           </button>
         </footer>
+        )}
 
         {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onClose={() => setIdeasOpen(false)} />}
 

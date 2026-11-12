@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 
 const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
 
-export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
+export function LegalSection({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section className="space-y-2">
+    <section id={id} className="scroll-mt-6 space-y-2">
       <h2 className="font-serif text-xl text-[#f6d77a]">{title}</h2>
       <div className="space-y-2 text-[15px] leading-relaxed text-[#fff6dc]/80">{children}</div>
     </section>

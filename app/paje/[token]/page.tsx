@@ -5,6 +5,7 @@ import { PajePanel } from '@/components/features/royal-chat/PajePanel';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { originFromHeaders } from '@/lib/site';
 import { deriveChildToken } from '@/lib/tokens';
+import { billingInfo } from '@/lib/billing';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,8 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
       childName={found.room.childName}
       characterAlias={found.room.characterAlias}
       characterGender={found.room.characterGender}
+      readingLevel={found.room.readingLevel}
+      billing={billingInfo()}
     />
   );
 }

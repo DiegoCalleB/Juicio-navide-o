@@ -40,6 +40,8 @@ interface RoyalChatProps {
   caps?: boolean;
   /** Si se da, aparece el botón para cambiar a MAYÚSCULAS. */
   onToggleCaps?: () => void;
+  /** Si se da, no se puede escribir: se muestra esta nota del personaje en lugar del teclado. */
+  closedNote?: string | null;
 }
 
 export type KingActivity = 'recording' | 'typing' | null;
@@ -63,6 +65,7 @@ export function RoyalChat({
   reconnecting = false,
   caps = false,
   onToggleCaps,
+  closedNote = null,
 }: RoyalChatProps) {
   const { recording, elapsed, error, start, stop } = useVoiceRecorder({ simulate: simulateRecording });
   const [hint, setHint] = useState(false);
@@ -213,6 +216,11 @@ export function RoyalChat({
           </p>
         )}
 
+        {closedNote ? (
+          <p role="status" className={`kid-font relative z-10 mx-3 mb-[max(0.8rem,env(safe-area-inset-bottom))] mt-2 rounded-3xl bg-[#fbf5e6] px-4 py-3.5 text-center text-[15px] leading-snug text-[#3a2208] shadow-md ${caps ? 'uppercase tracking-wide' : ''}`}>
+            {closedNote}
+          </p>
+        ) : (
         <form onSubmit={submitText} className="relative z-10 flex items-end gap-2 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
           <div className="relative flex min-h-12 flex-1 items-center rounded-3xl bg-[#fbf5e6] pl-4 pr-1 shadow-md">
             {recording ? (
@@ -291,6 +299,7 @@ export function RoyalChat({
             </button>
           )}
         </form>
+        )}
 
         {lightbox && (
           <div role="dialog" aria-modal="true" aria-label="Foto" className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-3" onClick={() => setLightbox(null)}>

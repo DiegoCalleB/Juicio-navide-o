@@ -6,18 +6,20 @@
  *   npm run test:e2e              → todas menos voz real
  *   npm run test:e2e -- landing   → solo las que coincidan con "landing"
  *   npm run test:e2e -- --voice   → incluye la prueba de voz (gasta créditos de ElevenLabs)
+ *   npm run test:e2e -- --billing → prueba gratis y Pase de Navidad (Stripe simulado, servidor aparte)
  */
 const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 
 const args = process.argv.slice(2);
 const withVoice = args.includes('--voice');
+const withBilling = args.includes('--billing');
 const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
 const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'media', 'plan', 'phase1', ...(withVoice ? ['voice'] : [])];
-const selected = SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
+const selected = withBilling ? ['billing'] : SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {
   ...process.env,
@@ -29,6 +31,7 @@ const env = {
   NEXT_PUBLIC_CONTACT_EMAIL: 'hola@ejemplo.com',
   E2E_BASE: BASE,
   NEXT_DIST_DIR: '.next-e2e',
+  ...(withBilling ? { STRIPE_FAKE: '1', TRIAL_TEST_SECONDS: '45', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
   ...(withVoice ? { NEXT_PUBLIC_ENABLE_VOICE: '1', VOICE_ROOM_DAILY_LIMIT: '2', NODE_USE_ENV_PROXY: '1' } : {}),
 };
 

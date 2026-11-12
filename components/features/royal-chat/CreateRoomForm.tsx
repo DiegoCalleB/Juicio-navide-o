@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { loadPass } from '@/lib/myPass';
+import { PassOffer, type BillingInfo } from './PassOffer';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
 import { CHARACTERS, CHARACTER_GROUPS, resolveCharacter, type CharacterId } from '@/lib/characters';
@@ -9,13 +11,20 @@ import { saveRoom } from '@/lib/myRooms';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
 
-export function CreateRoomForm() {
+type Reading = 'yes' | 'learning' | 'no';
+
+export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
   const [characterId, setCharacterId] = useState<CharacterId>('papa_noel');
   const [alias, setAlias] = useState('');
   const [gender, setGender] = useState<'m' | 'f'>('m');
+  const [reading, setReading] = useState<Reading>('yes');
   const [consent, setConsent] = useState(false);
+  const [trialUsed, setTrialUsed] = useState(false);
+  const [plan, setPlan] = useState<'free' | 'trial' | 'pass'>('free');
+  const [hasPass, setHasPass] = useState(false);
+  useEffect(() => setHasPass(!!loadPass()), []);
   const [trap, setTrap] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<{ child: string; parent: string } | null>(null);
@@ -24,7 +33,8 @@ export function CreateRoomForm() {
     e.preventDefault();
     setError(null);
     const isElf = characterId === 'duende_chispa';
-    const payload = { childName, characterId, consent, website: trap, ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) };
+    const passToken = loadPass() ?? undefined;
+    const payload = { childName, characterId, consent, website: trap, readingLevel: reading, ...(passToken ? { passToken } : {}), ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) };
     const check = createRoomSchema.safeParse(payload);
     if (!check.success) {
       const f = check.error.flatten().fieldErrors;
@@ -33,7 +43,11 @@ export function CreateRoomForm() {
     }
     startTransition(async () => {
       const res = await createRoomAction(payload);
-      if (!res.ok) return setError(res.error.message);
+      if (!res.ok) {
+        if (res.error.code === 'TRIAL_USED') setTrialUsed(true);
+        return setError(res.error.message);
+      }
+      setPlan(res.data.plan);
       const origin = window.location.origin;
       saveRoom({ childName: childName.trim(), characterId, characterAlias: payload.characterAlias, characterGender: payload.characterGender, parentPath: `/paje/${res.data.parentToken}`, childPath: `/r/${res.data.childToken}`, createdAt: new Date().toISOString() });
       setLinks({ child: `${origin}/r/${res.data.childToken}`, parent: `${origin}/paje/${res.data.parentToken}` });
@@ -46,6 +60,10 @@ export function CreateRoomForm() {
     return (
       <div className="space-y-4 animate-pop">
         <p className="text-center font-serif text-xl text-[#f6d77a]">¡La sala real está lista!</p>
+        {plan === 'trial' && (
+          <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Después podrás seguir con el Pase de Navidad ({billing.price}).</p>
+        )}
+        {plan === 'pass' && <p className="text-center text-[13px] text-[#fff6dc]/70">✨ Con tu Pase de Navidad: sin límite hasta el 20 de enero.</p>}
         <LinkCard title={`1. Móvil de ${name}`} text={`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`} url={links.child} />
         <LinkCard title="2. Tu panel secreto de los padres" text={`Desde aquí lees lo que escribe ${name} y contestas como ${c.shortName}. No lo compartas con el peque.`} url={links.parent} secret />
         <div role="note" className="rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/[.07] p-3.5 text-[13px] leading-snug text-[#fff6dc]/85">
@@ -135,6 +153,31 @@ export function CreateRoomForm() {
         ))}
       </fieldset>
 
+      <fieldset className="space-y-1.5">
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿{childName.trim() || 'Tu peque'} ya lee?</legend>
+        <div role="radiogroup" aria-label="Nivel de lectura" className="grid grid-cols-3 gap-2">
+          {([['yes', 'Sí'], ['learning', 'Está empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={reading === v}
+              onClick={() => setReading(v)}
+              className={`min-h-11 rounded-2xl border px-1 text-[13px] font-bold leading-tight ${reading === v ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {reading !== 'yes' && (
+          <p className="text-xs leading-snug text-[#fff6dc]/55">
+            {reading === 'learning'
+              ? 'Verá todo en MAYÚSCULAS y te daremos consejos para escribirle frases fáciles. ¡Querrá leer cada mensaje!'
+              : 'Verá todo en MAYÚSCULAS. Leedlo juntos y usad fotos: él puede contestar con notas de voz.'}
+          </p>
+        )}
+      </fieldset>
+
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
         <span>
@@ -145,11 +188,16 @@ export function CreateRoomForm() {
 
       <Honeypot value={trap} onChange={setTrap} />
       {error && <p role="alert" className="text-sm text-[#ff8a8c]">{error}</p>}
+      {trialUsed && billing.enabled && <PassOffer billing={billing} title="Pase de Navidad" tone="landing" />}
 
       <button type="submit" disabled={pending}
         className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg disabled:opacity-60">
         {pending ? 'Preparando la sala real…' : 'Crear la sala real'}
       </button>
+      {billing.enabled && !hasPass && (
+        <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>
+      )}
+      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80">✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</p>}
     </form>
   );
 }

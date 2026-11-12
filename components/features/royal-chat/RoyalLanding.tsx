@@ -3,9 +3,11 @@ import { CHARACTERS } from '@/lib/characters';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
 import { MyRooms } from './MyRooms';
+import type { BillingInfo } from './PassOffer';
+import { PassWelcome } from './PassWelcome';
 import { DEMO_NOEL } from './demoData';
 
-export function RoyalLanding() {
+export function RoyalLanding({ billing }: { billing: BillingInfo }) {
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
@@ -16,6 +18,9 @@ export function RoyalLanding() {
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
             Tu peque le escribe a Papá Noel, a los Reyes Magos, al Ratoncito Pérez o a un duende travieso y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.
           </p>
+          <p className="mx-auto mt-3 inline-block rounded-full border border-[#f6d77a]/40 bg-[#f6d77a]/10 px-3 py-1 text-[12.5px] font-semibold text-[#f6d77a]">
+            📖 Ideal para primeros lectores: ¡querrá leer cada mensaje!
+          </p>
         </header>
 
         <section aria-labelledby="demo-title" className="mb-8">
@@ -25,6 +30,7 @@ export function RoyalLanding() {
           <DemoChat embedded character={CHARACTERS.papa_noel} childName="Lucía" initial={DEMO_NOEL} />
         </section>
 
+        <PassWelcome />
         <MyRooms />
 
         <div className="mb-3 text-center">
@@ -32,7 +38,7 @@ export function RoyalLanding() {
           <p className="mt-1 text-[14px] text-[#fff6dc]/60">Gratis, sin registrarte. Tarda un minuto. Puedes crear una sala por cada peque o personaje.</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur">
-          <CreateRoomForm />
+          <CreateRoomForm billing={billing} />
         </div>
         <ol className="mt-8 space-y-3 text-[14px] leading-snug text-[#fff6dc]/75">
           <li><span className="font-bold text-[#f6d77a]">1.</span> Crea la sala con el nombre de tu peque y elige quién le contesta.</li>

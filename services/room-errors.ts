@@ -1,4 +1,4 @@
-export type RoomErrorCode = 'RATE_LIMITED' | 'NOT_FOUND' | 'INVALID_FILE' | 'UNKNOWN';
+export type RoomErrorCode = 'RATE_LIMITED' | 'NOT_FOUND' | 'INVALID_FILE' | 'TRIAL_USED' | 'TRIAL_ENDED' | 'UNKNOWN';
 
 export class RoomError extends Error {
   constructor(public readonly code: RoomErrorCode) {

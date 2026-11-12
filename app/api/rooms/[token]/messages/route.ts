@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { fail, guarded, json } from '@/lib/http';
-import { findRoomByToken, getMessagesVersion, listMessages } from '@/services/rooms';
+import { findRoomByToken, getMessagesVersion, listMessages, roomAccess } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +14,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
     const found = await findRoomByToken(token);
     if (!found) return fail('NOT_FOUND', 'Sala no encontrada', 404);
 
+    // El acceso va siempre: la prueba termina por tiempo, sin que cambie ningún mensaje.
+    const access = roomAccess(found.room);
     const version = await getMessagesVersion(found.room, found.role);
-    if (req.nextUrl.searchParams.get('v') === version) return json({ ok: true, data: { version, unchanged: true } });
+    if (req.nextUrl.searchParams.get('v') === version) return json({ ok: true, data: { version, unchanged: true, access } });
 
     const messages = await listMessages(found.room, found.role);
-    return json({ ok: true, data: { version, messages } });
+    return json({ ok: true, data: { version, messages, access } });
   });
 }
