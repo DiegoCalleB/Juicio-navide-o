@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import { ContactLine, LegalPage, LegalSection } from '@/components/features/LegalPage';
+import { regionalize } from '@/lib/i18n';
+import { getRequestLocale } from '@/lib/i18n.server';
 
 export const metadata: Metadata = { title: 'Privacidad' };
 
-export default function PrivacidadPage() {
+export default async function PrivacidadPage() {
+  const locale = await getRequestLocale();
+  const r = (t: string) => regionalize(t, locale);
   return (
     <LegalPage title="Privacidad" intro="Esta app está pensada para que los padres creen una conversación mágica con sus hijos. Te contamos qué guardamos y por qué.">
       <LegalSection title="Quién usa la app">
@@ -15,11 +19,11 @@ export default function PrivacidadPage() {
           <li>El nombre de pila del niño (nunca apellidos) y el personaje elegido.</li>
           <li>Los mensajes escritos, los audios del niño y las fotos (y, solo si algún día se activa, las respuestas con voz del personaje).</li>
           <li>Si los padres lo indican, si el niño ya lee (para mostrarle el texto en mayúsculas y dar consejos a los padres).</li>
-          <li>Un identificador técnico anónimo (hash) para limitar abusos y el número de pruebas gratis por móvil. No es reversible.</li>
-          <li>Si compráis el Pase de Navidad: un identificador del pago de Stripe, el importe y la fecha de caducidad del pase. No guardamos vuestro nombre, correo ni tarjeta.</li>
+          <li>{r('Un identificador técnico anónimo (hash) para limitar abusos y el número de pruebas gratis por móvil. No es reversible.')}</li>
+          <li>{r('Si compráis el Pase de Navidad: un identificador del pago de Stripe, el importe y la fecha de caducidad del pase. No guardamos vuestro nombre, correo ni tarjeta.')}</li>
         </ul>
-        <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento. En el propio navegador guardamos solo lo necesario para que funcione: tus salas, tu pase y la preferencia de mayúsculas.</p>
-        <p>La app no graba vídeo ni usa la cámara del niño. Si los padres graban su reacción con la opción “Con este móvil”, el vídeo se crea en el propio móvil de los padres y nunca pasa por nuestros servidores.</p>
+        <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento. En el propio navegador guardamos solo lo necesario para que funcione: tus salas, tu pase, la preferencia de mayúsculas y el idioma que elijas.</p>
+        <p>{r('La app no graba vídeo ni usa la cámara del niño. Si los padres graban su reacción con la opción “Con este móvil”, el vídeo se crea en el propio móvil de los padres y nunca pasa por nuestros servidores.')}</p>
       </LegalSection>
 
       <LegalSection title="Servicios que intervienen">

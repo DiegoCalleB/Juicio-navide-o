@@ -20,6 +20,8 @@ export interface RoomRecord {
   trialEndsAt: string | null;
   /** Pase de Navidad que desbloquea la sala (null = sin pase). */
   passId: string | null;
+  /** Variante de idioma: 'es' o 'es-419'. */
+  locale: string;
 }
 
 export interface PassRecord {
@@ -80,6 +82,7 @@ export interface NewRoom {
   readingLevel?: string;
   trialEndsAt?: string | null;
   passId?: string | null;
+  locale?: string;
 }
 
 /**

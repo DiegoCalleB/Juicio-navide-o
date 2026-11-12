@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { loadRooms, removeRoom, type SavedRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
+import { R, useLocale } from '@/components/LocaleProvider';
 
 /** Salas creadas en este móvil, para volver al panel o preparar otra (otro niño, otro personaje). */
 export function MyRooms() {
+  const locale = useLocale();
   const [rooms, setRooms] = useState<SavedRoom[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -32,7 +34,7 @@ export function MyRooms() {
         onClick={() => setOpen(true)}
         className="mb-8 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] px-4 text-left text-[14px] font-semibold text-[#f6d77a]"
       >
-        <span>Ya tengo salas en este móvil ({rooms.length})</span>
+        <span><R>Ya tengo salas en este móvil ({rooms.length})</R></span>
         <span aria-hidden>▾</span>
       </button>
     );
@@ -40,13 +42,13 @@ export function MyRooms() {
 
   return (
     <section aria-labelledby="my-rooms" className="mb-8 rounded-3xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] p-4">
-      <h2 id="my-rooms" className="font-serif text-xl text-[#f6d77a]">Tus salas en este móvil</h2>
+      <h2 id="my-rooms" className="font-serif text-xl text-[#f6d77a]"><R>Tus salas en este móvil</R></h2>
       <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/60">Solo para padres: no enseñes esta pantalla a los peques.</p>
       <ul className="mt-3 space-y-2.5">
         {rooms.map((r) => {
           const base = CHARACTERS[r.characterId];
           if (!base) return null;
-          const c = resolveCharacter(base, { alias: r.characterAlias, gender: r.characterGender });
+          const c = resolveCharacter(base, { alias: r.characterAlias, gender: r.characterGender, locale });
           return (
             <li key={r.parentPath} className="rounded-2xl border border-white/10 bg-black/20 p-3">
               <div className="flex items-center gap-3">

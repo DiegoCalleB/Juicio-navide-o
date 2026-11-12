@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import { getRequestLocale } from '@/lib/i18n.server';
 import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
@@ -15,12 +17,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: '#2a0f4a', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getRequestLocale();
   return (
-    <html lang="es">
+    <html lang={locale}>
       <body className="min-h-dvh font-sans">
         <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
-          {children}
+          <LocaleProvider locale={locale}>{children}</LocaleProvider>
         </main>
       </body>
     </html>

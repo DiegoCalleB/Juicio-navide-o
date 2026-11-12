@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { removeRoom } from '@/lib/myRooms';
 import { CHARACTER_GROUPS, CHARACTERS, resolveCharacter, type CharacterId } from '@/lib/characters';
 import type { ApiResult } from './mapping';
+import { R, useLocale } from '@/components/LocaleProvider';
 
 interface Props {
   token: string;
@@ -18,6 +19,7 @@ type Reading = 'yes' | 'learning' | 'no';
 
 /** Editar la sala (nombre y personaje) y borrarla por completo. Lo ven solo los padres. */
 export function RoomAdmin({ token, childName, characterId, characterAlias = null, characterGender = null, readingLevel = 'yes' }: Props) {
+  const locale = useLocale();
   const [reading, setReading] = useState<Reading>(readingLevel);
   const [name, setName] = useState(childName);
   const [character, setCharacter] = useState<CharacterId>(characterId);
@@ -96,7 +98,7 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
                 onClick={() => setCharacter(id)}
                 className={`rounded-full px-3 py-1.5 text-[12.5px] font-bold ${character === id ? 'bg-[#5eead4] text-[#04302b]' : 'bg-white/10 text-[#e8f1ff]/80'}`}
               >
-                {resolveCharacter(CHARACTERS[id]).name}
+                {resolveCharacter(CHARACTERS[id], { locale }).name}
               </button>
             ))}
           </div>
@@ -106,7 +108,7 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
           {isElf && (
             <div className="space-y-2 rounded-xl bg-black/20 p-2.5">
               <label className="block">
-                <span className="text-[12px] text-[#e8f1ff]/70">Nombre de vuestro elfo</span>
+                <span className="text-[12px] text-[#e8f1ff]/70"><R>Nombre de vuestro elfo</R></span>
                 <input
                   value={alias}
                   maxLength={20}
@@ -161,7 +163,7 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
 
       <div className="space-y-2 border-t border-white/10 pt-3">
         <p className="font-semibold text-[#ff8a8c]">Borrar la sala</p>
-        <p className="text-[#e8f1ff]/70">Se borran los mensajes, los audios y las fotos, para los dos móviles. No se puede deshacer.</p>
+        <p className="text-[#e8f1ff]/70"><R>Se borran los mensajes, los audios y las fotos, para los dos móviles. No se puede deshacer.</R></p>
         {askDelete ? (
           <div role="alertdialog" aria-label="Confirmar borrado de la sala" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#ff8a8c]/10 p-2.5">
             <span className="flex-1 font-semibold text-[#ff8a8c]">¿Borrar la sala de {childName} para siempre?</span>

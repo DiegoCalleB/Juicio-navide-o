@@ -3,6 +3,7 @@
  * (+ su voz en lib/voice.ts y, si hace falta, su avatar en RoyalAvatar).
  * Sin secretos: este archivo viaja al cliente.
  */
+import { regionalizeDeep, type Locale } from '@/lib/i18n';
 
 export type AvatarKind = 'crown' | 'santa' | 'mouse' | 'elf';
 export type SkyKind = 'orient' | 'snow' | 'night' | 'candy';
@@ -558,8 +559,9 @@ export type ElfGender = 'm' | 'f';
  * Adapta un personaje a su sala. Hoy solo el elfo cambia: cada familia le pone nombre y elige si es chico o chica.
  * Los textos usan marcas: {elf} nombre, {Elfo}, {o}, {el}, {un}, {del}.
  */
-export function resolveCharacter(c: CharacterProfile, opts?: { alias?: string | null; gender?: string | null }): CharacterProfile {
-  if (c.group !== 'duende') return c;
+export function resolveCharacter(c: CharacterProfile, opts?: { alias?: string | null; gender?: string | null; locale?: Locale }): CharacterProfile {
+  const locale = opts?.locale ?? 'es';
+  if (c.group !== 'duende') return regionalizeDeep(c, locale);
   const alias = opts?.alias?.trim() || 'Chispa';
   const f = opts?.gender === 'f';
   const map = (t: string) =>
@@ -577,7 +579,7 @@ export function resolveCharacter(c: CharacterProfile, opts?: { alias?: string | 
     if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, deep(x)]));
     return v;
   };
-  return deep(c) as CharacterProfile;
+  return regionalizeDeep(deep(c) as CharacterProfile, locale);
 }
 
 export function isCharacterId(value: string): value is CharacterId {

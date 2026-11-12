@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { LocaleProvider } from '@/components/LocaleProvider';
 import { PajePanel } from '@/components/features/royal-chat/PajePanel';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { originFromHeaders } from '@/lib/site';
@@ -17,8 +18,9 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'parent') notFound();
   const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token, found.room.childLinkVersion)}`;
-  const character = resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender });
+  const character = resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender, locale: found.room.locale });
   return (
+    <LocaleProvider locale={found.room.locale}>
     <PajePanel
       token={token}
       childLink={childLink}
@@ -29,5 +31,6 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
       readingLevel={found.room.readingLevel}
       billing={billingInfo()}
     />
+    </LocaleProvider>
   );
 }

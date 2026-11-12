@@ -33,6 +33,7 @@ export class MemoryRoomStore implements RoomStore {
       characterGender: room.characterGender ?? null,
       childLinkVersion: 0,
       readingLevel: room.readingLevel ?? 'yes',
+      locale: room.locale ?? 'es',
       trialEndsAt: room.trialEndsAt ?? null,
       passId: room.passId ?? null,
       creatorHash: room.creatorHash,

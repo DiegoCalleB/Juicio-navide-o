@@ -20,6 +20,7 @@ import { SchedulePlanner } from './SchedulePlanner';
 import { useReactionRecorder } from './useReactionRecorder';
 import { useRoomEvents } from './useRoomEvents';
 import { VoiceNote } from './VoiceNote';
+import { R, useRegional } from '@/components/LocaleProvider';
 
 const MAX_CHARS = 300;
 const COUNTDOWN_SECONDS = 5;
@@ -56,6 +57,7 @@ function timeLeft(iso: string): string {
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
 export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing }: PajePanelProps) {
+  const r = useRegional();
   const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
   const [offerOpen, setOfferOpen] = useState(false);
   // Si la prueba termina con el panel abierto, se muestra la oferta en ese momento.
@@ -438,7 +440,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       const res = await fetch(`/api/rooms/${token}/erase/${id}`, { method: 'DELETE' });
       const json = (await res.json()) as ApiResult<null>;
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo borrar.');
-      setNotice({ tone: 'ok', msg: 'Mensaje borrado. Ya no aparece en ninguno de los dos móviles.' });
+      setNotice({ tone: 'ok', msg: r('Mensaje borrado. Ya no aparece en ninguno de los dos móviles.') });
       await refresh();
     } catch (err) {
       setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo borrar.' });
@@ -531,8 +533,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
           <div id="panel-setup" hidden={!setupVisible} className="space-y-3" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
-            <p className="font-semibold text-[#5eead4]">Enlace para el móvil de {childName}</p>
-            <p className="mt-1 text-[#e8f1ff]/70">Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</p>
+            <p className="font-semibold text-[#5eead4]"><R>Enlace para el móvil de {childName}</R></p>
+            <p className="mt-1 text-[#e8f1ff]/70"><R>Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</R></p>
             <label htmlFor="caps-link" className="mt-2.5 flex cursor-pointer items-start gap-2.5 rounded-xl bg-black/20 p-2.5 text-[#e8f1ff]/85">
               <input id="caps-link" type="checkbox" checked={capsLink} onChange={(e) => setCapsLink(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#5eead4]" />
               <span>
@@ -554,7 +556,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
             {askRotate ? (
               <div role="alertdialog" aria-label="Confirmar cambio de enlace" className="mt-3 space-y-2 rounded-xl bg-[#ff8a8c]/10 p-2.5">
-                <p className="font-semibold text-[#ff8a8c]">El enlace actual dejará de funcionar. Tendrás que abrir el nuevo en el móvil de {childName}.</p>
+                <p className="font-semibold text-[#ff8a8c]"><R>El enlace actual dejará de funcionar. Tendrás que abrir el nuevo en el móvil de {childName}.</R></p>
                 <div className="flex gap-2">
                   <button type="button" onClick={rotateLink} disabled={rotating} className="flex-1 rounded-lg bg-[#ff8a8c] py-1.5 font-bold text-[#2a0a0c] disabled:opacity-50">
                     {rotating ? 'Cambiando…' : 'Sí, cambiar'}
@@ -577,8 +579,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </p>
             <div role="radiogroup" aria-label="Cómo grabar" className="mt-2 flex gap-1 rounded-xl bg-white/5 p-1">
               {[
-                { v: false, label: 'Con otro móvil' },
-                { v: true, label: 'Con este móvil' },
+                { v: false, label: r('Con otro móvil') },
+                { v: true, label: r('Con este móvil') },
               ].map((o) => (
                 <button
                   key={o.label}
@@ -595,9 +597,9 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
             <p className="mt-2 text-[#e8f1ff]/75">
               {recordHere ? (
-                <>Se graba con la <strong>cámara trasera de este móvil</strong>. Apúntalo al niño y verás la imagen mientras contestas. El vídeo se queda en tu móvil: no se sube a ningún sitio.</>
+                <R>Se graba con la <strong>cámara trasera de este móvil</strong>. Apúntalo al niño y verás la imagen mientras contestas. El vídeo se queda en tu móvil: no se sube a ningún sitio.</R>
               ) : (
-                <>Lo mejor para la calidad: que otra persona grabe con <strong>otro móvil</strong>. Así tú no tocas nada y sale buena imagen.</>
+                <R>Lo mejor para la calidad: que otra persona grabe con <strong>otro móvil</strong>. Así tú no tocas nada y sale buena imagen.</R>
               )}
             </p>
             {rec.error && <p role="alert" className="mt-2 text-[12.5px] text-[#ff8a8c]">{rec.error}</p>}
@@ -698,7 +700,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               void refresh();
             }}
           />
-          <p className="text-center text-[11.5px] text-[#e8f1ff]/55">{childName} puede seguir leyendo todo lo que ya le habéis escrito. Ve que {short} «ha ido a preparar la magia».</p>
+          <p className="text-center text-[11.5px] text-[#e8f1ff]/55"><R>{childName} puede seguir leyendo todo lo que ya le habéis escrito. Ve que {short} «ha ido a preparar la magia».</R></p>
         </footer>
         ) : (
         <footer className="space-y-2.5 border-t border-white/10 bg-[#121d33] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
@@ -938,7 +940,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-[#5eead4]">Empieza a grabar</p>
               <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '✨'}</p>
-              <p className="text-[15px] text-[#e8f1ff]/70">Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</p>
+              <p className="text-[15px] text-[#e8f1ff]/70"><R>Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</R></p>
               <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#e8f1ff]/80">
                 Cancelar
               </button>

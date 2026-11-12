@@ -10,10 +10,13 @@ import { CHARACTERS, CHARACTER_GROUPS, resolveCharacter, type CharacterId } from
 import { saveRoom } from '@/lib/myRooms';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
+import { R, useLocale, useRegional } from '@/components/LocaleProvider';
 
 type Reading = 'yes' | 'learning' | 'no';
 
 export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
+  const locale = useLocale();
+  const r = useRegional();
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
   const [characterId, setCharacterId] = useState<CharacterId>('papa_noel');
@@ -34,7 +37,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
     setError(null);
     const isElf = characterId === 'duende_chispa';
     const passToken = loadPass() ?? undefined;
-    const payload = { childName, characterId, consent, website: trap, readingLevel: reading, ...(passToken ? { passToken } : {}), ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) };
+    const payload = { childName, characterId, consent, website: trap, readingLevel: reading, locale, ...(passToken ? { passToken } : {}), ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) };
     const check = createRoomSchema.safeParse(payload);
     if (!check.success) {
       const f = check.error.flatten().fieldErrors;
@@ -55,7 +58,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   };
 
   if (links) {
-    const c = resolveCharacter(CHARACTERS[characterId], { alias, gender });
+    const c = resolveCharacter(CHARACTERS[characterId], { alias, gender, locale });
     const name = childName.trim();
     return (
       <div className="space-y-4 animate-pop">
@@ -64,11 +67,11 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
           <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Después podrás seguir con el Pase de Navidad ({billing.price}).</p>
         )}
         {plan === 'pass' && <p className="text-center text-[13px] text-[#fff6dc]/70">✨ Con tu Pase de Navidad: sin límite hasta el 20 de enero.</p>}
-        <LinkCard title={`1. Móvil de ${name}`} text={`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`} url={links.child} />
+        <LinkCard title={r(`1. Móvil de ${name}`)} text={r(`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`)} url={links.child} />
         <LinkCard title="2. Tu panel secreto de los padres" text={`Desde aquí lees lo que escribe ${name} y contestas como ${c.shortName}. No lo compartas con el peque.`} url={links.parent} secret />
         <div role="note" className="rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/[.07] p-3.5 text-[13px] leading-snug text-[#fff6dc]/85">
           <p className="font-semibold text-[#ff8a8c]">Guarda el enlace del panel ahora</p>
-          <p className="mt-1">No hay cuenta ni contraseña: si lo pierdes, no podemos recuperarlo. Mándatelo por WhatsApp o guarda esta página. En este móvil, además, quedará en «Tus salas» de la portada.</p>
+          <p className="mt-1"><R>No hay cuenta ni contraseña: si lo pierdes, no podemos recuperarlo. Mándatelo por WhatsApp o guarda esta página. En este móvil, además, quedará en «Tus salas» de la portada.</R></p>
         </div>
         <a href={links.parent} className="flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a]">
           Abrir mi panel de los padres
@@ -104,7 +107,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
             <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]/80">{group.label}</p>
             <div className={`grid gap-2 ${group.ids.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
               {group.ids.map((id) => {
-                const c = resolveCharacter(CHARACTERS[id]);
+                const c = resolveCharacter(CHARACTERS[id], { locale });
                 const selected = characterId === id;
                 return (
                   <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${group.ids.length === 1 ? 'flex-row' : 'flex-col text-center'} ${selected ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
@@ -122,7 +125,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
             <div className="mt-2 space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
               <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
               <div className="space-y-1.5">
-                <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75">Nombre (el que queráis)</label>
+                <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75"><R>Nombre (el que queráis)</R></label>
                 <input
                   id="elf-alias"
                   value={alias}
@@ -197,7 +200,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       {billing.enabled && !hasPass && (
         <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>
       )}
-      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80">✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</p>}
+      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
     </form>
   );
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getCheckoutReturn, savePass, setCheckoutReturn } from '@/lib/myPass';
+import { R } from '@/components/LocaleProvider';
 
 const giftText = (link: string) =>
   `¡Te regalo un Pase de Navidad de Línea Mágica! Con él, tus peques pueden escribirse en directo con Papá Noel, el elfo o los Reyes Magos (tú contestas en secreto). Ábrelo aquí: ${link}`;
@@ -35,7 +36,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
         <p className="text-center text-4xl" aria-hidden>✨</p>
         <h1 className="text-center text-2xl font-bold">¡Ya tienes tu Pase de Navidad!</h1>
         <p className="text-center text-[14px] opacity-75">
-          {back ? 'Tu sala ya no tiene límite. ' : ''}Las salas que crees desde este móvil tampoco tendrán límite hasta el 20 de enero.
+          <R>{back ? 'Tu sala ya no tiene límite. ' : ''}Las salas que crees desde este móvil tampoco tendrán límite hasta el 20 de enero.</R>
         </p>
 
         {back && (
@@ -76,7 +77,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
 
         <section className="space-y-2 rounded-2xl border border-white/15 bg-white/[.04] p-4 text-[13px]">
           <p className="font-semibold">Guarda tu pase</p>
-          <p className="opacity-70">Ya está guardado en este móvil. Si quieres usarlo en otro, mándatelo:</p>
+          <p className="opacity-70"><R>Ya está guardado en este móvil. Si quieres usarlo en otro, mándatelo:</R></p>
           <a
             href={`mailto:?subject=${encodeURIComponent('Mi Pase de Navidad')}&body=${encodeURIComponent(passLink)}`}
             className="flex min-h-10 items-center justify-center rounded-xl border border-[#5eead4]/40 font-semibold text-[#5eead4]"

@@ -1,13 +1,17 @@
 import type { Metadata } from 'next';
 import { ContactLine, LegalPage, LegalSection } from '@/components/features/LegalPage';
+import { regionalize } from '@/lib/i18n';
+import { getRequestLocale } from '@/lib/i18n.server';
 
 export const metadata: Metadata = { title: 'Términos de uso' };
 
-export default function TerminosPage() {
+export default async function TerminosPage() {
+  const locale = await getRequestLocale();
+  const r = (t: string) => regionalize(t, locale);
   return (
     <LegalPage title="Términos de uso" intro="Reglas sencillas para que la magia funcione bien y sea segura para los niños.">
       <LegalSection title="Qué es este servicio">
-        <p>Una herramienta de entretenimiento familiar: los padres escriben, desde su móvil, los mensajes que su hijo recibe como si vinieran de Papá Noel o de los Reyes Magos. No somos ni representamos a ningún personaje real ni de marca.</p>
+        <p>{r('Una herramienta de entretenimiento familiar: los padres escriben, desde su móvil, los mensajes que su hijo recibe como si vinieran de Papá Noel o de los Reyes Magos. No somos ni representamos a ningún personaje real ni de marca.')}</p>
       </LegalSection>
 
       <LegalSection title="Quién puede usarlo">

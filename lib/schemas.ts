@@ -28,6 +28,8 @@ export const createRoomSchema = z.object({
   characterGender: z.enum(['m', 'f']).optional(),
   /** ¿Ya lee? Ajusta mayúsculas y consejos para los padres. */
   readingLevel: z.enum(['yes', 'learning', 'no']).optional(),
+  /** Variante de idioma elegida (o detectada) al crear la sala. */
+  locale: z.enum(['es', 'es-419']).optional(),
   /** Enlace de pase guardado en este móvil (propio o regalado). */
   passToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   consent: z.literal(true, { errorMap: () => ({ message: 'Necesitamos tu consentimiento' }) }),

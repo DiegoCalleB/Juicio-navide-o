@@ -62,6 +62,8 @@ export async function createCheckoutSession(opts: {
   successUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
+  /** Idioma de la pantalla de pago de Stripe. */
+  locale?: 'es' | 'es-419';
 }): Promise<CheckoutSession> {
   if (isStripeFake()) {
     const id = `cs_fake_${randomBytes(12).toString('hex')}`;
@@ -71,7 +73,7 @@ export async function createCheckoutSession(opts: {
   }
   const f = new URLSearchParams();
   f.set('mode', 'payment');
-  f.set('locale', 'es');
+  f.set('locale', opts.locale ?? 'es');
   f.set('success_url', opts.successUrl);
   f.set('cancel_url', opts.cancelUrl);
   f.set('line_items[0][quantity]', '1');

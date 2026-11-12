@@ -6,6 +6,7 @@ import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
 import { prepareSpeechText, synthesizeKingVoice, voiceLimits, VoiceError } from '@/lib/voice';
 import { publish, publishRefresh, type Audience } from '@/services/realtime';
+import { parseLocale, type Locale } from '@/lib/i18n';
 import { RoomError } from '@/services/room-errors';
 import { getRoomStore } from '@/services/room-store';
 import type { MessageRecord } from '@/services/room-store/types';
@@ -28,6 +29,8 @@ export interface Room {
   readingLevel: ReadingLevel;
   trialEndsAt: string | null;
   passId: string | null;
+  /** Variante de idioma de la sala (la misma para los padres y para el niño). */
+  locale: Locale;
 }
 
 export type ReadingLevel = 'yes' | 'learning' | 'no';
@@ -56,7 +59,7 @@ function assertOpen(room: Room): void {
 // ── Salas ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
-  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string },
+  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string; locale?: Locale },
   creatorHash: string,
 ): Promise<{ childToken: string; parentToken: string; plan: RoomAccess['plan'] }> {
   // Con un pase válido: sin límite. Si no, prueba gratis (con tope suave por dispositivo/conexión).
@@ -83,6 +86,7 @@ export async function createRoom(
     creatorHash,
     expiresAt: roomExpiresAt(CHARACTERS[input.characterId]).toISOString(),
     readingLevel: input.readingLevel ?? 'yes',
+    locale: input.locale ?? 'es',
     trialEndsAt,
     passId,
   });
@@ -96,7 +100,7 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId },
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es' },
     role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
@@ -163,7 +167,7 @@ function notify(room: Room, rec: MessageRecord): void {
 async function maybeAcknowledge(room: Room): Promise<void> {
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
   if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
-  const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender });
+  const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale: room.locale });
   const rec = await getRoomStore().insertMessage({
     roomId: room.id,
     sender: 'system',

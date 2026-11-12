@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { BRAND, seasonTagline } from '@/lib/brand';
-import { CHARACTERS } from '@/lib/characters';
+import { CHARACTERS, resolveCharacter } from '@/lib/characters';
+import { regionalize, type Locale } from '@/lib/i18n';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
+import { LocaleSwitch } from './LocaleSwitch';
 import { MyRooms } from './MyRooms';
 import type { BillingInfo } from './PassOffer';
 import { PassWelcome } from './PassWelcome';
 import { DEMO_NOEL } from './demoData';
 
-export function RoyalLanding({ billing }: { billing: BillingInfo }) {
+export function RoyalLanding({ billing, locale }: { billing: BillingInfo; locale: Locale }) {
+  const r = (t: string) => regionalize(t, locale);
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
@@ -18,7 +21,7 @@ export function RoyalLanding({ billing }: { billing: BillingInfo }) {
           <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/80">{seasonTagline()}</p>
           <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Que antes de abrir los regalos, hable con Papá Noel</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
-            Tu peque le escribe a Papá Noel, a los Reyes Magos, al Ratoncito Pérez o a un duende travieso y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.
+            Tu peque le escribe a Papá Noel, a los Reyes Magos, al Ratoncito Pérez o a un duende travieso y recibe su respuesta en directo. {r('Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.')}
           </p>
           <p className="mx-auto mt-3 inline-block rounded-full border border-[#f6d77a]/40 bg-[#f6d77a]/10 px-3 py-1 text-[12.5px] font-semibold text-[#f6d77a]">
             📖 Ideal para primeros lectores: ¡querrá leer cada mensaje!
@@ -29,9 +32,10 @@ export function RoyalLanding({ billing }: { billing: BillingInfo }) {
           <h2 id="demo-title" className="mb-3 text-center text-[13px] font-semibold uppercase tracking-widest text-[#fff6dc]/60">
             Esto es lo que verá tu hijo · pruébalo
           </h2>
-          <DemoChat embedded character={CHARACTERS.papa_noel} childName="Lucía" initial={DEMO_NOEL} />
+          <DemoChat embedded character={resolveCharacter(CHARACTERS.papa_noel, { locale })} childName="Lucía" initial={DEMO_NOEL} />
         </section>
 
+        <LocaleSwitch />
         <PassWelcome />
         <MyRooms />
 
@@ -44,7 +48,7 @@ export function RoyalLanding({ billing }: { billing: BillingInfo }) {
         </div>
         <ol className="mt-8 space-y-3 text-[14px] leading-snug text-[#fff6dc]/75">
           <li><span className="font-bold text-[#f6d77a]">1.</span> Crea la sala con el nombre de tu peque y elige quién le contesta.</li>
-          <li><span className="font-bold text-[#f6d77a]">2.</span> Abre su enlace en el móvil o tablet que usará.</li>
+          <li><span className="font-bold text-[#f6d77a]">2.</span> {r('Abre su enlace en el móvil o tablet que usará.')}</li>
           <li><span className="font-bold text-[#f6d77a]">3.</span> Desde tu panel secreto de padres, lee lo que escribe y contesta como si fueras él. Guarda ese enlace: es la única llave.</li>
         </ol>
 

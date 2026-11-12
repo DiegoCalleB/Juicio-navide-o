@@ -19,6 +19,14 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Para activarlo: migración `20261113000000_reading_trial_passes.sql`, variables `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PASS_SECRET` en Railway, y el webhook en Stripe. Probar primero con claves `sk_test_`.
 - Pendiente: limpiar pases caducados en el cron; el Ratoncito fuera de temporada usa el mismo "Pase de Navidad" (decidir nombre y precio propios); factura o recibo con datos fiscales (gestoría); revisar las condiciones de /terminos#pase con un abogado.
 
+## Idiomas (13-nov): fases 1 y 2 hechas, falta la fase 3 (inglés)
+
+- **Hecho:** `lib/i18n.ts` (detección por `Accept-Language`, cookie `lm-locale` con el selector 🇪🇸/🌎 de la portada, y diccionario `regionalize` español de España → Latinoamérica). La sala guarda su `locale` (migración `20261114000000_room_locale.sql`): padres y niño ven siempre el mismo idioma, aunque abran el enlace desde otro móvil. Stripe se abre en `es` o `es-419`.
+- Palabras que cambian (ampliar en `WORDS` de `lib/i18n.ts`): móvil→celular, vosotros→ustedes, coche→auto, gafas→lentes, zapatillas→zapatos, "cogido"→"agarrado" (coger es vulgar en Latinoamérica), pasta de dientes→pasta dental.
+- Pendiente de decidir: **la voz**. Si algún día se activa, las voces son de España (decisión de Diego: nunca latinas). Para el público latinoamericano habría que reconsiderarlo.
+- Pendiente: precio y moneda para Latinoamérica (hoy siempre euros, 3,99 €/4,99 €); legal de cada país (México, Argentina, Colombia…) con un abogado; revisar con una persona latinoamericana el tono de los textos de los personajes; la imagen de vista previa (OG) y el manifiesto de la app siguen en español de España.
+- **Fase 3, inglés:** otros personajes (Santa, Elf on the Shelf, Tooth Fairy; sin Reyes), catálogo de textos aparte, otra marca y dominio, COPPA/UK AADC con abogado. Solo si España funciona.
+
 ## Monetización: notas previas
 
 - **Cobro solo en el panel de los padres** (`/paje/…`). El niño nunca ve avisos de pago:

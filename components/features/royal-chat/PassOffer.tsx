@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { forgetPass, loadPass, startCheckout } from '@/lib/myPass';
+import { R } from '@/components/LocaleProvider';
 
 export interface BillingInfo {
   enabled: boolean;
@@ -83,7 +84,7 @@ export function PassOffer({
       <p className={`text-[15px] font-bold ${accent}`}>{title}</p>
       {savedPass && roomToken ? (
         <>
-          <p className="opacity-80">En este móvil ya tienes un Pase de Navidad.</p>
+          <p className="opacity-80"><R>En este móvil ya tienes un Pase de Navidad.</R></p>
           <button type="button" onClick={useSaved} disabled={busy} className={`min-h-12 w-full rounded-2xl font-bold disabled:opacity-60 ${btn}`}>
             {busy ? 'Activando…' : 'Usar mi pase en esta sala'}
           </button>
@@ -91,7 +92,7 @@ export function PassOffer({
       ) : (
         <>
           <ul className="space-y-1 opacity-85">
-            <li>✓ {childName ? `${childName} sigue` : 'Seguís'} escribiéndose hasta el 20 de enero</li>
+            <li><R>✓ {childName ? `${childName} sigue` : 'Seguís'} escribiéndose hasta el 20 de enero</R></li>
             <li>✓ Papá Noel, el elfo y los Reyes, para todos los hermanos</li>
             <li>✓ Un pase de regalo para otra familia</li>
             <li>✓ Pago único, sin suscripción</li>

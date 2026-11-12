@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { currentPrice, paymentsEnabled } from '@/lib/billing';
 import { fail, guarded, json } from '@/lib/http';
+import { getRequestLocale } from '@/lib/i18n.server';
 import { originFromHeaders } from '@/lib/site';
 import { createCheckoutSession } from '@/lib/stripe';
 import { findRoomByToken } from '@/services/rooms';
@@ -27,10 +28,12 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return fail('VALIDATION', 'Marca la casilla para continuar.', 400);
 
     let roomId: string | undefined;
+    let locale = await getRequestLocale();
     if (parsed.data.roomToken) {
       const found = await findRoomByToken(parsed.data.roomToken);
       if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
       roomId = found.room.id;
+      locale = found.room.locale;
     }
     const origin = originFromHeaders(await headers());
     const price = currentPrice();
@@ -38,6 +41,7 @@ export async function POST(req: NextRequest) {
       amountCents: price.cents,
       successUrl: `${origin}/pase/listo?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/`,
+      locale,
       metadata: { ...(roomId ? { room_id: roomId } : {}), waiver: 'accepted', price_cents: String(price.cents) },
     });
     if (!session.url) return fail('UNKNOWN', 'No se pudo abrir el pago.', 502);

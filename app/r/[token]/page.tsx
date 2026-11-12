@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
+import { LocaleProvider } from '@/components/LocaleProvider';
 import { LiveChildChat } from '@/components/features/royal-chat/LiveChildChat';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { findRoomByToken } from '@/services/rooms';
@@ -19,5 +20,5 @@ export default async function ChildRoomPage({ params, searchParams }: { params: 
   const { letras } = await searchParams;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'child') notFound();
-  return <LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender })} childName={found.room.childName} initialCaps={letras === 'mayus' || found.room.readingLevel !== 'yes'} />;
+  return <LocaleProvider locale={found.room.locale}><LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender, locale: found.room.locale })} childName={found.room.childName} initialCaps={letras === 'mayus' || found.room.readingLevel !== 'yes'} /></LocaleProvider>;
 }

@@ -76,6 +76,7 @@ export class SupabaseRoomStore implements RoomStore {
       creator_hash: room.creatorHash,
       expires_at: room.expiresAt,
       reading_level: room.readingLevel ?? 'yes',
+      locale: room.locale ?? 'es',
       trial_ends_at: room.trialEndsAt ?? null,
       pass_id: room.passId ?? null,
     });
@@ -86,10 +87,10 @@ export class SupabaseRoomStore implements RoomStore {
   async findRoomByTokenHash(hash: string): Promise<RoomRecord | null> {
     const { data, error } = await getAdminClient()
       .from('rooms')
-      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, child_token_hash, parent_token_hash')
+      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, locale, child_token_hash, parent_token_hash')
       .or(`child_token_hash.eq.${hash},parent_token_hash.eq.${hash}`)
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; reading_level: string | null; trial_ends_at: string | null; pass_id: string | null; child_token_hash: string; parent_token_hash: string }>();
+      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; reading_level: string | null; trial_ends_at: string | null; pass_id: string | null; locale: string | null; child_token_hash: string; parent_token_hash: string }>();
     if (error || !data) return null;
     return {
       id: data.id,
@@ -101,6 +102,7 @@ export class SupabaseRoomStore implements RoomStore {
       readingLevel: data.reading_level ?? 'yes',
       trialEndsAt: data.trial_ends_at,
       passId: data.pass_id,
+      locale: data.locale ?? 'es',
       childTokenHash: data.child_token_hash,
       parentTokenHash: data.parent_token_hash,
     };

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { savePass } from '@/lib/myPass';
+import { R } from '@/components/LocaleProvider';
 
 /**
  * Llega un enlace de pase (propio o regalado: /?pase=…). Se comprueba, se guarda en este móvil
@@ -31,7 +32,7 @@ export function PassWelcome() {
   return state === 'ok' ? (
     <div role="status" className="mb-6 rounded-2xl border border-[#f6d77a]/50 bg-[#f6d77a]/10 p-4 text-center text-[14px] text-[#fff6dc]">
       <p className="text-lg font-bold text-[#f6d77a]">🎁 ¡Tienes un Pase de Navidad!</p>
-      <p className="mt-1 opacity-85">Ya está guardado en este móvil. Crea tu sala abajo: no tendrá límite hasta el 20 de enero.</p>
+      <p className="mt-1 opacity-85"><R>Ya está guardado en este móvil. Crea tu sala abajo: no tendrá límite hasta el 20 de enero.</R></p>
     </div>
   ) : (
     <div role="status" className="mb-6 rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/10 p-4 text-center text-[13px] text-[#fff6dc]/85">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ReactionResult } from './useReactionRecorder';
+import { R } from '@/components/LocaleProvider';
 
 interface ReactionReviewProps {
   result: ReactionResult;
@@ -48,11 +49,11 @@ export function ReactionReview({ result, childName, onDiscard }: ReactionReviewP
         <video src={result.url} controls playsInline preload="metadata" className="mx-auto mt-4 max-h-[52dvh] w-full rounded-2xl bg-black object-contain" />
 
         <p className="mt-4 rounded-xl bg-[#5eead4]/10 p-3 text-center text-[12.5px] leading-snug text-[#5eead4]">
-          Este vídeo está solo en tu móvil: no lo hemos subido a ningún sitio. Si cierras esta pantalla sin guardarlo, se pierde.
+          <R>Este vídeo está solo en tu móvil: no lo hemos subido a ningún sitio. Si cierras esta pantalla sin guardarlo, se pierde.</R>
         </p>
         {result.ext === 'webm' && (
           <p className="mt-2 text-center text-[12px] leading-snug text-[#e8f1ff]/50">
-            Tu navegador graba en WebM. Algunas redes no lo aceptan; si te pasa, grábalo con el modo “otro móvil”.
+            <R>Tu navegador graba en WebM. Algunas redes no lo aceptan; si te pasa, grábalo con el modo “otro móvil”.</R>
           </p>
         )}
         {shareError && <p role="alert" className="mt-2 text-center text-[13px] text-[#ff8a8c]">{shareError}</p>}
@@ -65,7 +66,7 @@ export function ReactionReview({ result, childName, onDiscard }: ReactionReviewP
           </button>
         )}
         <button type="button" onClick={save} className={`flex min-h-12 w-full items-center justify-center rounded-2xl font-bold active:scale-[0.99] ${canShare ? 'border border-[#5eead4]/50 text-[#5eead4]' : 'bg-gradient-to-b from-[#5eead4] to-[#14b8a6] text-[#04302b]'}`}>
-          Guardar en el móvil
+          <R>Guardar en el móvil</R>
         </button>
         <button
           type="button"
