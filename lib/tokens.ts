@@ -16,6 +16,8 @@ export function hashToken(token: string): string {
  * Token del niño derivado del de los padres (unidireccional): quien tiene el
  * enlace de padres puede reconstruir el del niño, nunca al revés.
  */
-export function deriveChildToken(parentToken: string): string {
-  return createHash('sha256').update(`royal-child:${parentToken}`).digest('base64url');
+export function deriveChildToken(parentToken: string, version = 0): string {
+  // La versión 0 conserva el enlace original; al cambiarlo se incrementa y el anterior deja de valer.
+  const seed = version === 0 ? `royal-child:${parentToken}` : `royal-child:${parentToken}:v${version}`;
+  return createHash('sha256').update(seed).digest('base64url');
 }

@@ -13,6 +13,7 @@ import { ReactionReview } from './ReactionReview';
 import { IdeasList } from './IdeasList';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
+import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 import { SchedulePlanner } from './SchedulePlanner';
 import { useReactionRecorder } from './useReactionRecorder';
@@ -63,6 +64,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const [whenValue, setWhenValue] = useState('');
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
   const [capsLink, setCapsLink] = useState(false);
+  const [askRotate, setAskRotate] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const shareLink = capsLink ? `${childLink}?letras=mayus` : childLink;
   /** null = automático: abierto al principio, plegado cuando el niño ya ha abierto o ha escrito. */
   const [setupOpen, setSetupOpen] = useState<boolean | null>(null);
@@ -325,6 +328,33 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
   };
 
+  const rotateLink = async () => {
+    if (rotating) return;
+    setRotating(true);
+    try {
+      const res = await fetch(`/api/rooms/${token}/child-link`, { method: 'POST' });
+      const json = (await res.json()) as ApiResult<{ childPath: string }>;
+      if (!json.ok || !json.data) throw new Error(json.error?.message ?? 'No se pudo cambiar el enlace.');
+      // Mantiene "Tus salas" al día y recarga para mostrar el enlace nuevo.
+      const mine = loadRooms().find((r) => r.parentPath === `/paje/${token}`);
+      if (mine) saveRoom({ ...mine, childPath: json.data.childPath });
+      window.location.reload();
+    } catch (err) {
+      setNotice({ tone: 'error', msg: err instanceof Error ? err.message : 'No se pudo cambiar el enlace.' });
+      setRotating(false);
+      setAskRotate(false);
+    }
+  };
+
+  const savePanel = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setNotice({ tone: 'ok', msg: 'Enlace del panel copiado. Guárdalo en tus notas o mándatelo.' });
+    } catch {
+      /* sin permisos del portapapeles */
+    }
+  };
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareLink);
@@ -473,6 +503,23 @@ export function PajePanel({ token, childLink, character, childName, characterAli
                 Enviármelo
               </a>
             </div>
+            {askRotate ? (
+              <div role="alertdialog" aria-label="Confirmar cambio de enlace" className="mt-3 space-y-2 rounded-xl bg-[#ff8a8c]/10 p-2.5">
+                <p className="font-semibold text-[#ff8a8c]">El enlace actual dejará de funcionar. Tendrás que abrir el nuevo en el móvil de {childName}.</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={rotateLink} disabled={rotating} className="flex-1 rounded-lg bg-[#ff8a8c] py-1.5 font-bold text-[#2a0a0c] disabled:opacity-50">
+                    {rotating ? 'Cambiando…' : 'Sí, cambiar'}
+                  </button>
+                  <button type="button" onClick={() => setAskRotate(false)} disabled={rotating} className="rounded-lg border border-white/20 px-3 py-1.5 font-semibold">
+                    No
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setAskRotate(true)} className="mt-2.5 text-[12px] text-[#e8f1ff]/55 underline underline-offset-2">
+                ¿Se ha compartido por error? Cambiar el enlace
+              </button>
+            )}
           </section>
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
@@ -528,6 +575,25 @@ export function PajePanel({ token, childLink, character, childName, characterAli
                 </button>
               </div>
             )}
+          </section>
+
+          <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
+            <p className="font-semibold text-[#e8f1ff]">Guarda este panel</p>
+            <p className="mt-1 text-[#e8f1ff]/70">Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.</p>
+            <div className="mt-2.5 flex gap-2">
+              <button type="button" onClick={savePanel} className="min-h-10 flex-1 rounded-xl bg-white/10 font-semibold text-[#e8f1ff] active:scale-[0.98]">
+                Copiar el del panel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = `mailto:?subject=${encodeURIComponent(`Mi panel de ${childName}`)}&body=${encodeURIComponent(window.location.href)}`;
+                }}
+                className="min-h-10 flex-1 rounded-xl border border-[#5eead4]/40 font-semibold text-[#5eead4] active:scale-[0.98]"
+              >
+                Enviármelo por correo
+              </button>
+            </div>
           </section>
 
           <RoomAdmin token={token} childName={childName} characterId={character.id} characterAlias={characterAlias} characterGender={characterGender} />

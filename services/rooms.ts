@@ -21,6 +21,8 @@ export interface Room {
   /** Solo el elfo: nombre que le puso la familia y si es chico ('m') o chica ('f'). */
   characterAlias: string | null;
   characterGender: string | null;
+  /** Cuántas veces se ha cambiado el enlace del niño. */
+  childLinkVersion: number;
 }
 
 // ── Salas ────────────────────────────────────────────────────────────────
@@ -51,7 +53,7 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender },
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion },
     role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
@@ -293,4 +295,18 @@ export async function eraseRoom(room: Room): Promise<void> {
   }
   await store.deleteRoom(room.id);
   publishRefresh(room.id);
+}
+
+/**
+ * Cambia el enlace del niño: el anterior deja de funcionar y se genera otro, derivado del de los padres.
+ * Devuelve el nuevo token del niño para que los padres lo compartan.
+ */
+export async function rotateChildLink(room: Room, parentToken: string): Promise<string> {
+  const version = room.childLinkVersion + 1;
+  const childToken = deriveChildToken(parentToken, version);
+  const ok = await getRoomStore().updateChildLink(room.id, version, hashToken(childToken));
+  if (!ok) throw new RoomError('NOT_FOUND');
+  // Si el niño tenía la sala abierta, en su próxima actualización verá que el enlace ya no vale.
+  publishRefresh(room.id);
+  return childToken;
 }

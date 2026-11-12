@@ -15,7 +15,7 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'parent') notFound();
-  const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token)}`;
+  const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token, found.room.childLinkVersion)}`;
   const character = resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender });
   return (
     <PajePanel

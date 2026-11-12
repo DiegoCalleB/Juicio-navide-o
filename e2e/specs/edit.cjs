@@ -63,7 +63,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const apiChild = await fetch(`${BASE}/api/rooms/${childToken}/messages`);
   check('el enlace del niño tampoco funciona (404)', apiChild.status === 404);
   check('el enlace ya no aparece en "Tus salas"', await parent.evaluate((t) => (localStorage.getItem('magic-rooms') || '').includes(t), parentToken).then((x) => !x));
-  await child.waitForSelector('text=Esta sala ya no existe', { timeout: 20000 }).then(() => check('el móvil del niño muestra "Esta sala ya no existe"', true)).catch(() => check('el móvil del niño muestra "Esta sala ya no existe"', false));
+  await child.waitForSelector('text=Este enlace ya no funciona', { timeout: 20000 }).then(() => check('el móvil del niño muestra "Este enlace ya no funciona"', true)).catch(() => check('el móvil del niño muestra "Este enlace ya no funciona"', false));
   await child.screenshot({ path: S + '/ed2-child-gone.png' });
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));

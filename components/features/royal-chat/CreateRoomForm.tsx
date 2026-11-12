@@ -177,6 +177,14 @@ function LinkCard({ title, text, url, secret = false }: { title: string; text: s
           Enviar por WhatsApp
         </a>
       </div>
+      {secret && (
+        <a
+          href={`mailto:?subject=${encodeURIComponent('Mi panel de padres')}&body=${encodeURIComponent(url)}`}
+          className="mt-2 grid min-h-10 place-items-center rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]"
+        >
+          Enviármelo por correo
+        </a>
+      )}
     </div>
   );
 }

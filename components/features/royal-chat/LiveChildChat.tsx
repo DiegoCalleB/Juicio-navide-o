@@ -278,8 +278,8 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
 
   if (gone) {
     return (
-      <StateScreen title="Esta sala ya no existe">
-        <p>Los padres la han borrado. Si crees que es un error, pregúntales a ellos.</p>
+      <StateScreen title="Este enlace ya no funciona">
+        <p>Pídele a tu familia el enlace nuevo. Si la sala se ha borrado, también tendrán que crear otra.</p>
       </StateScreen>
     );
   }

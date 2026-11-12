@@ -29,6 +29,7 @@ export class MemoryRoomStore implements RoomStore {
       characterId: room.characterId,
       characterAlias: room.characterAlias ?? null,
       characterGender: room.characterGender ?? null,
+      childLinkVersion: 0,
       childTokenHash: room.childTokenHash,
       parentTokenHash: room.parentTokenHash,
       expiresAt: room.expiresAt,
@@ -100,6 +101,17 @@ export class MemoryRoomStore implements RoomStore {
 
   async removeFile(bucket: Bucket, path: string): Promise<void> {
     state().files.delete(`${bucket}/${path}`);
+  }
+
+  async updateChildLink(roomId: string, version: number, childTokenHash: string): Promise<boolean> {
+    const st = state();
+    const row = st.rooms.get(roomId);
+    if (!row) return false;
+    st.byHash.delete(row.childTokenHash);
+    row.childTokenHash = childTokenHash;
+    row.childLinkVersion = version;
+    st.byHash.set(childTokenHash, row);
+    return true;
   }
 
   async getMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {

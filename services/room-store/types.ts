@@ -12,6 +12,8 @@ export interface RoomRecord {
   characterAlias: string | null;
   /** 'm' o 'f' (solo el elfo). */
   characterGender: string | null;
+  /** Cuántas veces se ha cambiado el enlace del niño (0 = nunca). */
+  childLinkVersion: number;
 }
 
 export interface MessageRecord {
@@ -71,6 +73,8 @@ export interface RoomStore {
    */
   getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
   countSystemMessagesSince(roomId: string, sinceIso: string): Promise<number>;
+  /** Sustituye el enlace del niño por otro nuevo (el anterior deja de funcionar). */
+  updateChildLink(roomId: string, version: number, childTokenHash: string): Promise<boolean>;
   getMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
   /** Cambia el texto de un mensaje del personaje (texto o pie de foto). Devuelve la fila o null. */
   updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null>;

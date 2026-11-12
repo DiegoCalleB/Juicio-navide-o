@@ -65,10 +65,10 @@ export class SupabaseRoomStore implements RoomStore {
   async findRoomByTokenHash(hash: string): Promise<RoomRecord | null> {
     const { data, error } = await getAdminClient()
       .from('rooms')
-      .select('id, child_name, character_id, character_alias, character_gender, child_token_hash, parent_token_hash')
+      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, child_token_hash, parent_token_hash')
       .or(`child_token_hash.eq.${hash},parent_token_hash.eq.${hash}`)
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_token_hash: string; parent_token_hash: string }>();
+      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; child_token_hash: string; parent_token_hash: string }>();
     if (error || !data) return null;
     return {
       id: data.id,
@@ -76,6 +76,7 @@ export class SupabaseRoomStore implements RoomStore {
       characterId: data.character_id,
       characterAlias: data.character_alias,
       characterGender: data.character_gender,
+      childLinkVersion: data.child_link_version ?? 0,
       childTokenHash: data.child_token_hash,
       parentTokenHash: data.parent_token_hash,
     };
@@ -161,6 +162,16 @@ export class SupabaseRoomStore implements RoomStore {
   async removeFile(bucket: Bucket, path: string): Promise<void> {
     const { error } = await getAdminClient().storage.from(bucket).remove([path]);
     if (error) throw new Error(`removeFile: ${error.message}`);
+  }
+
+  async updateChildLink(roomId: string, version: number, childTokenHash: string): Promise<boolean> {
+    const { data, error } = await getAdminClient()
+      .from('rooms')
+      .update({ child_link_version: version, child_token_hash: childTokenHash })
+      .eq('id', roomId)
+      .select('id');
+    if (error) throw new Error('No se pudo cambiar el enlace.');
+    return (data?.length ?? 0) > 0;
   }
 
   async getMessage(roomId: string, messageId: string): Promise<MessageRecord | null> {
