@@ -13,6 +13,14 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Más adelante: Ratoncito Pérez ~2,99 €/año.
 - Requisitos de Diego antes de cobrar: alta de autónomo o sociedad, condiciones de venta con IVA y casilla de renuncia al desistimiento (revisión de un abogado o una gestoría), cuenta de Stripe. Validar el precio con ~20 padres.
 
+### Cambio (15-nov): familias y enlace de familia
+- Cadena de enlaces **familia → panel de cada sala → niño**: el enlace de familia (43 caracteres) reconstruye todos los paneles con HMAC y el `family_seed` de cada sala; la base de datos solo guarda huellas. Migración `20261115000000_families.sql` (`family_hash`, `family_seed`, `family_name`).
+- Página `/familia/[token]`: lista las salas, abre cada panel, copia el enlace del niño, cambia el apodo, y recupera "Tus salas" en un móvil nuevo. El servidor no adopta enlaces de familia inventados (solo reutiliza uno si ya existe).
+- Formulario: varios peques a la vez (hasta 5), desplegable "Tus peques", apodo opcional (dentro de la página, nunca en la dirección).
+- El **pase cuelga de la familia**: al desbloquear una sala se desbloquean las demás y las nuevas nacen con él (tope: `rooms_limit` del pase, 10).
+- Las salas anteriores a esta migración no tienen familia; siguen funcionando con su enlace de siempre.
+- Sin hacer: enviar los enlaces por correo desde el servidor (falta dominio y Resend), código escrito a mano de recuperación, reenvío del enlace del pase.
+
 ### Cambio (14-nov): prueba para todos los hijos
 - Cada familia puede preparar **una sala de prueba por peque, hasta 5 por móvil y mes** (`TRIALS_PER_DEVICE`, 5 por defecto), cada una con sus 3 días. Antes eran 2. El Pase sigue siendo lo que permite seguir después. Si más adelante se quiere una primera sala gratis para siempre (modelo B/C), está descrito en la conversación y no se ha hecho.
 

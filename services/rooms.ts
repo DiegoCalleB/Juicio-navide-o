@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { CHARACTERS, fillChild, isCharacterId, resolveCharacter, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
 import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
-import { deriveChildToken, hashToken, newToken, TOKEN_REGEX } from '@/lib/tokens';
+import { deriveChildToken, deriveParentToken, hashToken, newFamilySeed, newToken, TOKEN_REGEX } from '@/lib/tokens';
 import { prepareSpeechText, synthesizeKingVoice, voiceLimits, VoiceError } from '@/lib/voice';
 import { publish, publishRefresh, type Audience } from '@/services/realtime';
 import { parseLocale, type Locale } from '@/lib/i18n';
@@ -11,7 +11,7 @@ import { RoomError } from '@/services/room-errors';
 import { getRoomStore } from '@/services/room-store';
 import type { MessageRecord } from '@/services/room-store/types';
 import { paymentsEnabled, trialMs, TRIAL_WINDOW_DAYS, TRIALS_PER_CREATOR } from '@/lib/billing';
-import { checkPass } from '@/services/passes';
+import { checkPass, checkPassById } from '@/services/passes';
 
 export { RoomError };
 
@@ -31,6 +31,8 @@ export interface Room {
   passId: string | null;
   /** Variante de idioma de la sala (la misma para los padres y para el niño). */
   locale: Locale;
+  /** Huella de la familia (null = sala sin familia). */
+  familyHash: string | null;
 }
 
 export type ReadingLevel = 'yes' | 'learning' | 'no';
@@ -59,24 +61,39 @@ function assertOpen(room: Room): void {
 // ── Salas ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
-  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string; locale?: Locale },
+  input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string; locale?: Locale; familyToken?: string; familyName?: string },
   creatorHash: string,
-): Promise<{ childToken: string; parentToken: string; plan: RoomAccess['plan'] }> {
+): Promise<{ childToken: string; parentToken: string; familyToken: string; plan: RoomAccess['plan'] }> {
+  const store = getRoomStore();
+  // Familia: se reutiliza solo si ya existe (el servidor no deja elegir un enlace de familia a medida).
+  let familyToken = newToken();
+  let familyName: string | null = input.familyName?.trim() || null;
+  let familyPassId: string | null = null;
+  if (input.familyToken && TOKEN_REGEX.test(input.familyToken)) {
+    const existing = await store.listRoomsByFamilyHash(hashToken(input.familyToken));
+    if (existing.length > 0) {
+      familyToken = input.familyToken;
+      familyName = familyName ?? existing.find((x) => x.familyName)?.familyName ?? null;
+      familyPassId = existing.find((x) => x.passId)?.passId ?? null;
+    }
+  }
   // Con un pase válido: sin límite. Si no, prueba gratis (con tope suave por dispositivo/conexión).
   let passId: string | null = null;
   let trialEndsAt: string | null = null;
   if (paymentsEnabled()) {
     const pass = input.passToken ? await checkPass(input.passToken) : null;
     if (pass?.state === 'ok' && pass.pass) passId = pass.pass.id;
+    else if (familyPassId && (await checkPassById(familyPassId))) passId = familyPassId;
     else {
       const since = new Date(Date.now() - TRIAL_WINDOW_DAYS * 86_400_000).toISOString();
-      if ((await getRoomStore().countTrialRoomsByCreatorSince(creatorHash, since)) >= TRIALS_PER_CREATOR) throw new RoomError('TRIAL_USED');
+      if ((await store.countTrialRoomsByCreatorSince(creatorHash, since)) >= TRIALS_PER_CREATOR) throw new RoomError('TRIAL_USED');
       trialEndsAt = new Date(Date.now() + trialMs()).toISOString();
     }
   }
-  const parentToken = newToken();
+  const familySeed = newFamilySeed();
+  const parentToken = deriveParentToken(familyToken, familySeed);
   const childToken = deriveChildToken(parentToken);
-  await getRoomStore().insertRoom({
+  await store.insertRoom({
     childTokenHash: hashToken(childToken),
     parentTokenHash: hashToken(parentToken),
     childName: input.childName,
@@ -89,8 +106,11 @@ export async function createRoom(
     locale: input.locale ?? 'es',
     trialEndsAt,
     passId,
+    familyHash: hashToken(familyToken),
+    familySeed,
+    familyName,
   });
-  return { childToken, parentToken, plan: passId ? 'pass' : trialEndsAt ? 'trial' : 'free' };
+  return { childToken, parentToken, familyToken, plan: passId ? 'pass' : trialEndsAt ? 'trial' : 'free' };
 }
 
 /** Resuelve token → sala + rol. El token se compara por hash; nunca se guarda en claro. */
@@ -100,7 +120,7 @@ export async function findRoomByToken(token: string): Promise<{ room: Room; role
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es' },
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash },
     role: rec.childTokenHash === h ? 'child' : 'parent',
   };
 }
@@ -364,4 +384,64 @@ export async function rotateChildLink(room: Room, parentToken: string): Promise<
   // Si el niño tenía la sala abierta, en su próxima actualización verá que el enlace ya no vale.
   publishRefresh(room.id);
   return childToken;
+}
+
+// ── Familias ─────────────────────────────────────────────────────────────
+
+export interface FamilyRoomView {
+  childName: string;
+  character: CharacterId;
+  characterAlias: string | null;
+  characterGender: string | null;
+  locale: Locale;
+  /** Enlaces secretos reconstruidos desde el enlace de familia. */
+  parentToken: string;
+  childToken: string;
+  expiresAt: string;
+  access: RoomAccess;
+}
+
+export interface FamilyView {
+  name: string | null;
+  rooms: FamilyRoomView[];
+}
+
+/** Reconstruye todas las salas de una familia a partir de su enlace. null si no existe o ha caducado. */
+export async function getFamily(familyToken: string): Promise<FamilyView | null> {
+  if (!TOKEN_REGEX.test(familyToken)) return null;
+  const recs = await getRoomStore().listRoomsByFamilyHash(hashToken(familyToken));
+  const rooms: FamilyRoomView[] = [];
+  for (const rec of recs) {
+    if (!rec.familySeed || !isCharacterId(rec.characterId)) continue;
+    const parentToken = deriveParentToken(familyToken, rec.familySeed);
+    // Defensa: el enlace reconstruido tiene que coincidir con la huella guardada.
+    if (hashToken(parentToken) !== rec.parentTokenHash) continue;
+    const room: Room = {
+      id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender,
+      childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId,
+      locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash,
+    };
+    rooms.push({
+      childName: rec.childName,
+      character: rec.characterId,
+      characterAlias: rec.characterAlias,
+      characterGender: rec.characterGender,
+      locale: room.locale,
+      parentToken,
+      childToken: deriveChildToken(parentToken, rec.childLinkVersion),
+      expiresAt: rec.expiresAt,
+      access: roomAccess(room),
+    });
+  }
+  if (rooms.length === 0) return null;
+  return { name: recs.find((r) => r.familyName)?.familyName ?? null, rooms };
+}
+
+/** Cambia el apodo de la familia (se ve dentro de la página de familia, nunca en la dirección). */
+export async function renameFamily(familyToken: string, name: string | null): Promise<boolean> {
+  if (!TOKEN_REGEX.test(familyToken)) return false;
+  const hash = hashToken(familyToken);
+  if ((await getRoomStore().listRoomsByFamilyHash(hash)).length === 0) return false;
+  await getRoomStore().updateFamilyName(hash, name);
+  return true;
 }

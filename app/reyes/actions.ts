@@ -6,7 +6,7 @@ import { getClientFingerprint, rateLimit } from '@/lib/security';
 import { createRoom, RoomError } from '@/services/rooms';
 import type { ActionResult } from '@/types';
 
-export async function createRoomAction(raw: unknown): Promise<ActionResult<{ childToken: string; parentToken: string; plan: 'free' | 'trial' | 'pass' }>> {
+export async function createRoomAction(raw: unknown): Promise<ActionResult<{ childToken: string; parentToken: string; familyToken: string; plan: 'free' | 'trial' | 'pass' }>> {
   try {
     const parsed = createRoomSchema.safeParse(raw);
     if (!parsed.success) return { ok: false, error: appError('VALIDATION', parsed.error.flatten().fieldErrors) };
@@ -16,7 +16,7 @@ export async function createRoomAction(raw: unknown): Promise<ActionResult<{ chi
     if (!rateLimit(`room:${fp}`, 8, 60_000)) return { ok: false, error: appError('RATE_LIMITED') };
 
     const tokens = await createRoom(
-      { childName: parsed.data.childName, characterId: parsed.data.characterId, characterAlias: parsed.data.characterAlias, characterGender: parsed.data.characterGender, readingLevel: parsed.data.readingLevel, passToken: parsed.data.passToken, locale: parsed.data.locale },
+      { childName: parsed.data.childName, characterId: parsed.data.characterId, characterAlias: parsed.data.characterAlias, characterGender: parsed.data.characterGender, readingLevel: parsed.data.readingLevel, passToken: parsed.data.passToken, locale: parsed.data.locale, familyToken: parsed.data.familyToken, familyName: parsed.data.familyName },
       fp,
     );
     return { ok: true, data: tokens };

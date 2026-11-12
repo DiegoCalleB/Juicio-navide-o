@@ -89,14 +89,11 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await kid.waitForSelector('text=se ha ido a preparar la magia', { state: 'detached', timeout: 15000 }).catch(() => {});
   check('niño: puede volver a escribir sin recargar', (await kid.getByText(/se ha ido a preparar la magia/).count()) === 0);
 
-  // Sala 2: usar el pase guardado en este móvil
+  // Sala 2: es de la misma familia, así que ya nace desbloqueada por el pase de la familia
   const panel2 = await ctxA.newPage();
   await panel2.goto(r2.panel, { waitUntil: 'networkidle' });
-  await panel2.getByRole('button', { name: 'Usar mi pase en esta sala' }).waitFor({ timeout: 15000 }).catch(() => {});
-  check('otra sala caducada: ofrece usar el pase de este móvil', await panel2.getByRole('button', { name: 'Usar mi pase en esta sala' }).isVisible());
-  await panel2.getByRole('button', { name: 'Usar mi pase en esta sala' }).click();
   await panel2.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
-  check('con un toque, desbloqueada', (await panel2.locator('#reply').count()) === 1);
+  check('el pase cuelga de la familia: la sala del hermano ya está desbloqueada', (await panel2.locator('#reply').count()) === 1 && (await panel2.getByText('La prueba gratis ha terminado').count()) === 0);
 
   // Salas nuevas con el pase
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
@@ -105,17 +102,31 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('con el pase, la sala nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
 
-  // Pase de regalo en otra familia
+  // Pase de regalo en otra familia: tenía una sala en prueba y usa el pase con un toque
   const other = await ctxB.newPage();
-  await other.goto(local(giftLink), { waitUntil: 'networkidle' });
-  await other.getByText('🎁 ¡Tienes un Pase de Navidad!').waitFor({ timeout: 15000 }).catch(() => {});
-  check('regalo: la otra familia ve su pase', await other.getByText('🎁 ¡Tienes un Pase de Navidad!').isVisible());
-  check('regalo: el enlace se quita de la barra de direcciones', !other.url().includes('pase='));
+  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
   await other.getByRole('checkbox').first().check();
   await other.getByRole('button', { name: /Crear la sala/ }).click();
   await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
-  check('regalo: su sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
+  const martinaPanel = local(await other.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
+  await other.goto(local(giftLink), { waitUntil: 'networkidle' });
+  await other.getByText('🎁 ¡Tienes un Pase de Navidad!').waitFor({ timeout: 15000 }).catch(() => {});
+  check('regalo: la otra familia ve su pase', await other.getByText('🎁 ¡Tienes un Pase de Navidad!').isVisible());
+  check('regalo: el enlace se quita de la barra de direcciones', !other.url().includes('pase='));
+  await other.goto(martinaPanel, { waitUntil: 'networkidle' });
+  await other.getByRole('button', { name: /^Pase 3,99/ }).click();
+  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).waitFor({ timeout: 15000 }).catch(() => {});
+  check('regalo: su sala en prueba ofrece usar el pase', await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).isVisible());
+  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).click();
+  await other.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
+  check('regalo: con un toque, desbloqueada', (await other.locator('#reply').count()) === 1);
+  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await other.fill('#child', 'Sofia');
+  await other.getByRole('checkbox').first().check();
+  await other.getByRole('button', { name: /Crear la sala/ }).click();
+  await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  check('regalo: su siguiente sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
 
   // Webhook de Stripe: firma obligatoria e idempotente
   const hook = async (body, sig) => (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', headers: { 'stripe-signature': sig, 'content-type': 'application/json' }, body })).status;

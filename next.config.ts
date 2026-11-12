@@ -43,7 +43,7 @@ const config: NextConfig = {
       },
       {
         // Rutas con enlace secreto: sin Referer ni caché, para que el token no se filtre ni se guarde.
-        source: '/:section(r|paje)/:path*',
+        source: '/:section(r|paje|familia)/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'private, no-store' },

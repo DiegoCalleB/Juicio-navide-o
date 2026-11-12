@@ -14,6 +14,7 @@ import { IdeasList } from './IdeasList';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { loadFamily } from '@/lib/myFamily';
 import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 import { SchedulePlanner } from './SchedulePlanner';
@@ -60,6 +61,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const r = useRegional();
   const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
   const [offerOpen, setOfferOpen] = useState(false);
+  const [familyHref, setFamilyHref] = useState<string | null>(null);
+  useEffect(() => {
+    const f = loadFamily();
+    setFamilyHref(f ? `/familia/${f}` : null);
+  }, []);
   // Si la prueba termina con el panel abierto, se muestra la oferta en ese momento.
   useEffect(() => {
     if (access.plan !== 'trial' || access.locked || !access.trialEndsAt) return;
@@ -630,7 +636,12 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#e8f1ff]">Guarda este panel</p>
-            <p className="mt-1 text-[#e8f1ff]/70">Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.</p>
+            <p className="mt-1 text-[#e8f1ff]/70">{familyHref ? 'Es la llave de esta sala. Para todas las salas de la familia, guarda el enlace de familia.' : 'Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.'}</p>
+            {familyHref && (
+              <a href={familyHref} className="mt-2 grid min-h-10 place-items-center rounded-xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.98]">
+                ⭐ Ver el enlace de mi familia
+              </a>
+            )}
             <div className="mt-2.5 flex gap-2">
               <button type="button" onClick={savePanel} className="min-h-10 flex-1 rounded-xl bg-white/10 font-semibold text-[#e8f1ff] active:scale-[0.98]">
                 Copiar el del panel

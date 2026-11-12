@@ -20,6 +20,14 @@ export async function checkPass(token: string | null | undefined): Promise<{ sta
   return { state: 'ok', pass, roomsLeft: pass.roomsLimit - used };
 }
 
+/** ¿Sigue vigente un pase conocido por su id (el de la familia)? */
+export async function checkPassById(id: string): Promise<boolean> {
+  const store = getRoomStore();
+  const pass = await store.findPassById(id);
+  if (!pass || Date.parse(pass.expiresAt) <= Date.now()) return false;
+  return (await store.countRoomsByPass(id)) < pass.roomsLimit;
+}
+
 /**
  * Da por bueno un pago de Stripe: crea el pase y el de regalo (idempotente, por id de sesión) y
  * desbloquea la sala desde la que se pagó. Lo llaman el webhook y la página de pago completado.

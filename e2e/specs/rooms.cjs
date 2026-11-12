@@ -17,7 +17,7 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
     await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   };
   await create('Lucía');
-  check('al crear: avisa de guardar el enlace', await page.getByText('Guarda el enlace del panel ahora').isVisible());
+  check('al crear: avisa de guardar el enlace', await page.getByText('Guarda el enlace de tu familia ahora').isVisible());
   check('los textos hablan de "panel de los padres" (no "Paje Real")', (await page.getByText('Paje Real').count()) === 0 && await page.getByRole('link', { name: /Abrir mi panel de los padres/ }).isVisible());
   await page.screenshot({ path: S + '/ro1-created.png' });
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();

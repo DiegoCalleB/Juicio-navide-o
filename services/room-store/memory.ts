@@ -2,7 +2,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import type { Bucket, MessageRecord, NewMessage, NewPass, NewRoom, PassRecord, RoomRecord, RoomStore } from './types';
 
-type RoomRow = RoomRecord & { expiresAt: string; creatorHash: string; createdAt: number };
+type RoomRow = RoomRecord & { creatorHash: string; createdAt: number };
 type PassRow = PassRecord & { tokenHash: string };
 
 /** Con índices: las pruebas de carga miden la aplicación, no un barrido lineal del almacén. */
@@ -34,6 +34,9 @@ export class MemoryRoomStore implements RoomStore {
       childLinkVersion: 0,
       readingLevel: room.readingLevel ?? 'yes',
       locale: room.locale ?? 'es',
+      familyHash: room.familyHash ?? null,
+      familySeed: room.familySeed ?? null,
+      familyName: room.familyName ?? null,
       trialEndsAt: room.trialEndsAt ?? null,
       passId: room.passId ?? null,
       creatorHash: room.creatorHash,
@@ -141,6 +144,10 @@ export class MemoryRoomStore implements RoomStore {
     return [...state().passes.values()].find((x) => x.tokenHash === hash) ?? null;
   }
 
+  async findPassById(id: string): Promise<PassRecord | null> {
+    return state().passes.get(id) ?? null;
+  }
+
   async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
     return [...state().passes.values()].find((x) => x.stripeSessionId === sessionId) ?? null;
   }
@@ -159,7 +166,20 @@ export class MemoryRoomStore implements RoomStore {
     const row = state().rooms.get(roomId);
     if (!row) return false;
     row.passId = passId;
+    if (row.familyHash) {
+      for (const r of state().rooms.values()) if (r.familyHash === row.familyHash && !r.passId) r.passId = passId;
+    }
     return true;
+  }
+
+  async listRoomsByFamilyHash(hash: string): Promise<RoomRecord[]> {
+    return [...state().rooms.values()]
+      .filter((r) => r.familyHash === hash && Date.parse(r.expiresAt) > Date.now())
+      .sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  async updateFamilyName(hash: string, name: string | null): Promise<void> {
+    for (const r of state().rooms.values()) if (r.familyHash === hash) r.familyName = name;
   }
 
   async updateReadingLevel(roomId: string, level: string): Promise<boolean> {

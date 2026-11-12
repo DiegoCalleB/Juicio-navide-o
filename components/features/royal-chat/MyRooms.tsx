@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
+import { loadFamily } from '@/lib/myFamily';
 import { loadRooms, removeRoom, type SavedRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 import { R, useLocale } from '@/components/LocaleProvider';
@@ -14,7 +15,11 @@ export function MyRooms() {
   const [copied, setCopied] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => setRooms(loadRooms()), []);
+  const [familyToken, setFamilyToken] = useState<string | null>(null);
+  useEffect(() => {
+    setRooms(loadRooms());
+    setFamilyToken(loadFamily());
+  }, []);
   if (rooms.length === 0) return null;
 
   const copyChild = async (r: SavedRoom) => {
@@ -43,6 +48,11 @@ export function MyRooms() {
   return (
     <section aria-labelledby="my-rooms" className="mb-8 rounded-3xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] p-4">
       <h2 id="my-rooms" className="font-serif text-xl text-[#f6d77a]"><R>Tus salas en este móvil</R></h2>
+      {familyToken && (
+        <Link href={`/familia/${familyToken}`} className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-[#f6d77a]/50 text-[14px] font-bold text-[#f6d77a] active:scale-[0.98]">
+          👨‍👩‍👧 Ver todas las salas de mi familia
+        </Link>
+      )}
       <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/60">Solo para padres: no enseñes esta pantalla a los peques.</p>
       <ul className="mt-3 space-y-2.5">
         {rooms.map((r) => {

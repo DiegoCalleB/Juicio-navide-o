@@ -64,6 +64,46 @@ const URL_CACHE_MAX = 5000;
 const g = globalThis as unknown as { __signedUrlCache?: Map<string, { url: string; exp: number }> };
 const urlCache = () => (g.__signedUrlCache ??= new Map());
 
+
+interface RoomRow {
+  id: string;
+  child_name: string;
+  character_id: string;
+  character_alias: string | null;
+  character_gender: string | null;
+  child_link_version: number;
+  reading_level: string | null;
+  trial_ends_at: string | null;
+  pass_id: string | null;
+  locale: string | null;
+  family_hash: string | null;
+  family_seed: string | null;
+  family_name: string | null;
+  expires_at: string;
+  child_token_hash: string;
+  parent_token_hash: string;
+}
+const ROOM_COLUMNS =
+  'id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, locale, family_hash, family_seed, family_name, expires_at, child_token_hash, parent_token_hash';
+const toRoom = (d: RoomRow): RoomRecord => ({
+  id: d.id,
+  childName: d.child_name,
+  characterId: d.character_id,
+  characterAlias: d.character_alias,
+  characterGender: d.character_gender,
+  childLinkVersion: d.child_link_version ?? 0,
+  readingLevel: d.reading_level ?? 'yes',
+  trialEndsAt: d.trial_ends_at,
+  passId: d.pass_id,
+  locale: d.locale ?? 'es',
+  familyHash: d.family_hash,
+  familySeed: d.family_seed,
+  familyName: d.family_name,
+  expiresAt: d.expires_at,
+  childTokenHash: d.child_token_hash,
+  parentTokenHash: d.parent_token_hash,
+});
+
 export class SupabaseRoomStore implements RoomStore {
   async insertRoom(room: NewRoom): Promise<void> {
     const { error } = await getAdminClient().from('rooms').insert({
@@ -79,6 +119,9 @@ export class SupabaseRoomStore implements RoomStore {
       locale: room.locale ?? 'es',
       trial_ends_at: room.trialEndsAt ?? null,
       pass_id: room.passId ?? null,
+      family_hash: room.familyHash ?? null,
+      family_seed: room.familySeed ?? null,
+      family_name: room.familyName ?? null,
     });
     if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
     if (error) throw new Error(`insertRoom: ${error.message}`);
@@ -87,25 +130,30 @@ export class SupabaseRoomStore implements RoomStore {
   async findRoomByTokenHash(hash: string): Promise<RoomRecord | null> {
     const { data, error } = await getAdminClient()
       .from('rooms')
-      .select('id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, locale, child_token_hash, parent_token_hash')
+      .select(ROOM_COLUMNS)
       .or(`child_token_hash.eq.${hash},parent_token_hash.eq.${hash}`)
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle<{ id: string; child_name: string; character_id: string; character_alias: string | null; character_gender: string | null; child_link_version: number; reading_level: string | null; trial_ends_at: string | null; pass_id: string | null; locale: string | null; child_token_hash: string; parent_token_hash: string }>();
+      .maybeSingle<RoomRow>();
     if (error || !data) return null;
-    return {
-      id: data.id,
-      childName: data.child_name,
-      characterId: data.character_id,
-      characterAlias: data.character_alias,
-      characterGender: data.character_gender,
-      childLinkVersion: data.child_link_version ?? 0,
-      readingLevel: data.reading_level ?? 'yes',
-      trialEndsAt: data.trial_ends_at,
-      passId: data.pass_id,
-      locale: data.locale ?? 'es',
-      childTokenHash: data.child_token_hash,
-      parentTokenHash: data.parent_token_hash,
-    };
+    return toRoom(data);
+  }
+
+  async listRoomsByFamilyHash(hash: string): Promise<RoomRecord[]> {
+    const { data, error } = await getAdminClient()
+      .from('rooms')
+      .select(ROOM_COLUMNS)
+      .eq('family_hash', hash)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: true })
+      .limit(50)
+      .returns<RoomRow[]>();
+    if (error) throw new Error(`listRoomsByFamilyHash: ${error.message}`);
+    return (data ?? []).map(toRoom);
+  }
+
+  async updateFamilyName(hash: string, name: string | null): Promise<void> {
+    const { error } = await getAdminClient().from('rooms').update({ family_name: name }).eq('family_hash', hash);
+    if (error) throw new Error(`updateFamilyName: ${error.message}`);
   }
 
   async insertMessage(m: NewMessage): Promise<MessageRecord> {
@@ -361,6 +409,11 @@ export class SupabaseRoomStore implements RoomStore {
     return data ? toPass(data) : null;
   }
 
+  async findPassById(id: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('id', id).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
   async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
     const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_session_id', sessionId).maybeSingle<PassRow>();
     return data ? toPass(data) : null;
@@ -380,7 +433,14 @@ export class SupabaseRoomStore implements RoomStore {
   async attachPass(roomId: string, passId: string): Promise<boolean> {
     const { data, error } = await getAdminClient().from('rooms').update({ pass_id: passId }).eq('id', roomId).select('id');
     if (error) throw new Error(`attachPass: ${error.message}`);
-    return (data?.length ?? 0) > 0;
+    if ((data?.length ?? 0) === 0) return false;
+    // El pase cuelga de la familia: lo reciben también las demás salas que aún no tengan uno.
+    const { data: fam } = await getAdminClient().from('rooms').select('family_hash').eq('id', roomId).maybeSingle<{ family_hash: string | null }>();
+    if (fam?.family_hash) {
+      const { error: e2 } = await getAdminClient().from('rooms').update({ pass_id: passId }).eq('family_hash', fam.family_hash).is('pass_id', null);
+      if (e2) throw new Error(`attachPass familia: ${e2.message}`);
+    }
+    return true;
   }
 
   async updateReadingLevel(roomId: string, level: string): Promise<boolean> {

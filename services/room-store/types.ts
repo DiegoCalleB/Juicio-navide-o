@@ -22,6 +22,13 @@ export interface RoomRecord {
   passId: string | null;
   /** Variante de idioma: 'es' o 'es-419'. */
   locale: string;
+  /** Huella del enlace de familia (null = sala sin familia). */
+  familyHash: string | null;
+  /** Dato interno para derivar el enlace de padres desde el de familia. */
+  familySeed: string | null;
+  /** Apodo de la familia (opcional). */
+  familyName: string | null;
+  expiresAt: string;
 }
 
 export interface PassRecord {
@@ -83,6 +90,9 @@ export interface NewRoom {
   trialEndsAt?: string | null;
   passId?: string | null;
   locale?: string;
+  familyHash?: string | null;
+  familySeed?: string | null;
+  familyName?: string | null;
 }
 
 /**
@@ -135,12 +145,17 @@ export interface RoomStore {
   /** Crea el pase; si ya existe uno con ese stripeSessionId, devuelve el existente (idempotente). */
   insertPass(pass: NewPass): Promise<PassRecord>;
   findPassByTokenHash(hash: string): Promise<PassRecord | null>;
+  findPassById(id: string): Promise<PassRecord | null>;
   findPassByStripeSession(sessionId: string): Promise<PassRecord | null>;
   /** El pase regalado por otro pase (si existe). */
   findGiftOf(passId: string): Promise<PassRecord | null>;
   countRoomsByPass(passId: string): Promise<number>;
-  /** Asocia un pase a la sala (quita el límite de la prueba). */
+  /** Asocia un pase a la sala (quita el límite de la prueba) y, si tiene familia, a las demás salas de la familia sin pase. */
   attachPass(roomId: string, passId: string): Promise<boolean>;
+  /** Salas vigentes de una familia, de la más antigua a la más reciente. */
+  listRoomsByFamilyHash(hash: string): Promise<RoomRecord[]>;
+  /** Cambia el apodo de todas las salas de la familia. */
+  updateFamilyName(hash: string, name: string | null): Promise<void>;
   /** Cambia el nivel de lectura de la sala. */
   updateReadingLevel(roomId: string, level: string): Promise<boolean>;
 }
