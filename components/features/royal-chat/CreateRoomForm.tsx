@@ -64,7 +64,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       <div className="space-y-4 animate-pop">
         <p className="text-center font-serif text-xl text-[#f6d77a]">¡La sala real está lista!</p>
         {plan === 'trial' && (
-          <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Después podrás seguir con el Pase de Navidad ({billing.price}).</p>
+          <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Puedes preparar una sala para cada peque. Después, podréis seguir con el Pase de Navidad ({billing.price}).</p>
         )}
         {plan === 'pass' && <p className="text-center text-[13px] text-[#fff6dc]/70">✨ Con tu Pase de Navidad: sin límite hasta el 20 de enero.</p>}
         <LinkCard title={r(`1. Móvil de ${name}`)} text={r(`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`)} url={links.child} />

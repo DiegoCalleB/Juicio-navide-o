@@ -6,7 +6,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   DUPLICATE: 'Esto ya estaba hecho.',
   NOT_FOUND: 'No lo encontramos.',
   SPAM: 'Solicitud rechazada.',
-  TRIAL_USED: 'Ya has usado la prueba gratis en este móvil. Con el Pase de Navidad puedes crear todas las salas que quieras.',
+  TRIAL_USED: 'Ya has creado todas las salas de prueba gratis de este móvil. Con el Pase de Navidad puedes crear las que quieras.',
   UNKNOWN: 'Ha habido un problema. Inténtalo de nuevo.',
 };
 

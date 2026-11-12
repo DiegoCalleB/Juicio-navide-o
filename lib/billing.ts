@@ -11,8 +11,8 @@ import { isMemoryStore } from '@/services/room-store';
  */
 
 export const TRIAL_DAYS = 3;
-/** Pruebas gratis por dispositivo/conexión cada 30 días (límite suave, nunca un bloqueo por IP). */
-export const TRIALS_PER_CREATOR = 2;
+/** Pruebas gratis por dispositivo/conexión cada 30 días: una por peque (5 por defecto). Límite suave, nunca un bloqueo por IP. */
+export const TRIALS_PER_CREATOR = Math.max(1, Math.min(20, Number(process.env.TRIALS_PER_DEVICE) || 5));
 export const TRIAL_WINDOW_DAYS = 30;
 
 const num = (v: string | undefined, fallback: number) => {

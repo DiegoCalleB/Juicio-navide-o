@@ -38,10 +38,17 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();
   await create('Mateo');
   const r2 = await linksAfterCreate();
+  // Una prueba por peque: hasta cinco por móvil
+  for (const n of ['Pablo', 'Sofía', 'Hugo']) {
+    await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+    await create(n);
+    await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  }
+  check('se pueden preparar cinco salas de prueba (una por peque)', true);
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();
-  await create('Pablo');
-  await page.getByText(/Ya has usado la prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
-  check('3ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has usado la prueba gratis/).count()) > 0 && await page.getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
+  await create('Lola');
+  await page.getByText(/Ya has creado todas las salas de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
+  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todas las salas de prueba gratis/).count()) > 0 && await page.getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
 
   // Panel y niño de la sala 1
   const panel = await ctxA.newPage();
