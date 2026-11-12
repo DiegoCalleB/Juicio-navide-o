@@ -2,7 +2,18 @@
 
 Ideas aparcadas. No están construidas ni verificadas.
 
-## Monetización (pendiente de decidir pasarela y precios)
+## Monetización: DECIDIDO (12-nov)
+
+- **Pasarela: Stripe** (Checkout, con Apple Pay y Google Pay). Claves en Railway, las pone Diego.
+- **Gratis para todos: "Prueba mágica"**: 1 sala, texto y fotos sin límite durante 3 días. **Sin voz del personaje.** Al acabar, el aviso sale solo en el panel; el niño ve algo del personaje ("Papá Noel vuelve pronto"), nunca un muro de pago.
+- **"Pase de Navidad"**: 3,99 € hasta el 1-dic, después 4,99 € (pago único). Hasta el 20-ene, todos los personajes, hermanos y salas ilimitadas (tope suave de ~10 salas por pase), sorpresas y **1 pase para regalar a otra familia** (motor viral). Se puede regalar (abuelos).
+- **Sin cuentas**: tras pagar se genera un "enlace de pase" secreto (solo se guarda su hash), que llega en el recibo de Stripe. No guardamos correos.
+- **Antiabuso (suave, nunca bloqueo duro por IP)**: marca en el navegador + huella cifrada (IP+UA con sal) con ~2 pruebas/mes por móvil. Aceptamos un 5–10 % de fuga.
+- **Voz de los personajes: APAGADA en el lanzamiento** (decisión de Diego: si pronuncia mal, el niño lo nota). `NEXT_PUBLIC_ENABLE_VOICE` sin poner en Railway. Revisar más adelante solo con frases probadas a mano.
+- Más adelante: Ratoncito Pérez ~2,99 €/año.
+- Requisitos de Diego antes de cobrar: alta de autónomo o sociedad, condiciones de venta con IVA y casilla de renuncia al desistimiento (revisión de un abogado o una gestoría), cuenta de Stripe. Validar el precio con ~20 padres.
+
+## Monetización: notas previas
 
 - **Cobro solo en el panel de los padres** (`/paje/…`). El niño nunca ve avisos de pago:
   - Las rutas de pago aceptan solo el token de padres (con el del niño → 404).
@@ -84,7 +95,7 @@ Ideas aparcadas. No están construidas ni verificadas.
 ## Modo audio (activar)
 
 - Hoy la voz del personaje está detrás de `NEXT_PUBLIC_ENABLE_VOICE=1` (se lee al compilar: hay que redeployar). Necesita `ELEVENLABS_API_KEY` en el servidor. Con la variable apagada, el panel no muestra el selector "Nota de voz / Por escrito".
-- Pendiente de decisión: ¿activarla para todas las salas, o elegirla por sala (con cobro)? Con topes actuales: 40 respuestas por sala y día, 150.000 caracteres al día en total.
+- **Decidido: apagada en el lanzamiento.** Antes: ¿activarla para todas las salas, o elegirla por sala (con cobro)? Con topes actuales: 40 respuestas por sala y día, 150.000 caracteres al día en total.
 
 ## Antes de desplegar (orden obligatorio)
 

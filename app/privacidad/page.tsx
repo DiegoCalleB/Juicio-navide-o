@@ -13,7 +13,7 @@ export default function PrivacidadPage() {
       <LegalSection title="Qué datos guardamos">
         <ul className="list-disc space-y-1 pl-5">
           <li>El nombre de pila del niño (nunca apellidos) y el personaje elegido.</li>
-          <li>Los mensajes escritos, los audios del niño, las fotos y las respuestas con voz del personaje.</li>
+          <li>Los mensajes escritos, los audios del niño y las fotos (y, solo si algún día se activa, las respuestas con voz del personaje).</li>
           <li>Un identificador técnico anónimo (hash) para limitar abusos. No es reversible.</li>
         </ul>
         <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento.</p>
