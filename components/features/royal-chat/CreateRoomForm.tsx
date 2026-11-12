@@ -66,13 +66,18 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
         {plan === 'trial' && (
           <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Puedes preparar una sala para cada peque. Después, podréis seguir con el Pase de Navidad ({billing.price}).</p>
         )}
+        <div role="alert" className="rounded-2xl border-2 border-[#ff8a8c] bg-[#ff8a8c]/[.12] p-4 text-[14px] leading-snug text-[#fff6dc]">
+          <p className="text-[16px] font-extrabold text-[#ff8a8c]">⚠️ Guarda el enlace del panel ahora</p>
+          <p className="mt-1.5"><R>No hay cuenta ni contraseña: <strong>ese enlace es la única llave</strong> de la sala. Si lo pierdes, no podemos recuperarlo y no podrás contestar a {name}.</R></p>
+          <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[13.5px] text-[#fff6dc]/90">
+            <li>Pulsa «Enviar por WhatsApp» o «Enviármelo por correo» en el recuadro de tu panel secreto, más abajo.</li>
+            <li>Mándatelo a ti mismo (o a tu pareja), no lo guardes solo en esta página.</li>
+            <li><R>En este móvil quedará también en «Tus salas» de la portada, pero eso se borra si limpias el navegador.</R></li>
+          </ol>
+        </div>
         {plan === 'pass' && <p className="text-center text-[13px] text-[#fff6dc]/70">✨ Con tu Pase de Navidad: sin límite hasta el 20 de enero.</p>}
         <LinkCard title={r(`1. Móvil de ${name}`)} text={r(`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`)} url={links.child} />
         <LinkCard title="2. Tu panel secreto de los padres" text={`Desde aquí lees lo que escribe ${name} y contestas como ${c.shortName}. No lo compartas con el peque.`} url={links.parent} secret />
-        <div role="note" className="rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/[.07] p-3.5 text-[13px] leading-snug text-[#fff6dc]/85">
-          <p className="font-semibold text-[#ff8a8c]">Guarda el enlace del panel ahora</p>
-          <p className="mt-1"><R>No hay cuenta ni contraseña: si lo pierdes, no podemos recuperarlo. Mándatelo por WhatsApp o guarda esta página. En este móvil, además, quedará en «Tus salas» de la portada.</R></p>
-        </div>
         <a href={links.parent} className="flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a]">
           Abrir mi panel de los padres
         </a>
