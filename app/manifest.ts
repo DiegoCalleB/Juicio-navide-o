@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Mensajería Mágica de Navidad',
-    short_name: 'Mensajería Mágica',
+    name: 'Línea Mágica',
+    short_name: 'Línea Mágica',
     description: 'Que antes de abrir los regalos, hable con Papá Noel: tu hijo escribe y tú contestas desde tu móvil, en directo.',
     lang: 'es',
     start_url: '/',

@@ -5,11 +5,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: 'Mensajería Mágica de Navidad', template: '%s · Mensajería Mágica de Navidad' },
+  title: { default: 'Línea Mágica · Tu peque habla en directo con Papá Noel', template: '%s · Línea Mágica' },
   description: 'Que antes de abrir los regalos, hable con Papá Noel: tu hijo le escribe y tú contestas desde tu móvil, en directo.',
-  openGraph: { type: 'website', siteName: 'Mensajería Mágica de Navidad', locale: 'es_ES' },
+  openGraph: { type: 'website', siteName: 'Línea Mágica', locale: 'es_ES' },
   twitter: { card: 'summary_large_image' },
-  appleWebApp: { capable: true, title: 'Mensajería Mágica', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Línea Mágica', statusBarStyle: 'black-translucent' },
   formatDetection: { telephone: false },
 };
 

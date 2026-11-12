@@ -77,7 +77,7 @@ export async function createCheckoutSession(opts: {
   f.set('line_items[0][quantity]', '1');
   f.set('line_items[0][price_data][currency]', 'eur');
   f.set('line_items[0][price_data][unit_amount]', String(opts.amountCents));
-  f.set('line_items[0][price_data][product_data][name]', 'Pase de Navidad · Mensajería Mágica');
+  f.set('line_items[0][price_data][product_data][name]', 'Pase de Navidad · Línea Mágica');
   f.set(
     'line_items[0][price_data][product_data][description]',
     'Salas sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',

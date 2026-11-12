@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { getCheckoutReturn, savePass, setCheckoutReturn } from '@/lib/myPass';
 
 const giftText = (link: string) =>
-  `¡Te regalo un Pase de Navidad! Con él, tus peques pueden escribirse en directo con Papá Noel, el elfo o los Reyes Magos (tú contestas en secreto). Ábrelo aquí: ${link}`;
+  `¡Te regalo un Pase de Navidad de Línea Mágica! Con él, tus peques pueden escribirse en directo con Papá Noel, el elfo o los Reyes Magos (tú contestas en secreto). Ábrelo aquí: ${link}`;
 
 export function PassReady({ passToken, passLink, giftLink }: { passToken: string | null; passLink: string | null; giftLink: string | null }) {
   const [back, setBack] = useState<string | null>(null);

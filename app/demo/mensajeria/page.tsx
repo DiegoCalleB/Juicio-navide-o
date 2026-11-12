@@ -3,7 +3,7 @@ import { DemoChat } from '@/components/features/royal-chat/DemoChat';
 import { demoFor } from '@/components/features/royal-chat/demoData';
 import { CHARACTERS, isCharacterId, resolveCharacter } from '@/lib/characters';
 
-export const metadata: Metadata = { title: 'Mensajería Mágica de Navidad', robots: { index: false } };
+export const metadata: Metadata = { title: 'Demo', robots: { index: false } };
 export const viewport: Viewport = { themeColor: '#2a0f4a' };
 
 export default async function MensajeriaDemo({ searchParams }: { searchParams: Promise<{ p?: string }> }) {

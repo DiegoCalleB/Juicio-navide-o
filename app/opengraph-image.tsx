@@ -23,7 +23,7 @@ export default function OgImage() {
         }}
       >
         <div style={{ display: 'flex', fontSize: 30, letterSpacing: 8, color: '#f6d77a', textTransform: 'uppercase' }}>
-          Mensajería mágica de Navidad
+          Línea Mágica · Papá Noel te contesta
         </div>
         <div style={{ display: 'flex', fontSize: 72, fontWeight: 800, lineHeight: 1.08, marginTop: 28 }}>
           Que antes de abrir los regalos, hable con Papá Noel

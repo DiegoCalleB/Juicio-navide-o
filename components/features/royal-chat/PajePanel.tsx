@@ -350,9 +350,9 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
   const shareApp = async () => {
     const url = window.location.origin;
-    const msg = `Mira lo que hemos hecho: ${character.name} le escribe a ${childName} en directo y su cara no tiene precio. Pruébalo gratis:`;
+    const msg = `Mira lo que hemos hecho: ${character.name} le escribe a ${childName} en directo y su cara no tiene precio. Pruébalo gratis en Línea Mágica:`;
     try {
-      if (navigator.share) await navigator.share({ title: 'Mensajería Mágica de Navidad', text: msg, url });
+      if (navigator.share) await navigator.share({ title: 'Línea Mágica', text: msg, url });
       else await navigator.clipboard.writeText(`${msg} ${url}`);
       setShared(true);
       setTimeout(() => setShared(false), 2500);

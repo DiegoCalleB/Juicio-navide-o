@@ -26,7 +26,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
       <article className="relative mx-auto w-full max-w-md space-y-6 px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-10">
         <header>
-          <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería mágica de Navidad</p>
+          <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Línea Mágica</p>
           <h1 className="mt-2 font-serif text-[32px] leading-tight">{title}</h1>
           <p className="mt-2 text-[15px] leading-relaxed text-[#fff6dc]/70">{intro}</p>
         </header>

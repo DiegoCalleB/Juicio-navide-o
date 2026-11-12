@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BRAND, seasonTagline } from '@/lib/brand';
 import { CHARACTERS } from '@/lib/characters';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
@@ -13,7 +14,8 @@ export function RoyalLanding({ billing }: { billing: BillingInfo }) {
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
         <header className="mb-6 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#f6d77a]">Mensajería mágica de Navidad</p>
+          <p className="font-serif text-[22px] leading-none text-[#f6d77a]">✨ {BRAND}</p>
+          <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/80">{seasonTagline()}</p>
           <h1 className="mt-3 font-serif text-[32px] leading-tight text-[#fff6dc]">Que antes de abrir los regalos, hable con Papá Noel</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">
             Tu peque le escribe a Papá Noel, a los Reyes Magos, al Ratoncito Pérez o a un duende travieso y recibe su respuesta en directo. Tú la escribes desde tu móvil y a él le llega como si fuera el personaje.

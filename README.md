@@ -1,4 +1,4 @@
-# Mensajería Mágica de Navidad
+# Línea Mágica
 
 Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. El niño escribe, manda fotos o **audios**; los padres contestan con texto, fotos o **la voz del personaje**, y pueden **grabar su reacción** con el propio móvil.
 
