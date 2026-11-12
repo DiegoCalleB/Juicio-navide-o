@@ -82,6 +82,8 @@ export async function createCheckoutSession(opts: {
     'line_items[0][price_data][product_data][description]',
     'Salas sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',
   );
+  // Códigos promocionales creados en el panel de Stripe (p. ej. AMIGOS al 100 %).
+  f.set('allow_promotion_codes', 'true');
   f.set('custom_text[submit][message]', 'El pase se activa al momento. Pago único: no es una suscripción.');
   for (const [k, v] of Object.entries(opts.metadata)) f.set(`metadata[${k}]`, v);
   return toSession(await stripeFetch('checkout/sessions', { method: 'POST', form: f }));
