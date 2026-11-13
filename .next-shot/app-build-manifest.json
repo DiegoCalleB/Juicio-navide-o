@@ -1,9 +1,14 @@
 {
   "pages": {
-    "/ideas-elfo/sin-tiempo/imagen/route": [
+    "/ideas-elfo/[noche]/imagen/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/ideas-elfo/sin-tiempo/imagen/route.js"
+      "static/chunks/app/ideas-elfo/[noche]/imagen/route.js"
+    ],
+    "/ideas-elfo/[noche]/opengraph-image/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/ideas-elfo/[noche]/opengraph-image/route.js"
     ]
   }
 }

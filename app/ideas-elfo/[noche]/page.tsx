@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
+import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
 const CTA_HREF = '/?personaje=duende_chispa#crear';
@@ -38,6 +39,7 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
   const next = night.day < 24 ? night.day + 1 : null;
   const shareText = `Trastada ${night.day} del elfo travieso: ${night.title}. ${night.why}`;
   const image = `/ideas-elfo/${night.day}/imagen`;
+  const art = elfArt(night.day);
 
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822] text-[#fff6dc]">
@@ -52,6 +54,13 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
           <div>
             <p className="text-[11.5px] font-bold uppercase tracking-[.2em] text-[#7ee2a8]">🧝 Trastada {night.day} de 24 · {nightDate(night.day)}</p>
             <h1 className="mt-2 font-serif text-[32px] leading-[1.1] lg:text-[44px]">{night.title}</h1>
+            {art && (
+              <figure className="mt-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${night.title}`} className="w-full rounded-2xl border border-white/10 shadow-xl" />
+                <figcaption className="mt-1 text-right text-[11px] text-[#fff6dc]/40">{AI_ART_NOTE}</figcaption>
+              </figure>
+            )}
             <p className="mt-3 text-[16.5px] leading-relaxed text-[#fff6dc]/85">{night.idea}</p>
             <ul className="mt-4 flex flex-wrap gap-2 text-[12.5px] font-semibold" aria-label="Ficha">
               <li className="rounded-full border border-[#7ee2a8]/40 bg-[#7ee2a8]/10 px-3 py-1 text-[#7ee2a8]">⏱ {night.minutes} min</li>

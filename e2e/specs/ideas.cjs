@@ -97,6 +97,17 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('robots: permite /ideas-elfo y sigue bloqueando las salas', /Allow: \/ideas-elfo/.test(robots) && /Disallow: \/paje\//.test(robots));
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
+  // Ilustraciones (opcionales): cada noche con su JPG en public/elfo/trastadas la enseña, con el aviso de IA
+  const fs = require('fs');
+  const arts = fs.existsSync('public/elfo/trastadas') ? fs.readdirSync('public/elfo/trastadas').filter((f) => /^\d+\.jpg$/.test(f)) : [];
+  await page.goto(BASE + '/ideas-elfo', { waitUntil: 'networkidle' });
+  check(`la lista enseña las ilustraciones que hay (${arts.length})`, (await page.locator('article[id^=noche-] img').count()) === arts.length);
+  if (arts.length) {
+    const d = arts[0].replace('.jpg', '');
+    await page.goto(BASE + '/ideas-elfo/' + d, { waitUntil: 'networkidle' });
+    check('la noche con ilustración la enseña con el aviso "creada con IA"', await page.locator('figure img').isVisible() && await page.getByText('Ilustración creada con IA').isVisible());
+  }
+
   // Trastadas exprés (sin tiempo / se me olvidó)
   check('mapa del sitio: incluye la página "sin tiempo"', /\/ideas-elfo\/sin-tiempo</.test(sm));
   await page.goto(BASE + '/ideas-elfo', { waitUntil: 'networkidle' });

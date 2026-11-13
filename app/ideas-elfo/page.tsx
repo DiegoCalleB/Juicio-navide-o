@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
+import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
 const TITLE = 'Las 24 mejores trastadas del elfo travieso (los clásicos de internet)';
@@ -119,7 +120,16 @@ export default function IdeasElfoPage() {
               const message = d.message;
               return (
                 <li key={d.day} className="contents">
-                  <article id={`noche-${d.day}`} className="scroll-mt-4 rounded-2xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+                  <article id={`noche-${d.day}`} className="scroll-mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+                    {(() => {
+                      const art = elfArt(d.day);
+                      return art ? (
+                        <Link href={`/ideas-elfo/${d.day}`} className="-mx-4 -mt-4 mb-3 block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${d.title}`} title={AI_ART_NOTE} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                        </Link>
+                      ) : null;
+                    })()}
                     <p className="text-[11.5px] font-bold uppercase tracking-widest text-[#7ee2a8]">Noche {d.day} · {nightDate(d.day)}</p>
                     <h3 className="mt-1.5 font-serif text-[21px] leading-tight"><Link href={`/ideas-elfo/${d.day}`} className="hover:underline">{d.title}</Link></h3>
                     <p className="mt-1.5 text-[14px] leading-snug text-[#fff6dc]/80">{d.idea}</p>
