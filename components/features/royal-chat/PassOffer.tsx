@@ -11,6 +11,8 @@ export interface BillingInfo {
   price: string;
   /** Precio de lanzamiento activo: "hasta el 1 de diciembre". */
   launchNote: string | null;
+  /** Campaña activa (p. ej. Black Friday): etiqueta y último día, ya escrito ("lunes 30 de noviembre"). */
+  campaign: { label: string; until: string } | null;
 }
 
 /**
@@ -107,7 +109,11 @@ export function PassOffer({
           <button type="button" onClick={buy} disabled={busy} className={`min-h-12 w-full rounded-2xl font-bold disabled:opacity-60 ${btn}`}>
             {busy ? 'Abriendo el pago…' : `Conseguir el Pase · ${billing.price}`}
           </button>
-          {billing.launchNote && <p className="text-center text-[11px] opacity-60">Precio de lanzamiento {billing.launchNote}</p>}
+          {billing.campaign ? (
+            <p className="text-center text-[11.5px] font-semibold text-[#f6d77a]">🖤 {billing.campaign.label} · hasta el {billing.campaign.until}</p>
+          ) : (
+            billing.launchNote && <p className="text-center text-[11px] opacity-60">Precio de lanzamiento {billing.launchNote}</p>
+          )}
         </>
       )}
       {error && <p role="alert" className="text-[#ff8a8c]">{error}</p>}

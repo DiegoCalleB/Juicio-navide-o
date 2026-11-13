@@ -1,6 +1,6 @@
-const { OUT: S, BASE, launch, openChild } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, openChild, pinSetup } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
-const openSetup = async (page) => { const t = page.getByRole('button', { name: /Preparativos/ }); if ((await t.getAttribute('aria-expanded')) !== 'true') await t.click(); };
+const openSetup = pinSetup; // fija abiertos los Preparativos (se pliegan solos cuando el niño abre o escribe)
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   const b = await launch();
@@ -52,8 +52,14 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.screenshot({ path: S + '/ed1-panel-admin.png' });
 
   // 3. Borrar la sala entera
+  // Esperamos a que la página esté lista (conectada en directo): pulsar antes de que cargue no hace nada.
+  await parent.waitForSelector('[aria-label="Conectado en tiempo real"]', { timeout: 30000 });
   await openSetup(parent);
   await parent.getByRole('button', { name: 'Borrar esta sala' }).click();
+  if (!(await parent.getByRole('alertdialog', { name: 'Confirmar borrado de la sala' }).waitFor({ timeout: 4000 }).then(() => true).catch(() => false))) {
+    await openSetup(parent);
+    await parent.getByRole('button', { name: 'Borrar esta sala' }).click();
+  }
   await parent.getByRole('alertdialog', { name: 'Confirmar borrado de la sala' }).getByRole('button', { name: 'No' }).click();
   check('"No" no borra la sala', await parent.getByRole('button', { name: 'Borrar esta sala' }).isVisible().catch(() => false));
   await parent.getByRole('button', { name: 'Borrar esta sala' }).click();

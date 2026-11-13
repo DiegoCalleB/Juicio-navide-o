@@ -13,6 +13,11 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Más adelante: Ratoncito Pérez ~2,99 €/año.
 - Requisitos de Diego antes de cobrar: alta de autónomo o sociedad, condiciones de venta con IVA y casilla de renuncia al desistimiento (revisión de un abogado o una gestoría), cuenta de Stripe. Validar el precio con ~20 padres.
 
+### Calendario, precios y portada de temporada (13-nov)
+- **Precio:** 3,99 € todo el año (ya no sube a 4,99 € el 1-dic: ese día llegan los elfos, que es el pico de interés). **Black Friday: 2,99 € del 27 al 30 de noviembre**, automático (sin código), con aviso en la portada y la tarjeta del Pase. Sin "antes X €" tachado (riesgo legal por el precio previo; consultar gestoría). Configurable: `PASS_PRICE_CENTS`, `PASS_PRICE_BLACKFRIDAY_CENTS`, `BLACKFRIDAY=0`, `BLACKFRIDAY_FROM/UNTIL`.
+- **Portada por fases** (`lib/brand.ts`): 1-nov→30-nov "Prepara la llegada del elfo" (con cuenta atrás hasta el 1-dic, `ELF_ARRIVAL_DATE`), 1-dic→14-dic elfo en casa, 15→25-dic Papá Noel, 26-dic→6-ene Reyes, resto Ratoncito. Cambia titular, demo y personaje preseleccionado. Pruebas con `npm run test:e2e -- --now=ISO` (reloj simulado `FAKE_NOW`, solo con almacén en memoria).
+- Pendiente: página pública SEO "24 trastadas del elfo" (los datos ya existen en `lib/characters.ts`), analítica sin cookies, foto real de una trastada para la demo, banco de vídeos para redes.
+
 ### Cambio (15-nov): familias y enlace de familia
 - Cadena de enlaces **familia → panel de cada sala → niño**: el enlace de familia (43 caracteres) reconstruye todos los paneles con HMAC y el `family_seed` de cada sala; la base de datos solo guarda huellas. Migración `20261115000000_families.sql` (`family_hash`, `family_seed`, `family_name`).
 - Página `/familia/[token]`: lista las salas, abre cada panel, copia el enlace del niño, cambia el apodo, y recupera "Tus salas" en un móvil nuevo. El servidor no adopta enlaces de familia inventados (solo reutiliza uno si ya existe).

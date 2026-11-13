@@ -62,6 +62,8 @@ export async function createCheckoutSession(opts: {
   successUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
+  /** Si el precio es el de la campaña de Black Friday (se nombra así en el recibo). */
+  blackFriday?: boolean;
   /** Idioma de la pantalla de pago de Stripe. */
   locale?: 'es' | 'es-419';
 }): Promise<CheckoutSession> {
@@ -79,7 +81,7 @@ export async function createCheckoutSession(opts: {
   f.set('line_items[0][quantity]', '1');
   f.set('line_items[0][price_data][currency]', 'eur');
   f.set('line_items[0][price_data][unit_amount]', String(opts.amountCents));
-  f.set('line_items[0][price_data][product_data][name]', 'Pase de Navidad · Línea Mágica');
+  f.set('line_items[0][price_data][product_data][name]', `Pase de Navidad · Línea Mágica${opts.blackFriday ? ' · Oferta Black Friday' : ''}`);
   f.set(
     'line_items[0][price_data][product_data][description]',
     'Salas sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',

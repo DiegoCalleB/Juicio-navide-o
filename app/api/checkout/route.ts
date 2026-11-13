@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       successUrl: `${origin}/pase/listo?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/`,
       locale,
+      blackFriday: price.blackFriday,
       metadata: { ...(roomId ? { room_id: roomId } : {}), waiver: 'accepted', price_cents: String(price.cents) },
     });
     if (!session.url) return fail('UNKNOWN', 'No se pudo abrir el pago.', 502);

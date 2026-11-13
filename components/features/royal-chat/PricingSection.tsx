@@ -50,12 +50,15 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
         </article>
 
         <article className="relative rounded-3xl border-2 border-[#f6d77a] bg-gradient-to-b from-[#f6d77a]/[.13] to-[#f6d77a]/[.04] p-4 shadow-lg">
-          <p className="absolute -top-3 left-4 rounded-full bg-[#f6d77a] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#2a0f4a]">Recomendado</p>
+          <p className="absolute -top-3 left-4 rounded-full bg-[#f6d77a] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#2a0f4a]">{billing.campaign ? `🖤 ${billing.campaign.label}` : 'Recomendado'}</p>
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[17px] font-bold text-[#f6d77a]">Pase de Navidad</h3>
             <p className="text-[18px] font-extrabold text-[#fff6dc]">{billing.price}</p>
           </div>
-          <p className="text-right text-[11.5px] text-[#fff6dc]/55">Pago único, sin suscripción{billing.launchNote ? ` · lanzamiento ${billing.launchNote}` : ''}</p>
+          <p className="text-right text-[11.5px] text-[#fff6dc]/55">
+            Pago único, sin suscripción
+            {billing.campaign ? ` · hasta el ${billing.campaign.until}` : billing.launchNote ? ` · lanzamiento ${billing.launchNote}` : ''}
+          </p>
           <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/85">
             <li>✓ La magia sigue hasta el 20 de enero</li>
             <li>✓ Todos los peques y todos los personajes (hasta 10 salas)</li>

@@ -1,5 +1,6 @@
 import 'server-only';
 import { createHmac } from 'node:crypto';
+import { siteNow } from '@/lib/clock';
 import { isMemoryStore } from '@/services/room-store';
 
 /**
@@ -37,14 +38,34 @@ export function paymentsEnabled(): boolean {
   return isStripeFake() || (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_');
 }
 
+/** Hora que usa la facturación (la real, salvo FAKE_NOW en pruebas). */
+export function billingNow(): Date {
+  return siteNow();
+}
+
+/** Campaña de Black Friday: del 27 al 30 de noviembre (hora de España), a 2,99 € por defecto. Se apaga con BLACKFRIDAY=0. */
+export function blackFridayWindow(now: Date = billingNow()): { from: string; until: string; active: boolean } | null {
+  if (process.env.BLACKFRIDAY === '0') return null;
+  const year = now.getUTCFullYear();
+  const from = process.env.BLACKFRIDAY_FROM || `${year}-11-27`;
+  const until = process.env.BLACKFRIDAY_UNTIL || `${year}-11-30`; // inclusive
+  const start = Date.parse(`${from}T00:00:00+01:00`);
+  const end = Date.parse(`${until}T00:00:00+01:00`) + 86_400_000;
+  if (Number.isNaN(start) || Number.isNaN(end)) return null;
+  return { from, until, active: now.getTime() >= start && now.getTime() < end };
+}
+
 /** Precio actual en céntimos (IVA incluido). Configurable sin tocar código. */
-export function currentPrice(now: Date = new Date()): { cents: number; launch: boolean; launchUntil: string } {
-  const launchUntil = process.env.PASS_LAUNCH_UNTIL || `${seasonYear(now)}-12-01`;
-  const launch = now.getTime() < Date.parse(`${launchUntil}T00:00:00+01:00`);
+export function currentPrice(now: Date = billingNow()): { cents: number; launch: boolean; launchUntil: string | null; blackFriday: boolean } {
+  // Precio de temporada: 3,99 € todo el año. "Lanzamiento" solo existe si se configura PASS_LAUNCH_UNTIL (AAAA-MM-DD).
+  const launchUntil = process.env.PASS_LAUNCH_UNTIL || null;
+  const launch = !!launchUntil && now.getTime() < Date.parse(`${launchUntil}T00:00:00+01:00`);
+  const bf = blackFridayWindow(now)?.active ?? false;
   return {
-    cents: launch ? num(process.env.PASS_PRICE_LAUNCH_CENTS, 399) : num(process.env.PASS_PRICE_CENTS, 499),
+    cents: bf ? num(process.env.PASS_PRICE_BLACKFRIDAY_CENTS, 299) : launch ? num(process.env.PASS_PRICE_LAUNCH_CENTS, 399) : num(process.env.PASS_PRICE_CENTS, 399),
     launch,
     launchUntil,
+    blackFriday: bf,
   };
 }
 
@@ -56,7 +77,7 @@ function seasonYear(now: Date): number {
 }
 
 /** El pase vale hasta el 20 de enero de esta temporada (mínimo 7 días); fuera de temporada, 45 días. */
-export function passExpiresAt(now: Date = new Date()): Date {
+export function passExpiresAt(now: Date = billingNow()): Date {
   const end = new Date(Date.UTC(seasonYear(now) + 1, 0, 20, 23, 59));
   const left = end.getTime() - now.getTime();
   if (left > 0 && left <= 130 * 86_400_000) return new Date(Math.max(end.getTime(), now.getTime() + 7 * 86_400_000));
@@ -77,13 +98,20 @@ export function derivePassTokens(stripeSessionId: string): { pass: string; gift:
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 /** Lo que necesitan las pantallas de los padres para mostrar la oferta. */
-export function billingInfo(now: Date = new Date()): { enabled: boolean; price: string; launchNote: string | null } {
+export function billingInfo(now: Date = billingNow()): { enabled: boolean; price: string; launchNote: string | null; campaign: { label: string; until: string } | null } {
   const p = currentPrice(now);
   let launchNote: string | null = null;
-  if (p.launch) {
+  let campaign: { label: string; until: string } | null = null;
+  const bf = blackFridayWindow(now);
+  if (p.blackFriday && bf) {
+    // Último día de la campaña, escrito como "lunes 30 de noviembre".
+    const last = new Date(Date.parse(`${bf.until}T12:00:00+01:00`));
+    const until = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Madrid' }).format(last).replace(',', '');
+    campaign = { label: 'Oferta Black Friday', until };
+  } else if (p.launch && p.launchUntil) {
     // El lanzamiento acaba al empezar `launchUntil`: el último día es el anterior.
     const last = new Date(Date.parse(`${p.launchUntil}T12:00:00Z`) - 86_400_000);
     launchNote = `hasta el ${last.getUTCDate()} de ${MONTHS[last.getUTCMonth()]}`;
   }
-  return { enabled: paymentsEnabled(), price: formatEuros(p.cents), launchNote };
+  return { enabled: paymentsEnabled(), price: formatEuros(p.cents), launchNote, campaign };
 }

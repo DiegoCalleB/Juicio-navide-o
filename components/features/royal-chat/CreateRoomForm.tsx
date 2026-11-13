@@ -20,12 +20,12 @@ type Reading = 'yes' | 'learning' | 'no';
 interface Extra { name: string; characterId: CharacterId; reading: Reading }
 interface CreatedRoom { name: string; characterId: CharacterId; alias: string; gender: 'm' | 'f'; child: string; parent: string }
 
-export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
+export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { billing: BillingInfo; defaultCharacter?: CharacterId }) {
   const locale = useLocale();
   const r = useRegional();
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
-  const [characterId, setCharacterId] = useState<CharacterId>('papa_noel');
+  const [characterId, setCharacterId] = useState<CharacterId>(defaultCharacter);
   const [alias, setAlias] = useState('');
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [reading, setReading] = useState<Reading>('yes');
