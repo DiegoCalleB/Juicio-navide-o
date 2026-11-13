@@ -10,7 +10,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   return guarded('family-check', { key: 'family-check', max: 30, windowMs: 60_000 }, async () => {
     const family = await getFamily(token);
-    return family ? json({ ok: true, data: { rooms: family.rooms.length } }) : fail('NOT_FOUND', 'Familia no encontrada', 404);
+    if (!family) return fail('NOT_FOUND', 'Familia no encontrada', 404);
+    // Los peques de la casa (solo nombre de pila y si ya leen) para el desplegable del formulario.
+    const seen = new Set<string>();
+    const kids = family.rooms.flatMap((r) => {
+      const key = r.childName.trim().toLowerCase();
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ name: r.childName, reading: r.readingLevel }];
+    });
+    return json({ ok: true, data: { rooms: family.rooms.length, kids } });
   });
 }
 

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { loadFamily, saveFamily } from '@/lib/myFamily';
+import { loadKids, mergeKids, saveKids, type Kid } from '@/lib/myKids';
 import { loadPass } from '@/lib/myPass';
 import { PassOffer, type BillingInfo } from './PassOffer';
 import { createRoomAction } from '@/app/reyes/actions';
@@ -37,7 +38,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedRoom[] | null>(null);
   const [familyLink, setFamilyLink] = useState<string | null>(null);
-  const [savedKids, setSavedKids] = useState<string[]>([]);
+  const [savedKids, setSavedKids] = useState<Kid[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
   const [familyName, setFamilyName] = useState('');
   const [hasFamily, setHasFamily] = useState(true);
@@ -47,7 +48,22 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
     if (created) doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [created]);
   useEffect(() => {
-    setSavedKids([...new Set(loadRooms().map((x) => x.childName))]);
+    // Peques conocidos: la lista propia de este móvil + las salas guardadas + (si hay familia) los de la familia en el servidor.
+    const local = mergeKids(loadKids(), loadRooms().map((x) => ({ name: x.childName, reading: 'yes' as const })));
+    setSavedKids(local);
+    const fam = loadFamily();
+    if (fam) {
+      fetch(`/api/family/${fam}`)
+        .then((res) => res.json() as Promise<{ ok: boolean; data?: { kids?: Kid[] } }>)
+        .then((j) => {
+          if (j.ok && j.data?.kids) {
+            const merged = mergeKids(j.data.kids, local);
+            setSavedKids(merged);
+            saveKids(merged);
+          }
+        })
+        .catch(() => {});
+    }
     setHasFamily(!!loadFamily());
   }, [created]);
 
@@ -91,6 +107,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
         lastPlan = res.data.plan;
         const aliasOut = k.characterId === 'duende_chispa' ? (k.alias.trim() || undefined) : undefined;
         const genderOut = k.characterId === 'duende_chispa' ? k.gender : undefined;
+        saveKids([{ name: k.name, reading: k.reading }]);
         saveRoom({ childName: k.name, characterId: k.characterId, characterAlias: aliasOut, characterGender: genderOut, parentPath: `/paje/${res.data.parentToken}`, childPath: `/r/${res.data.childToken}`, createdAt: new Date().toISOString() });
         done.push({ name: k.name, characterId: k.characterId, alias: k.alias, gender: k.gender, child: `${origin}/r/${res.data.childToken}`, parent: `${origin}/paje/${res.data.parentToken}` });
       }
@@ -204,12 +221,16 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
             <label htmlFor="kid-pick" className="block text-sm font-semibold text-[#fff6dc]/85">Tus peques</label>
             <select
               id="kid-pick"
-              value={savedKids.includes(childName) ? childName : ''}
-              onChange={(e) => setChildName(e.target.value)}
+              value={savedKids.some((k) => k.name === childName) ? childName : ''}
+              onChange={(e) => {
+                const kid = savedKids.find((k) => k.name === e.target.value);
+                setChildName(e.target.value);
+                if (kid) setReading(kid.reading);
+              }}
               className="mt-1 min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] focus:border-[#f6d77a] focus:outline-none"
             >
               <option value="">Otro peque…</option>
-              {savedKids.map((k) => <option key={k} value={k}>{k}</option>)}
+              {savedKids.map((k) => <option key={k.name} value={k.name}>{k.name}</option>)}
             </select>
           </div>
         )}
@@ -303,6 +324,20 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       {extras.map((x, i) => (
         <fieldset key={i} className="space-y-2 rounded-2xl border border-white/10 bg-white/[.03] p-3.5">
           <legend className="px-1 text-sm font-semibold text-[#fff6dc]/85">Otro peque ({i + 2})</legend>
+          {savedKids.filter((k) => k.name !== childName && !extras.some((y, j) => j !== i && y.name === k.name)).length > 0 && (
+            <select
+              aria-label={`Elegir el peque ${i + 2} de tu lista`}
+              value=""
+              onChange={(e) => {
+                const kid = savedKids.find((k) => k.name === e.target.value);
+                if (kid) setExtras((list) => list.map((y, j) => (j === i ? { ...y, name: kid.name, reading: kid.reading } : y)));
+              }}
+              className="min-h-11 w-full rounded-xl border border-white/15 bg-[#120822] px-3 text-[14px] text-[#fff6dc]"
+            >
+              <option value="">Elegir de tus peques…</option>
+              {savedKids.filter((k) => k.name !== childName && !extras.some((y, j) => j !== i && y.name === k.name)).map((k) => <option key={k.name} value={k.name}>{k.name}</option>)}
+            </select>
+          )}
           <label htmlFor={`extra-name-${i}`} className="sr-only">Nombre del otro peque {i + 2}</label>
           <input
             id={`extra-name-${i}`}

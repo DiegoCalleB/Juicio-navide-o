@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { R, useLocale } from '@/components/LocaleProvider';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { saveFamily } from '@/lib/myFamily';
+import { saveKids } from '@/lib/myKids';
 import { saveRoom } from '@/lib/myRooms';
 import type { FamilyView } from '@/services/rooms';
 import { PassOffer, type BillingInfo } from './PassOffer';
@@ -40,6 +41,7 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
   // Este móvil recuerda la familia y todas sus salas (así "Tus salas" se recupera en un móvil nuevo).
   useEffect(() => {
     saveFamily(familyToken);
+    saveKids(family.rooms.map((r) => ({ name: r.childName, reading: r.readingLevel })));
     for (const room of [...family.rooms].reverse()) {
       saveRoom({
         childName: room.childName,

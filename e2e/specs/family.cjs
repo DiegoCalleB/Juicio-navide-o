@@ -22,6 +22,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.getByRole('button', { name: /Añadir otro peque/ }).click();
   await page.fill('#extra-name-0', 'Mateo');
   await page.locator('fieldset', { hasText: 'Otro peque (2)' }).locator('select').first().selectOption('raton_perez');
+  await page.locator('fieldset', { hasText: 'Otro peque (2)' }).locator('select').last().selectOption('learning');
   await page.getByRole('checkbox').first().check();
   check('el botón anuncia las dos salas', await page.getByRole('button', { name: 'Crear las 2 salas reales' }).isVisible());
   await page.getByRole('button', { name: 'Crear las 2 salas reales' }).click();
@@ -74,6 +75,33 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('móvil nuevo: aparece el desplegable con los dos peques', (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Lucía') && (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Mateo'));
   await fresh.locator('#kid-pick').selectOption('Mateo');
   check('elegir en el desplegable rellena el nombre', (await fresh.inputValue('#child')) === 'Mateo');
+
+  // Elegir a Mateo recuerda también que está empezando a leer
+  check('el desplegable también pone su nivel de lectura', (await fresh.getByRole('radio', { name: 'Está empezando' }).getAttribute('aria-checked')) === 'true');
+
+  // El desplegable sobrevive a quitar las salas de la lista de este móvil
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
+  for (const n of ['Lucía', 'Mateo']) await page.getByRole('button', { name: `Quitar la sala de ${n} de la lista` }).click();
+  await page.reload({ waitUntil: 'networkidle' });
+  const optsAfter = (await page.locator('#kid-pick option').allInnerTexts()).join('|');
+  check('quitar las salas de la lista no borra a los peques del desplegable', optsAfter.includes('Lucía') && optsAfter.includes('Mateo'), optsAfter);
+
+  // Un móvil que solo tiene el enlace de familia ve a los peques (los lee del servidor)
+  const famOnly = await mk();
+  await famOnly.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await famOnly.evaluate((t) => localStorage.setItem('magic-family', t), familyLink.slice(-43));
+  await famOnly.reload({ waitUntil: 'networkidle' });
+  await famOnly.locator('#kid-pick').waitFor({ timeout: 15000 }).catch(() => {});
+  const optsServer = (await famOnly.locator('#kid-pick option').allInnerTexts()).join('|');
+  check('con solo el enlace de familia, el desplegable trae a Lucía y a Mateo', optsServer.includes('Lucía') && optsServer.includes('Mateo'), optsServer);
+  await famOnly.locator('#kid-pick').selectOption('Mateo');
+  check('y recuerda su nivel de lectura', (await famOnly.getByRole('radio', { name: 'Está empezando' }).getAttribute('aria-checked')) === 'true');
+
+  // Los otros peques también se eligen de la lista
+  await famOnly.getByRole('button', { name: /Añadir otro peque/ }).click();
+  await famOnly.getByLabel('Elegir el peque 2 de tu lista').selectOption('Lucía');
+  check('en "añadir otro peque" se elige de la lista', (await famOnly.locator('#extra-name-0').inputValue()) === 'Lucía');
 
   // Una sala nueva desde ese móvil entra en la misma familia
   await fresh.fill('#child', 'Pablo');

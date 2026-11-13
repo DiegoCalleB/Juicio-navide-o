@@ -394,6 +394,7 @@ export interface FamilyRoomView {
   characterAlias: string | null;
   characterGender: string | null;
   locale: Locale;
+  readingLevel: ReadingLevel;
   /** Enlaces secretos reconstruidos desde el enlace de familia. */
   parentToken: string;
   childToken: string;
@@ -427,6 +428,7 @@ export async function getFamily(familyToken: string): Promise<FamilyView | null>
       characterAlias: rec.characterAlias,
       characterGender: rec.characterGender,
       locale: room.locale,
+      readingLevel: room.readingLevel,
       parentToken,
       childToken: deriveChildToken(parentToken, rec.childLinkVersion),
       expiresAt: rec.expiresAt,
