@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { loadFamily, saveFamily } from '@/lib/myFamily';
+import { isLockedDevice } from '@/lib/myLock';
 import { loadKids, mergeKids, saveKids, type Kid } from '@/lib/myKids';
 import { loadPass } from '@/lib/myPass';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { PinSettings } from './PinSettings';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
 import { CHARACTERS, CHARACTER_GROUPS, resolveCharacter, type CharacterId } from '@/lib/characters';
@@ -41,6 +43,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
   const [familyLink, setFamilyLink] = useState<string | null>(null);
   const [savedKids, setSavedKids] = useState<Kid[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
+  const [pinDone, setPinDone] = useState(false);
   /** El selector de personajes se pliega al elegir uno, para que se vea lo que sigue. */
   const [pickerOpen, setPickerOpen] = useState(!initialCharacter);
   const [familyName, setFamilyName] = useState('');
@@ -51,6 +54,12 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
     if (created) doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [created]);
   useEffect(() => {
+    // Con PIN en este móvil, la portada no enseña nombres de peques (el que coja el móvil no debe verlos).
+    if (isLockedDevice()) {
+      setSavedKids([]);
+      setHasFamily(!!loadFamily());
+      return;
+    }
     // Peques conocidos: la lista propia de este móvil + las salas guardadas + (si hay familia) los de la familia en el servidor.
     const local = mergeKids(loadKids(), loadRooms().map((x) => ({ name: x.childName, reading: 'yes' as const })));
     setSavedKids(local);
@@ -168,6 +177,18 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           </div>
         </section>
 
+        {pinDone ? (
+          <p role="status" className="rounded-2xl border border-[#7ee2a8]/40 bg-[#7ee2a8]/10 p-3 text-center text-[13.5px] font-semibold text-[#7ee2a8]">🔒 Panel protegido con tu PIN</p>
+        ) : (
+          <PinSettings
+            token={created[0]?.parent.split('/paje/')[1] ?? ''}
+            hasPin={false}
+            tone="landing"
+            intro="Recomendado: si tu peque coge tu móvil, no podrá ver el panel ni lo que escribes como el personaje."
+            onDone={() => setPinDone(true)}
+          />
+        )}
+
         <ul className="space-y-2.5" aria-label="Salas creadas">
           {created.map((room) => {
             const c = resolveCharacter(CHARACTERS[room.characterId], { alias: room.alias, gender: room.gender, locale });
@@ -206,6 +227,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
               setError(null);
               setChildName('');
               setExtras([]);
+              setPinDone(false);
               setCharacterId(null);
               setPickerOpen(true);
               setConsent(false);

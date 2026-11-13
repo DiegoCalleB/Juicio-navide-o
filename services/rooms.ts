@@ -12,6 +12,7 @@ import { getRoomStore } from '@/services/room-store';
 import type { MessageRecord } from '@/services/room-store/types';
 import { paymentsEnabled, trialMs, TRIAL_WINDOW_DAYS, TRIALS_PER_CREATOR } from '@/lib/billing';
 import { checkPass, checkPassById } from '@/services/passes';
+import { isUnlocked, scopeOf } from '@/services/pin';
 
 export { RoomError };
 
@@ -33,6 +34,8 @@ export interface Room {
   locale: Locale;
   /** Huella de la familia (null = sala sin familia). */
   familyHash: string | null;
+  /** La sala tiene PIN de padres. */
+  hasPin: boolean;
 }
 
 export type ReadingLevel = 'yes' | 'learning' | 'no';
@@ -69,12 +72,15 @@ export async function createRoom(
   let familyToken = newToken();
   let familyName: string | null = input.familyName?.trim() || null;
   let familyPassId: string | null = null;
+  let familyPin: { parentPin: string; pinRecovery: string | null } | null = null;
   if (input.familyToken && TOKEN_REGEX.test(input.familyToken)) {
     const existing = await store.listRoomsByFamilyHash(hashToken(input.familyToken));
     if (existing.length > 0) {
       familyToken = input.familyToken;
       familyName = familyName ?? existing.find((x) => x.familyName)?.familyName ?? null;
       familyPassId = existing.find((x) => x.passId)?.passId ?? null;
+      const withPin = existing.find((x) => x.parentPin);
+      if (withPin?.parentPin) familyPin = { parentPin: withPin.parentPin, pinRecovery: withPin.pinRecovery };
     }
   }
   // Con un pase válido: sin límite. Si no, prueba gratis (con tope suave por dispositivo/conexión).
@@ -109,19 +115,26 @@ export async function createRoom(
     familyHash: hashToken(familyToken),
     familySeed,
     familyName,
+    parentPin: familyPin?.parentPin ?? null,
+    pinRecovery: familyPin?.pinRecovery ?? null,
   });
   return { childToken, parentToken, familyToken, plan: passId ? 'pass' : trialEndsAt ? 'trial' : 'free' };
 }
 
 /** Resuelve token → sala + rol. El token se compara por hash; nunca se guarda en claro. */
-export async function findRoomByToken(token: string): Promise<{ room: Room; role: Role } | null> {
+export async function findRoomByToken(token: string, opts: { allowLocked?: boolean } = {}): Promise<{ room: Room; role: Role; locked: boolean } | null> {
   if (!TOKEN_REGEX.test(token)) return null;
   const h = hashToken(token);
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
+  const role: Role = rec.childTokenHash === h ? 'child' : 'parent';
+  // Bloqueo parental: con PIN, el enlace de padres solo sirve si el panel está desbloqueado en este navegador.
+  const locked = role === 'parent' && !!rec.parentPin && !(await isUnlocked(scopeOf(rec)));
+  if (locked && !opts.allowLocked) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash },
-    role: rec.childTokenHash === h ? 'child' : 'parent',
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash, hasPin: !!rec.parentPin },
+    role,
+    locked,
   };
 }
 
@@ -420,7 +433,7 @@ export async function getFamily(familyToken: string): Promise<FamilyView | null>
     const room: Room = {
       id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender,
       childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId,
-      locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash,
+      locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash, hasPin: !!rec.parentPin,
     };
     rooms.push({
       childName: rec.childName,

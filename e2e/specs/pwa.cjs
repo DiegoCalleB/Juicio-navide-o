@@ -90,7 +90,7 @@ const get = async (path) => fetch(BASE + path);
   check('un enlace inventado no tiene manifiesto (404)', (await get(`/r/${'Z'.repeat(43)}/manifest.webmanifest`)).status === 404);
 
   const pm = await (await get(`/paje/${ptok}/manifest.webmanifest`)).json();
-  check('panel de los padres: la app abre ese panel', /Panel de Lucía/.test(pm.name) && pm.start_url === `/paje/${ptok}`, pm.name);
+  check('panel de los padres: la app abre ese panel (con nombre neutro, sin el del peque)', /Panel de los padres/.test(pm.name) && !/Lucía/.test(pm.name) && pm.start_url === `/paje/${ptok}`, pm.name);
   check('el enlace del niño no vale para el manifiesto del panel (404)', (await get(`/paje/${ctok}/manifest.webmanifest`)).status === 404);
   const fm = await (await get(`/familia/${ftok}/manifest.webmanifest`)).json();
   check('familia: la app abre todas las salas', /Línea Mágica/.test(fm.name) && fm.start_url === `/familia/${ftok}`, fm.name);

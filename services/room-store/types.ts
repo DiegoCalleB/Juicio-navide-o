@@ -28,6 +28,10 @@ export interface RoomRecord {
   familySeed: string | null;
   /** Apodo de la familia (opcional). */
   familyName: string | null;
+  /** Huella del PIN de los padres (null = sin PIN). */
+  parentPin: string | null;
+  /** Huella del código de rescate del PIN. */
+  pinRecovery: string | null;
   expiresAt: string;
 }
 
@@ -93,6 +97,8 @@ export interface NewRoom {
   familyHash?: string | null;
   familySeed?: string | null;
   familyName?: string | null;
+  parentPin?: string | null;
+  pinRecovery?: string | null;
 }
 
 /**
@@ -154,6 +160,8 @@ export interface RoomStore {
   attachPass(roomId: string, passId: string): Promise<boolean>;
   /** Salas vigentes de una familia, de la más antigua a la más reciente. */
   listRoomsByFamilyHash(hash: string): Promise<RoomRecord[]>;
+  /** Pone, cambia o quita el PIN (y su código de rescate): en todas las salas de la familia, o solo en la sala si no tiene. */
+  setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void>;
   /** Cambia el apodo de todas las salas de la familia. */
   updateFamilyName(hash: string, name: string | null): Promise<void>;
   /** Cambia el nivel de lectura de la sala. */

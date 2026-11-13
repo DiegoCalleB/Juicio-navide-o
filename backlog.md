@@ -149,3 +149,14 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 - **Migraciones a aplicar antes de desplegar, por orden:** `20261109000000_message_edit.sql` y `20261110000000_elf_alias.sql` (nombre y género del elfo). Ambas son aditivas.
 - El calendario ya no programa 24 mensajes escritos por nosotros: la app propone la escena y los padres escriben y eligen las fotos, programándolas para cuando quieran.
+
+## Bloqueo de padres con PIN
+
+- **Migración a aplicar ANTES de desplegar:** `20261116000000_parent_pin.sql` (columnas `parent_pin` y `pin_recovery` en `rooms`; aditiva). El código las lee.
+- El PIN (4–6 cifras) y el código de rescate se guardan solo como hash (scrypt). Nadie, tampoco nosotros, puede recuperarlos: si se pierden ambos, no hay vuelta atrás.
+- Con PIN, el servidor no envía NINGÚN dato del panel ni de la familia sin la cookie de desbloqueo (`lm_u_*`, httpOnly, firmada, 30 min). Punto único de control: `findRoomByToken`.
+- Límite de intentos en memoria (5 fallos → 15 min, se duplica hasta 6 h). Vale con una sola réplica; con varias habría que moverlo a la base de datos.
+- Bloqueo automático al volver a la app tras más de 1 minuto fuera. Botón 🔒 en el panel.
+- En el móvil con PIN la portada solo enseña "Zona de los padres" (marca local `magic-lock`; no oculta nombres de peques ni salas).
+- Límite honesto: durante los 30 minutos posteriores a meter el PIN, el panel está abierto en ese móvil.
+- Pendiente: mencionar el PIN y la cookie `lm_u_*` en la política de privacidad si se revisa el texto legal.

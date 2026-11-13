@@ -10,6 +10,8 @@ import { saveRoom } from '@/lib/myRooms';
 import type { FamilyView } from '@/services/rooms';
 import { InstallApp } from '@/components/features/InstallApp';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { PinSettings } from './PinSettings';
+import { useAutoLock } from './useAutoLock';
 import { RoyalAvatar } from './RoyalAvatar';
 
 function timeLeft(iso: string): string {
@@ -30,7 +32,10 @@ function accessLabel(a: FamilyView['rooms'][number]['access']): { text: string; 
 }
 
 /** Todas las salas de la familia, reconstruidas desde el enlace de familia. */
-export function FamilyPanel({ familyToken, family, origin, billing }: { familyToken: string; family: FamilyView; origin: string; billing: BillingInfo }) {
+export function FamilyPanel({ familyToken, family, origin, billing, hasPin = false }: { familyToken: string; family: FamilyView; origin: string; billing: BillingInfo; hasPin?: boolean }) {
+  // El PIN se pone y se quita con el enlace de padres de cualquiera de las salas (el de familia solo lo pide).
+  const panelToken = family.rooms[0]?.parentToken ?? '';
+  useAutoLock(hasPin, familyToken);
   const locale = useLocale();
   const familyLink = `${origin}/familia/${familyToken}`;
   const [name, setName] = useState(family.name ?? '');
@@ -153,6 +158,8 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
             Enviármelo por correo
           </a>
         </section>
+
+        {panelToken && <PinSettings token={panelToken} hasPin={hasPin} intro="Si tu peque coge tu móvil, no podrá ver vuestras salas ni lo que escribes. El PIN vale para todas." />}
 
         <InstallApp what="tus salas" tone="panel" />
 

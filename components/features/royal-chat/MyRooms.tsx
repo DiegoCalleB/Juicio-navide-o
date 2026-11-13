@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { loadFamily } from '@/lib/myFamily';
+import { isLockedDevice } from '@/lib/myLock';
 import { loadRooms, removeRoom, type SavedRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
 import { R, useLocale } from '@/components/LocaleProvider';
@@ -16,11 +17,23 @@ export function MyRooms() {
   const [open, setOpen] = useState(false);
 
   const [familyToken, setFamilyToken] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
   useEffect(() => {
     setRooms(loadRooms());
     setFamilyToken(loadFamily());
+    setLocked(isLockedDevice());
   }, []);
   if (rooms.length === 0) return null;
+  // Móvil con PIN de padres: nada de nombres, personajes ni enlaces a la vista. Solo una puerta discreta que pide el PIN.
+  if (locked) {
+    return (
+      <div className="mb-8 text-center">
+        <Link href={familyToken ? `/familia/${familyToken}` : (rooms[0]?.parentPath ?? '/')} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-4 text-[13.5px] font-semibold text-[#fff6dc]/80 active:scale-95">
+          <span aria-hidden>🔒</span> Zona de los padres
+        </Link>
+      </div>
+    );
+  }
 
   const copyChild = async (r: SavedRoom) => {
     try {

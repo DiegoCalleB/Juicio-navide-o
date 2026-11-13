@@ -15,6 +15,8 @@ import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
 import { InstallApp } from '@/components/features/InstallApp';
+import { PinSettings } from './PinSettings';
+import { useAutoLock } from './useAutoLock';
 import { loadFamily } from '@/lib/myFamily';
 import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -40,6 +42,8 @@ interface PajePanelProps {
   /** ¿Lee ya el niño? Ajusta consejos y mayúsculas. */
   readingLevel?: 'yes' | 'learning' | 'no';
   billing?: BillingInfo;
+  /** La sala tiene PIN de padres (bloqueo). */
+  hasPin?: boolean;
 }
 
 interface Access {
@@ -58,7 +62,8 @@ function timeLeft(iso: string): string {
 }
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
-export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing }: PajePanelProps) {
+export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing, hasPin = false }: PajePanelProps) {
+  useAutoLock(hasPin, token);
   const r = useRegional();
   const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
   const [offerOpen, setOfferOpen] = useState(false);
@@ -119,6 +124,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
+    // Con PIN, si caduca el desbloqueo (30 min) el servidor deja de contestar: se recarga y vuelve a pedir el PIN.
+    if (res.status === 404 && hasPin) {
+      window.location.reload();
+      return;
+    }
     const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[]; access?: Access }>;
     if (!body.ok || !body.data) return;
     if (body.data.access) {
@@ -136,7 +146,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
     childCount.current = fromChild;
     setMessages(list);
-  }, [token, childName]);
+  }, [token, childName, hasPin]);
 
   const onChildTyping = useCallback(() => {
     setChildTyping(true);
@@ -483,6 +493,20 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </p>
             <p className="truncate text-[15px] font-semibold">Contestas como {character.name} a {childName}</p>
           </div>
+          {hasPin && (
+            <button
+              type="button"
+              aria-label="Bloquear la pantalla de los padres"
+              title="Bloquear ahora"
+              onClick={async () => {
+                await fetch(`/api/rooms/${token}/pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lock' }) });
+                window.location.reload();
+              }}
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-[#5eead4]/15 text-[16px] active:scale-90"
+            >
+              🔒
+            </button>
+          )}
           {!connected && <span className="text-[11px] font-semibold text-[#5eead4]">Reconectando…</span>}
           <span
             title={connected ? 'Conectado en tiempo real' : 'Reconectando…'}
@@ -635,6 +659,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </div>
             )}
           </section>
+
+          <PinSettings token={token} hasPin={hasPin} />
 
           <InstallApp what="este panel" tone="panel" />
 
