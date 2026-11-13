@@ -40,6 +40,8 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   const [familyLink, setFamilyLink] = useState<string | null>(null);
   const [savedKids, setSavedKids] = useState<Kid[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
+  /** El selector de personajes se pliega al elegir uno, para que se vea lo que sigue. */
+  const [pickerOpen, setPickerOpen] = useState(true);
   const [familyName, setFamilyName] = useState('');
   const [hasFamily, setHasFamily] = useState(true);
   const doneRef = useRef<HTMLDivElement>(null);
@@ -194,6 +196,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
               setError(null);
               setChildName('');
               setExtras([]);
+              setPickerOpen(true);
               setConsent(false);
             }}
             className="min-h-11 w-full rounded-2xl border border-white/20 font-semibold text-[#fff6dc]/85 active:scale-[0.99]"
@@ -207,6 +210,39 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       </div>
     );
   }
+
+  const elfBlock = characterId === 'duende_chispa' && (
+            <div className="mt-2 space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
+              <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
+              <div className="space-y-1.5">
+                <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75"><R>Nombre (el que queráis)</R></label>
+                <input
+                  id="elf-alias"
+                  value={alias}
+                  maxLength={20}
+                  onChange={(e) => setAlias(e.target.value)}
+                  placeholder="Chispa"
+                  autoComplete="off"
+                  className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none"
+                />
+              </div>
+              <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-2">
+                {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
+                  <button
+                    key={g}
+                    type="button"
+                    role="radio"
+                    aria-checked={gender === g}
+                    onClick={() => setGender(g)}
+                    className={`min-h-11 flex-1 rounded-2xl border text-[14px] font-bold ${gender === g ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+  );
+  const picked = resolveCharacter(CHARACTERS[characterId], { alias, gender, locale });
 
   return (
     <>
@@ -242,7 +278,22 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
 
       <fieldset className="space-y-3">
         <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
-        {CHARACTER_GROUPS.map((group) => (
+        {!pickerOpen && (
+          <>
+            <div className="flex items-center gap-3 rounded-2xl border border-[#f6d77a] bg-[#f6d77a]/10 p-3">
+              <RoyalAvatar character={picked} size={52} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-bold text-[#fff6dc]">{characterId === 'duende_chispa' ? 'Elfo travieso' : picked.name}</p>
+                <p className="text-[12px] leading-tight text-[#fff6dc]/60">{picked.tagline}</p>
+              </div>
+              <button type="button" onClick={() => setPickerOpen(true)} aria-label="Cambiar de personaje" className="shrink-0 rounded-full border border-white/25 px-3 py-1.5 text-[13px] font-semibold text-[#fff6dc] active:scale-95">
+                Cambiar
+              </button>
+            </div>
+            {elfBlock}
+          </>
+        )}
+        {pickerOpen && CHARACTER_GROUPS.map((group) => (
           <div key={group.id}>
             <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-[#f6d77a]/80">{group.label}</p>
             <div className={`grid gap-2 ${group.ids.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
@@ -251,7 +302,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
                 const selected = characterId === id;
                 return (
                   <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${group.ids.length === 1 ? 'flex-row' : 'flex-col text-center'} ${selected ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
-                    <input type="radio" name="character" value={id} checked={selected} onChange={() => setCharacterId(id)} className="sr-only" />
+                    <input type="radio" name="character" value={id} checked={selected} onChange={() => setCharacterId(id)} onClick={() => setPickerOpen(false)} className="sr-only" />
                     <RoyalAvatar character={c} size={group.ids.length === 1 ? 52 : 48} />
                     <span className={group.ids.length === 1 ? '' : 'contents'}>
                       <span className="block text-[14px] font-bold text-[#fff6dc]">{group.ids.length === 1 ? c.name : c.shortName}</span>
@@ -261,37 +312,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
                 );
               })}
             </div>
-          {group.id === 'duende' && characterId === 'duende_chispa' && (
-            <div className="mt-2 space-y-3 rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-4">
-              <p className="text-sm font-semibold text-[#fff6dc]/90">Vuestro elfo travieso</p>
-              <div className="space-y-1.5">
-                <label htmlFor="elf-alias" className="block text-[13px] text-[#fff6dc]/75"><R>Nombre (el que queráis)</R></label>
-                <input
-                  id="elf-alias"
-                  value={alias}
-                  maxLength={20}
-                  onChange={(e) => setAlias(e.target.value)}
-                  placeholder="Chispa"
-                  autoComplete="off"
-                  className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none"
-                />
-              </div>
-              <div role="radiogroup" aria-label="Es un elfo o una elfa" className="flex gap-2">
-                {([['m', 'Es un elfo'], ['f', 'Es una elfa']] as const).map(([g, label]) => (
-                  <button
-                    key={g}
-                    type="button"
-                    role="radio"
-                    aria-checked={gender === g}
-                    onClick={() => setGender(g)}
-                    className={`min-h-11 flex-1 rounded-2xl border text-[14px] font-bold ${gender === g ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {group.id === 'duende' && elfBlock}
           </div>
         ))}
       </fieldset>

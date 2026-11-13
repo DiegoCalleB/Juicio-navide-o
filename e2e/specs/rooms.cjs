@@ -9,6 +9,17 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   check('portada sin salas guardadas: no aparece "Tus salas"', (await page.getByText('Tus salas en este móvil').count()) === 0);
 
+  // Al elegir un personaje, el selector se pliega y se ve lo siguiente ("¿ya lee?")
+  check('selector de personajes abierto al principio', await page.getByText('Melchor').first().isVisible());
+  await page.getByText('Baltasar', { exact: false }).first().click();
+  check('al elegir uno, el resto desaparece y queda el elegido con "Cambiar"', (await page.getByText('Melchor').count()) === 0 && await page.getByRole('button', { name: 'Cambiar de personaje' }).isVisible());
+  check('tras elegir, se ve la pregunta "¿ya lee?" sin bajar', await page.getByText(/ya lee\?/).isVisible() && (await page.getByText(/ya lee\?/).boundingBox()).y < 700);
+  await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
+  check('"Cambiar" vuelve a mostrar todos los personajes', await page.getByText('Melchor').first().isVisible());
+  await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).click();
+  check('también se pliega al tocar el que ya estaba marcado', (await page.getByText('Melchor').count()) === 0);
+  await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
+
   const create = async (name, character) => {
     await page.fill('#child', name);
     if (character) await page.getByText(character, { exact: false }).first().click();
