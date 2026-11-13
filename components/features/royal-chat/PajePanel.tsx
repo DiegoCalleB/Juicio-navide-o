@@ -14,6 +14,7 @@ import { IdeasList } from './IdeasList';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { InstallApp } from '@/components/features/InstallApp';
 import { loadFamily } from '@/lib/myFamily';
 import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -541,6 +542,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#5eead4]"><R>Enlace para el móvil de {childName}</R></p>
             <p className="mt-1 text-[#e8f1ff]/70"><R>Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</R></p>
+            <p className="mt-1.5 text-[12.5px] text-[#e8f1ff]/60"><R>{`💡 En el móvil de ${childName}, usa «Añadir a pantalla de inicio»: aparecerá con el icono de ${short}, como una app.`}</R></p>
             <label htmlFor="caps-link" className="mt-2.5 flex cursor-pointer items-start gap-2.5 rounded-xl bg-black/20 p-2.5 text-[#e8f1ff]/85">
               <input id="caps-link" type="checkbox" checked={capsLink} onChange={(e) => setCapsLink(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#5eead4]" />
               <span>
@@ -633,6 +635,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </div>
             )}
           </section>
+
+          <InstallApp what="este panel" tone="panel" />
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#e8f1ff]">Guarda este panel</p>

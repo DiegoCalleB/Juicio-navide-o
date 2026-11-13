@@ -20,13 +20,13 @@ type Reading = 'yes' | 'learning' | 'no';
 interface Extra { name: string; characterId: CharacterId | ''; reading: Reading }
 interface CreatedRoom { name: string; characterId: CharacterId; alias: string; gender: 'm' | 'f'; child: string; parent: string }
 
-export function CreateRoomForm({ billing, defaultCharacter }: { billing: BillingInfo; defaultCharacter?: CharacterId }) {
+export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: { billing: BillingInfo; defaultCharacter?: CharacterId; initialCharacter?: CharacterId }) {
   // `defaultCharacter` ya no se marca solo: se destaca como "De temporada" y se obliga a elegir, para que se vean todas las opciones.
   const locale = useLocale();
   const r = useRegional();
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
-  const [characterId, setCharacterId] = useState<CharacterId | null>(null);
+  const [characterId, setCharacterId] = useState<CharacterId | null>(initialCharacter ?? null);
   const [alias, setAlias] = useState('');
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [reading, setReading] = useState<Reading>('yes');
@@ -42,7 +42,7 @@ export function CreateRoomForm({ billing, defaultCharacter }: { billing: Billing
   const [savedKids, setSavedKids] = useState<Kid[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
   /** El selector de personajes se pliega al elegir uno, para que se vea lo que sigue. */
-  const [pickerOpen, setPickerOpen] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(!initialCharacter);
   const [familyName, setFamilyName] = useState('');
   const [hasFamily, setHasFamily] = useState(true);
   const doneRef = useRef<HTMLDivElement>(null);

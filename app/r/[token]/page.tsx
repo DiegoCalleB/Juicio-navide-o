@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const found = await findRoomByToken(token);
   const name = found?.role === 'child' ? resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender }).name : 'Mensaje mágico';
-  return { title: { absolute: name }, applicationName: name, appleWebApp: { capable: true, title: name, statusBarStyle: 'black-translucent' }, robots: { index: false, follow: false } };
+  return { manifest: found?.role === 'child' ? `/r/${token}/manifest.webmanifest` : undefined, title: { absolute: name }, applicationName: name, appleWebApp: { capable: true, title: name, statusBarStyle: 'black-translucent' }, robots: { index: false, follow: false } };
 }
 export const viewport: Viewport = { themeColor: '#2a0f4a' };
 

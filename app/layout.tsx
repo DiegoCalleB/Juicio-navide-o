@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { LocaleProvider } from '@/components/LocaleProvider';
+import { PwaRegister } from '@/components/PwaRegister';
 import { getRequestLocale } from '@/lib/i18n.server';
 import { getSiteUrl } from '@/lib/site';
 import './globals.css';
@@ -24,6 +25,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body className="min-h-dvh font-sans">
         <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
           <LocaleProvider locale={locale}>{children}</LocaleProvider>
+          <PwaRegister />
         </main>
       </body>
     </html>

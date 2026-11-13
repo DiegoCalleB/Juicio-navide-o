@@ -13,6 +13,13 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Más adelante: Ratoncito Pérez ~2,99 €/año.
 - Requisitos de Diego antes de cobrar: alta de autónomo o sociedad, condiciones de venta con IVA y casilla de renuncia al desistimiento (revisión de un abogado o una gestoría), cuenta de Stripe. Validar el precio con ~20 padres.
 
+### App instalable, icono mágico y páginas compartibles (13-nov)
+- **Icono nuevo** (`app/icon.svg` + PNG 192/512/maskable, apple-icon, favicon.ico): burbuja de chat con estrella dorada, cielo nocturno, destellos y rastro de polvo mágico. Iconos de cada personaje en `public/icons/characters/` (generados desde `RoyalAvatar`).
+- **Instalable**: `public/sw.js` (solo página sin conexión; NO guarda salas ni enlaces), `public/offline.html`, `PwaRegister` (solo producción), `InstallApp` (botón en Android/PC y pasos en iPhone) en portada, familia y panel. **Manifiestos propios**: `/r/[token]/manifest.webmanifest` (la app se llama como el personaje y abre ese chat), `/paje/[token]/…` y `/familia/[token]/…`. Sin cachear, solo con el rol correcto.
+- **Página pública /ideas-elfo** (24 noches, una URL por noche con su imagen de vista previa, compartir nativo/WhatsApp/copiar con utm_source, JSON-LD, mapa del sitio). `/?personaje=ID` deja elegido un personaje (enlaces de campaña).
+- Verificado en producción (headless): el service worker se registra, controla la página y sin conexión sale el aviso, también en rutas secretas. **No verificado**: la comprobación de instalabilidad de Chrome (el Chrome sin interfaz de pruebas no procesa manifiestos). Probar en móvil real tras desplegar.
+- Pendiente: analítica sin cookies que lea `utm_source`, foto real para la demo del elfo, vídeo de familia.
+
 ### Calendario, precios y portada de temporada (13-nov)
 - **Precio:** 3,99 € todo el año (ya no sube a 4,99 € el 1-dic: ese día llegan los elfos, que es el pico de interés). **Black Friday: 2,99 € del 27 al 30 de noviembre**, automático (sin código), con aviso en la portada y la tarjeta del Pase. Sin "antes X €" tachado (riesgo legal por el precio previo; consultar gestoría). Configurable: `PASS_PRICE_CENTS`, `PASS_PRICE_BLACKFRIDAY_CENTS`, `BLACKFRIDAY=0`, `BLACKFRIDAY_FROM/UNTIL`.
 - **Portada por fases** (`lib/brand.ts`): 1-nov→30-nov "Prepara la llegada del elfo" (con cuenta atrás hasta el 1-dic, `ELF_ARRIVAL_DATE`), 1-dic→14-dic elfo en casa, 15→25-dic Papá Noel, 26-dic→6-ene Reyes, resto Ratoncito. Cambia titular, demo y personaje preseleccionado. Pruebas con `npm run test:e2e -- --now=ISO` (reloj simulado `FAKE_NOW`, solo con almacén en memoria).

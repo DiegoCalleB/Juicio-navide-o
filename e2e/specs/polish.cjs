@@ -4,7 +4,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
 (async () => {
   // ── Metadatos, PWA, SEO y cabeceras (sin navegador)
   const man = await (await fetch(BASE + '/manifest.webmanifest')).json();
-  check('manifest válido e instalable', man.display === 'standalone' && man.start_url === '/' && man.icons.length >= 3 && man.lang === 'es', man.name);
+  check('manifest válido e instalable', man.display === 'standalone' && /^\/(\?utm_source=pwa)?$/.test(man.start_url) && man.icons.length >= 3 && man.lang === 'es', man.name);
   for (const ic of man.icons) { const r = await fetch(BASE + ic.src); check('icono accesible ' + ic.src, r.status === 200 && (r.headers.get('content-type') || '').includes('image/png')); }
   check('apple-touch-icon accesible', (await fetch(BASE + '/apple-icon.png')).status === 200);
   const robots = await (await fetch(BASE + '/robots.txt')).text();

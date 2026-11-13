@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { BRAND, heroFor } from '@/lib/brand';
-import { CHARACTERS, resolveCharacter } from '@/lib/characters';
+import { CHARACTERS, resolveCharacter, type CharacterId } from '@/lib/characters';
 import { regionalize, type Locale } from '@/lib/i18n';
 import { CreateRoomForm } from './CreateRoomForm';
 import { DemoChat } from './DemoChat';
+import { InstallApp } from '@/components/features/InstallApp';
 import { LocaleSwitch } from './LocaleSwitch';
 import { MyRooms } from './MyRooms';
 import type { BillingInfo } from './PassOffer';
@@ -11,7 +12,7 @@ import { PassWelcome } from './PassWelcome';
 import { PricingSection } from './PricingSection';
 import { demoFor } from './demoData';
 
-export function RoyalLanding({ billing, locale, now }: { billing: BillingInfo; locale: Locale; now: Date }) {
+export function RoyalLanding({ billing, locale, now, initialCharacter }: { billing: BillingInfo; locale: Locale; now: Date; initialCharacter?: CharacterId }) {
   const r = (t: string) => regionalize(t, locale);
   const hero = heroFor(now);
   const demoCharacter = hero.phase === 'elf' || hero.phase === 'elf-pre' ? 'duende_chispa' : hero.phase === 'reyes' ? 'melchor' : hero.phase === 'raton' ? 'raton_perez' : 'papa_noel';
@@ -48,6 +49,11 @@ export function RoyalLanding({ billing, locale, now }: { billing: BillingInfo; l
           <a href="#crear" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg active:scale-[0.99]">
             Crear la sala de mi peque
           </a>
+          {(hero.phase === 'elf' || hero.phase === 'elf-pre') && (
+            <Link href="/ideas-elfo" className="mt-2.5 block text-[13.5px] font-semibold text-[#7ee2a8] underline underline-offset-2">
+              🧝 Ver las 24 trastadas del elfo (gratis)
+            </Link>
+          )}
           {billing.enabled && (
             <a href="#pase" className="mt-2.5 inline-block text-[13px] text-[#f6d77a]/85 underline underline-offset-2">
               Ver el Pase de Navidad · {billing.price}
@@ -68,13 +74,18 @@ export function RoyalLanding({ billing, locale, now }: { billing: BillingInfo; l
         <PricingSection billing={billing} />
 
         <section id="crear" aria-label="Crear la sala" className="scroll-mt-4">
-          <CreateRoomForm billing={billing} defaultCharacter={hero.defaultCharacter} />
+          <CreateRoomForm billing={billing} defaultCharacter={hero.defaultCharacter} initialCharacter={initialCharacter} />
         </section>
 
-        <footer className="mt-10 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
+        <div className="mt-8">
+          <InstallApp />
+        </div>
+
+        <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <LocaleSwitch />
           <nav aria-label="Información legal" className="flex justify-center gap-5">
             <Link href="/privacidad" className="underline-offset-2 hover:underline">Privacidad</Link>
+            <Link href="/ideas-elfo" className="underline-offset-2 hover:underline">Trastadas del elfo</Link>
             <Link href="/terminos" className="underline-offset-2 hover:underline">Términos de uso</Link>
           </nav>
           <p>No somos Papá Noel ni los Reyes Magos, pero hacemos lo que podemos ✨</p>

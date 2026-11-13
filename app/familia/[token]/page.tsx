@@ -8,7 +8,10 @@ import { originFromHeaders } from '@/lib/site';
 import { getFamily } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Tu familia', robots: { index: false, follow: false } };
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  return { title: 'Tu familia', manifest: `/familia/${token}/manifest.webmanifest`, robots: { index: false, follow: false } };
+}
 export const viewport: Viewport = { themeColor: '#0a1220' };
 
 export default async function FamilyPage({ params }: { params: Promise<{ token: string }> }) {

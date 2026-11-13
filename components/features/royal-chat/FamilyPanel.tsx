@@ -8,6 +8,7 @@ import { saveFamily } from '@/lib/myFamily';
 import { saveKids } from '@/lib/myKids';
 import { saveRoom } from '@/lib/myRooms';
 import type { FamilyView } from '@/services/rooms';
+import { InstallApp } from '@/components/features/InstallApp';
 import { PassOffer, type BillingInfo } from './PassOffer';
 import { RoyalAvatar } from './RoyalAvatar';
 
@@ -152,6 +153,8 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
             Enviármelo por correo
           </a>
         </section>
+
+        <InstallApp what="tus salas" tone="panel" />
 
         <section aria-label="Apodo de la familia" className="space-y-1.5 rounded-2xl border border-white/10 bg-white/[.03] p-3.5 text-[13px]">
           <label htmlFor="family-name" className="font-semibold">Apodo de la familia <span className="font-normal opacity-60">(opcional)</span></label>

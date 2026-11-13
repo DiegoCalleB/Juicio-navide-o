@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { heroFor } from '@/lib/brand';
+import { siteNow } from '@/lib/clock';
 import { getSiteUrl } from '@/lib/site';
 
 export const alt = 'Que antes de abrir los regalos, hable con Papá Noel';
@@ -8,6 +10,7 @@ export const contentType = 'image/png';
 /** Vista previa al compartir el enlace (WhatsApp, redes). Sin emojis: el motor no los dibuja. */
 export default function OgImage() {
   const host = new URL(getSiteUrl()).host;
+  const hero = heroFor(siteNow());
   return new ImageResponse(
     (
       <div
@@ -23,13 +26,13 @@ export default function OgImage() {
         }}
       >
         <div style={{ display: 'flex', fontSize: 30, letterSpacing: 8, color: '#f6d77a', textTransform: 'uppercase' }}>
-          Línea Mágica · Papá Noel te contesta
+          {`Línea Mágica · ${hero.tagline}`}
         </div>
         <div style={{ display: 'flex', fontSize: 72, fontWeight: 800, lineHeight: 1.08, marginTop: 28 }}>
-          Que antes de abrir los regalos, hable con Papá Noel
+          {hero.title}
         </div>
         <div style={{ display: 'flex', fontSize: 34, marginTop: 30, color: '#d9cfe8', maxWidth: 980 }}>
-          Tú contestas desde tu móvil. A él le llega como si fuera Papá Noel, en directo.
+          Tú contestas en secreto desde tu móvil. A tu peque le llega como si fuera el personaje, en directo.
         </div>
         <div style={{ display: 'flex', fontSize: 30, marginTop: 'auto', paddingTop: 24, color: '#f6d77a' }}>{host}</div>
       </div>

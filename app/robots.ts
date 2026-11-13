@@ -4,7 +4,7 @@ import { getSiteUrl } from '@/lib/site';
 /** Las salas (/r, /paje, /familia) usan enlaces secretos: nunca deben indexarse. */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: ['/', '/privacidad', '/terminos'], disallow: ['/r/', '/paje/', '/familia/', '/api/', '/demo/'] }],
+    rules: [{ userAgent: '*', allow: ['/', '/ideas-elfo', '/privacidad', '/terminos'], disallow: ['/r/', '/paje/', '/familia/', '/api/', '/demo/'] }],
     sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }
