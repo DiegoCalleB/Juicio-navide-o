@@ -1,4 +1,5 @@
 const { OUT: S, FIX, BASE, launch, ensureFixtures } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const pad = (n) => String(n).padStart(2, '0');
 (async () => {
@@ -20,9 +21,9 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.screenshot({ path: S + '/du1-selector.png' });
   await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
-  check('la sala usa el nombre elegido', await parent.getByText('contestas como Chispita', { exact: false }).isVisible());
+  check('la sala usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(parent));
   const parentToken = pajeHref.split('/paje/')[1], childToken = childLink.split('/r/')[1];
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   check('panel: "Contestas como Elfa Chispita a Lucía"', await parent.getByText('Contestas como Elfa Chispita a Lucía').isVisible());

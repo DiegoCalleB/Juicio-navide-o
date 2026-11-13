@@ -34,14 +34,31 @@ export function MyRooms() {
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mb-8 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] px-4 text-left text-[14px] font-semibold text-[#f6d77a]"
-      >
-        <span><R>Ya tengo salas en este móvil ({rooms.length})</R></span>
-        <span aria-hidden>▾</span>
-      </button>
+      <div className="mb-8 space-y-1.5">
+        {familyToken && (
+          <Link
+            href={`/familia/${familyToken}`}
+            className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#f6d77a]/40 bg-[#f6d77a]/[.08] px-4 text-left active:scale-[0.99]"
+          >
+            <span aria-hidden className="text-2xl">👨‍👩‍👧</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold text-[#f6d77a]">Tu familia</span>
+              <span className="block text-[12.5px] text-[#fff6dc]/60">{rooms.length === 1 ? '1 sala' : `${rooms.length} salas`} · abrir paneles y enlaces</span>
+            </span>
+            <span aria-hidden className="text-[#f6d77a]">→</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={familyToken
+            ? 'w-full py-1 text-center text-[12.5px] text-[#fff6dc]/55 underline underline-offset-2'
+            : 'flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-[#f6d77a]/30 bg-[#f6d77a]/[.06] px-4 text-left text-[14px] font-semibold text-[#f6d77a]'}
+        >
+          <span><R>Ya tengo salas en este móvil ({rooms.length})</R></span>
+          {!familyToken && <span aria-hidden>▾</span>}
+        </button>
+      </div>
     );
   }
 

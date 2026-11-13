@@ -1,4 +1,5 @@
 const { BASE, launch, openChild } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 (async () => {
   const b = await launch(['--no-sandbox']);
   const mk = async () => (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
@@ -8,7 +9,7 @@ const { BASE, launch, openChild } = require('../_lib.cjs');
   await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await openChild(child, childLink, {});
   await parent.waitForSelector('[aria-label="Conectado en tiempo real"]');

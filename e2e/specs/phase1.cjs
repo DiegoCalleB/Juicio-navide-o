@@ -1,4 +1,5 @@
 const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
 
@@ -27,7 +28,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(parent));
   check('se generan enlaces de niño y padres', /\/paje\/[\w-]{43}$/.test(pajeHref) && /\/r\/[\w-]{43}$/.test(childLink), pajeHref.slice(-12));
   const childToken = childLink.split('/r/')[1];
   const parentToken = pajeHref.split('/paje/')[1];

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { loadFamily, saveFamily } from '@/lib/myFamily';
 import { loadPass } from '@/lib/myPass';
 import { PassOffer, type BillingInfo } from './PassOffer';
@@ -12,6 +12,8 @@ import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { createRoomSchema } from '@/lib/schemas';
 import { RoyalAvatar } from './RoyalAvatar';
 import { R, useLocale, useRegional } from '@/components/LocaleProvider';
+
+const CARD = 'rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur';
 
 type Reading = 'yes' | 'learning' | 'no';
 interface Extra { name: string; characterId: CharacterId; reading: Reading }
@@ -35,12 +37,14 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedRoom[] | null>(null);
   const [familyLink, setFamilyLink] = useState<string | null>(null);
-  const [familyName, setFamilyName] = useState('');
-  const [hasFamily, setHasFamily] = useState(false);
   const [savedKids, setSavedKids] = useState<string[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
+  const doneRef = useRef<HTMLDivElement>(null);
+  // Al crear, la confirmación se coloca arriba de la pantalla: es lo siguiente que hay que hacer.
   useEffect(() => {
-    setHasFamily(!!loadFamily());
+    if (created) doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [created]);
+  useEffect(() => {
     setSavedKids([...new Set(loadRooms().map((x) => x.childName))]);
   }, [created]);
 
@@ -73,7 +77,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       const done: CreatedRoom[] = [];
       let lastPlan: 'free' | 'trial' | 'pass' = 'free';
       for (const [i, k] of kids.entries()) {
-        const res = await createRoomAction({ ...k.payload, ...(familyToken ? { familyToken } : {}), ...(i === 0 && !familyToken && familyName.trim() ? { familyName: familyName.trim() } : {}) });
+        const res = await createRoomAction({ ...k.payload, ...(familyToken ? { familyToken } : {}), });
         if (!res.ok) {
           if (res.error.code === 'TRIAL_USED') setTrialUsed(true);
           setError(done.length > 0 ? `${res.error.message} (Se han creado ${done.length} de ${kids.length} salas.)` : res.error.message);
@@ -97,76 +101,100 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
 
   if (created && familyLink) {
     const multi = created.length > 1;
-    const names = created.map((x) => x.name).join(', ');
-    const mailSubject = `Tu enlace de Línea Mágica${familyName.trim() ? ` · ${familyName.trim()}` : ''}`;
+    const first = created[0];
+    const firstChar = first ? resolveCharacter(CHARACTERS[first.characterId], { alias: first.alias, gender: first.gender, locale }) : null;
+    const mailSubject = 'Tu enlace de Línea Mágica';
+    const familyPath = familyLink.replace(/^https?:\/\/[^/]+/, '');
     return (
-      <div className="space-y-4 animate-pop">
-        <p className="text-center font-serif text-xl text-[#f6d77a]">{multi ? '¡Las salas reales están listas!' : '¡La sala real está lista!'}</p>
-        {plan === 'trial' && (
-          <p className="text-center text-[13px] text-[#fff6dc]/70">Prueba gratis de 3 días, con mensajes y fotos. Puedes preparar una sala para cada peque. Después, podréis seguir con el Pase de Navidad ({billing.price}).</p>
-        )}
+      <div ref={doneRef} className={`${CARD} scroll-mt-4 space-y-4 animate-pop`}>
+        <div className="text-center">
+          <p aria-hidden className="text-4xl">🎉</p>
+          <p className="mt-1 font-serif text-[22px] leading-tight text-[#f6d77a]">{multi ? '¡Las salas reales están listas!' : '¡La sala real está lista!'}</p>
+          <p className="mt-1 text-[13.5px] text-[#fff6dc]/70">
+            {multi ? `${created.map((x) => x.name).join(', ')} ya pueden escribir.` : `${first?.name} ya puede escribir a ${firstChar?.shortName}.`}
+            {plan === 'trial' && ' Prueba gratis de 3 días.'}
+            {plan === 'pass' && ' ✨ Con tu Pase de Navidad.'}
+          </p>
+        </div>
         {error && <p role="alert" className="text-center text-sm text-[#ff8a8c]">{error}</p>}
-        <div role="alert" className="rounded-2xl border-2 border-[#ff8a8c] bg-[#ff8a8c]/[.12] p-4 text-[14px] leading-snug text-[#fff6dc]">
-          <p className="text-[16px] font-extrabold text-[#ff8a8c]">⚠️ Guarda el enlace de tu familia ahora</p>
-          <p className="mt-1.5"><R>No hay cuenta ni contraseña: <strong>el enlace de familia es la llave de todas vuestras salas</strong>. Si lo perdéis, no podemos recuperarlo y no podréis contestar a {names}.</R></p>
-          <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[13.5px] text-[#fff6dc]/90">
-            <li>Pulsa «Por WhatsApp» o «Enviármelo por correo» en el recuadro dorado, justo debajo.</li>
-            <li>Mándatelo a ti mismo (o a tu pareja), no lo guardes solo en esta página.</li>
-            <li><R>En este móvil quedará también en «Tus salas» de la portada, pero eso se borra si limpias el navegador.</R></li>
-          </ol>
-        </div>
-        <div className="space-y-2.5 rounded-2xl border-2 border-[#f6d77a]/60 bg-[#f6d77a]/[.08] p-4">
-          <p className="text-[15px] font-extrabold text-[#f6d77a]">⭐ Enlace de tu familia</p>
-          <p className="text-[13px] leading-snug text-[#fff6dc]/75"><R>Con él recuperáis todas las salas desde cualquier móvil. No lo compartáis con los peques.</R></p>
-          <p className="break-all rounded-lg bg-black/30 px-2.5 py-2 text-[11px] text-[#fff6dc]/60">{familyLink}</p>
-          <div className="flex gap-2">
-            <CopyButton text={familyLink} />
+
+        <section data-family-link={familyLink} className="rounded-2xl border-2 border-[#f6d77a] bg-[#f6d77a]/[.09] p-4">
+          <p className="text-[15.5px] font-extrabold text-[#f6d77a]">🔑 Guarda el enlace de tu familia ahora</p>
+          <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/80">
+            <R>Es la única llave de vuestras salas: no hay cuenta ni contraseña. Mándatelo y podrás volver desde cualquier móvil.</R>
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-[13px]">
             <a href={`https://wa.me/?text=${encodeURIComponent(`${mailSubject}: ${familyLink}`)}`} target="_blank" rel="noopener noreferrer"
-              className="grid min-h-10 flex-1 place-items-center rounded-xl bg-[#25d366] font-bold text-[#062b14] active:scale-[0.98]">
-              Por WhatsApp
+              className="col-span-3 grid min-h-11 place-items-center rounded-xl bg-[#25d366] font-bold text-[#062b14] active:scale-[0.98]">
+              Mandármelo por WhatsApp
             </a>
+            <a href={`mailto:?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(familyLink)}`}
+              className="col-span-2 grid min-h-10 place-items-center rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]">
+              Enviármelo por correo
+            </a>
+            <CopyButton text={familyLink} label="Copiar" />
           </div>
-          <a href={`mailto:?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(familyLink)}`}
-            className="grid min-h-10 place-items-center rounded-xl border border-[#5eead4]/40 font-semibold text-[#5eead4] active:scale-[0.98]">
-            Enviármelo por correo
-          </a>
+        </section>
+
+        <ul className="space-y-2.5" aria-label="Salas creadas">
+          {created.map((room) => {
+            const c = resolveCharacter(CHARACTERS[room.characterId], { alias: room.alias, gender: room.gender, locale });
+            const childMsg = `${r(`Abre este enlace en el móvil de ${room.name}`)}: ${room.child}`;
+            return (
+              <li key={room.parent} data-child-link={room.child} className="rounded-2xl border border-white/10 bg-white/[.04] p-3.5">
+                <div className="flex items-center gap-3">
+                  <RoyalAvatar character={c} size={40} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold text-[#fff6dc]">{room.name}</p>
+                    <p className="truncate text-[12.5px] text-[#fff6dc]/60">con {c.name}</p>
+                  </div>
+                </div>
+                <a href={room.parent} className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] active:scale-[0.99]">
+                  {multi ? `Abrir el panel de ${room.name}` : 'Abrir mi panel de los padres'}
+                </a>
+                <p className="mt-2.5 text-[12px] text-[#fff6dc]/60"><R>{`Enlace para el móvil de ${room.name}:`}</R></p>
+                <div className="mt-1 flex gap-2 text-[13px]">
+                  <a href={`https://wa.me/?text=${encodeURIComponent(childMsg)}`} target="_blank" rel="noopener noreferrer"
+                    className="grid min-h-10 flex-1 place-items-center rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]">
+                    Enviar por WhatsApp
+                  </a>
+                  <CopyButton text={room.child} label="Copiar" />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="flex flex-col items-center gap-2 pt-1 text-[13.5px]">
+          <button
+            type="button"
+            onClick={() => {
+              setCreated(null);
+              setFamilyLink(null);
+              setError(null);
+              setChildName('');
+              setExtras([]);
+              setConsent(false);
+            }}
+            className="min-h-11 w-full rounded-2xl border border-white/20 font-semibold text-[#fff6dc]/85 active:scale-[0.99]"
+          >
+            Preparar otra sala (otro peque u otro personaje)
+          </button>
+          <Link href={familyPath} className="py-1 text-[#f6d77a] underline underline-offset-2">
+            Ver todas las salas de la familia
+          </Link>
         </div>
-        {plan === 'pass' && <p className="text-center text-[13px] text-[#fff6dc]/70">✨ Con tu Pase de Navidad: sin límite hasta el 20 de enero.</p>}
-        {created.map((room) => {
-          const c = resolveCharacter(CHARACTERS[room.characterId], { alias: room.alias, gender: room.gender, locale });
-          return (
-            <div key={room.parent} className="space-y-3">
-              <LinkCard title={r(multi ? `Móvil de ${room.name}` : `1. Móvil de ${room.name}`)} text={r(`Ábrelo en el móvil o tablet que usará. Ahí verá el chat con ${c.shortName}.`)} url={room.child} />
-              <LinkCard title={multi ? `Panel de los padres de ${room.name}` : '2. Tu panel secreto de los padres'} text={`Desde aquí lees lo que escribe ${room.name} y contestas como ${c.shortName}. No lo compartas con el peque.`} url={room.parent} secret />
-              <a href={room.parent} className="flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a]">
-                {multi ? `Abrir el panel de ${room.name}` : 'Abrir mi panel de los padres'}
-              </a>
-            </div>
-          );
-        })}
-        <Link href={familyLink.replace(/^https?:\/\/[^/]+/, '')} className="flex min-h-11 items-center justify-center rounded-2xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.99]">
-          Ver todas las salas de la familia
-        </Link>
-        <button
-          type="button"
-          onClick={() => {
-            setCreated(null);
-            setFamilyLink(null);
-            setError(null);
-            setChildName('');
-            setExtras([]);
-            setConsent(false);
-          }}
-          className="min-h-11 w-full rounded-2xl border border-white/20 font-semibold text-[#fff6dc]/85 active:scale-[0.99]"
-        >
-          Preparar otra sala (otro peque u otro personaje)
-        </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} noValidate className="relative space-y-5">
+    <>
+    <div className="mb-3 text-center">
+      <h2 className="font-serif text-2xl text-[#fff6dc]">Crea la sala de tu peque</h2>
+      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">Sin registrarte. Tarda un minuto.</p>
+    </div>
+    <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
       <div className="space-y-1.5">
         {savedKids.length > 0 && (
           <div className="mb-2">
@@ -315,25 +343,17 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
         <button
           type="button"
           onClick={() => setExtras((list) => [...list, { name: '', characterId: 'papa_noel', reading: 'yes' }])}
-          className="min-h-11 w-full rounded-2xl border border-dashed border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.99]"
+          className="min-h-11 w-full rounded-2xl border border-dashed border-[#f6d77a]/40 text-[14px] font-semibold text-[#f6d77a]/90 active:scale-[0.99]"
         >
-          + ¿Tienes más peques? Prepara sus salas a la vez
+          + Añadir otro peque (salas a la vez)
         </button>
       )}
 
-      {!hasFamily && (
-        <div className="space-y-1.5">
-          <label htmlFor="family-nick" className="block text-sm font-semibold text-[#fff6dc]/85">Apodo de la familia <span className="font-normal text-[#fff6dc]/50">(opcional)</span></label>
-          <input id="family-nick" value={familyName} maxLength={30} autoComplete="off" placeholder="Los Estrella" onChange={(e) => setFamilyName(e.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none" />
-          <p className="text-xs text-[#fff6dc]/50">Mejor un apodo que un apellido. Solo lo veréis vosotros.</p>
-        </div>
-      )}
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
         <span>
-          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos de esta sala se guarden de forma privada, solo para esta conversación, y se borren automáticamente a los 45 días, o pasadas las fiestas (10 de enero; 20 con los Reyes) si eso es más tarde.{' '}
+          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos se guarden en privado, solo para esta conversación, y se borren solos a los 45 días o pasadas las fiestas.{' '}
           <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
         </span>
       </label>
@@ -351,45 +371,11 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       )}
       {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
     </form>
+    </>
   );
 }
 
-function LinkCard({ title, text, url, secret = false }: { title: string; text: string; url: string; secret?: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* sin permisos */ }
-  };
-  return (
-    <div className={`rounded-2xl border p-4 ${secret ? 'border-[#f6d77a]/40 bg-[#f6d77a]/[.06]' : 'border-white/10 bg-white/[.03]'}`}>
-      <p className="font-bold text-[#fff6dc]">{title}</p>
-      <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/65">{text}</p>
-      <p className="mt-2 truncate rounded-lg bg-black/30 px-2.5 py-2 font-mono text-[11px] text-[#fff6dc]/60">{url}</p>
-      <div className="mt-2.5 flex gap-2">
-        <button type="button" onClick={copy} className="min-h-10 flex-1 rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]">
-          {copied ? '¡Copiado!' : 'Copiar'}
-        </button>
-        <a href={`https://wa.me/?text=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer"
-          className="grid min-h-10 flex-1 place-items-center rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]">
-          Enviar por WhatsApp
-        </a>
-      </div>
-      {secret && (
-        <a
-          href={`mailto:?subject=${encodeURIComponent('Mi panel de padres')}&body=${encodeURIComponent(url)}`}
-          className="mt-2 grid min-h-10 place-items-center rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]"
-        >
-          Enviármelo por correo
-        </a>
-      )}
-    </div>
-  );
-}
-
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = 'Copiar enlace' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -403,7 +389,7 @@ function CopyButton({ text }: { text: string }) {
       }}
       className="min-h-10 flex-1 rounded-xl bg-white/10 font-semibold text-[#fff6dc] active:scale-[0.98]"
     >
-      {copied ? '¡Copiado!' : 'Copiar enlace'}
+      {copied ? '¡Copiado!' : label}
     </button>
   );
 }

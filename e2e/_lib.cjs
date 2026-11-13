@@ -56,4 +56,18 @@ async function pinSetup(page) {
   await t.click();
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup };
+/** Enlace del móvil del niño en la pantalla de "sala creada" (ya no se muestra el enlace largo: va en un atributo). */
+async function childLinkOf(page, i = 0) {
+  const el = page.locator('[data-child-link]').nth(i);
+  await el.waitFor({ timeout: 15000 });
+  return (await el.getAttribute('data-child-link')).trim();
+}
+
+/** Enlace de familia en la pantalla de "sala creada". */
+async function familyLinkOf(page) {
+  const el = page.locator('[data-family-link]').first();
+  await el.waitFor({ timeout: 15000 });
+  return (await el.getAttribute('data-family-link')).trim();
+}
+
+module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf };

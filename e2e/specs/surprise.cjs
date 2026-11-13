@@ -1,4 +1,5 @@
 const { OUT: S, FIX, BASE, launch, openChild, pinSetup } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   const b = await launch(['--no-sandbox']);
@@ -11,7 +12,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await pinSetup(parent);
   await openChild(child, childLink, {});

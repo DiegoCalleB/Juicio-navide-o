@@ -1,4 +1,5 @@
 const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   // ── Metadatos, PWA, SEO y cabeceras (sin navegador)
@@ -45,7 +46,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: /Crear la sala/ }).click();
   await page.waitForSelector('text=La sala real está lista');
-  const childLink = (await page.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(page));
   const child = await ctx.newPage();
   await openChild(child, childLink, {});
   await child.waitForTimeout(1500);

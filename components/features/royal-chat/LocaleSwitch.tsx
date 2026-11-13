@@ -20,7 +20,7 @@ export function LocaleSwitch() {
   };
 
   return (
-    <div role="radiogroup" aria-label="Idioma" className="mx-auto mb-5 flex w-fit gap-1 rounded-full border border-white/15 bg-black/20 p-1 text-[12.5px]">
+    <div role="radiogroup" aria-label="Idioma" className="mx-auto flex w-fit gap-1 rounded-full border border-white/15 bg-black/20 p-1 text-[12.5px]">
       {LOCALES.map((l) => (
         <button
           key={l.id}

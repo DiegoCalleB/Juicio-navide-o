@@ -1,4 +1,5 @@
 const { BASE, launch, openChild, pinSetup } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -11,7 +12,7 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   await parent.waitForSelector('text=La sala real está lista');
   check('al crear hay botón "Enviármelo por correo"', (await parent.getByRole('link', { name: /Enviármelo por correo/ }).count()) > 0);
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const oldLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const oldLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await openChild(child, oldLink, {});
   check('el enlace antiguo funciona', (await child.getByText(/Este enlace (ya )?no funciona/).count()) === 0);

@@ -1,4 +1,5 @@
 const { OUT: S, FIX, BASE, launch, openChild, ensureFixtures } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
 const pad = (n) => String(n).padStart(2, '0');
@@ -18,7 +19,7 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-  const childLink = (await parent.locator('p.font-mono').first().innerText()).trim();
+  const childLink = (await childLinkOf(parent));
   const parentToken = pajeHref.split('/paje/')[1];
   const childToken = childLink.split('/r/')[1];
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });

@@ -1,4 +1,5 @@
 // Prueba gratis (acortada a 45 s), Pase de Navidad con Stripe simulado, pase de regalo y nivel de lectura.
+const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 // Se lanza aparte: npm run test:e2e -- --billing
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
@@ -16,7 +17,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   check('portada: anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
-  check('portada: mensaje para primeros lectores', await page.getByText(/Ideal para primeros lectores/).isVisible());
+  check('portada: mensaje para primeros lectores', await page.getByText('Para primeros lectores').isVisible());
 
   const create = async (name, reading) => {
     await page.fill('#child', name);
@@ -27,7 +28,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const linksAfterCreate = async () => {
     await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
     const panel = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
-    const child = (await page.locator('p.font-mono').first().innerText()).trim();
+    const child = (await childLinkOf(page));
     return { panel: local(panel), child: local(child) };
   };
 

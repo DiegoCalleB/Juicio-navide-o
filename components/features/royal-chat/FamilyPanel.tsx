@@ -35,6 +35,7 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
   const [savedName, setSavedName] = useState(family.name ?? '');
   const [msg, setMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [offerOpen, setOfferOpen] = useState(false);
 
   // Este móvil recuerda la familia y todas sus salas (así "Tus salas" se recupera en un móvil nuevo).
   useEffect(() => {
@@ -94,6 +95,46 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
           <p className="mt-1 text-[13.5px] opacity-70"><R>Aquí están todas vuestras salas. Los peques no ven esta pantalla.</R></p>
         </header>
 
+        <ul className="space-y-3" aria-label="Salas de la familia">
+          {family.rooms.map((room) => {
+            const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale });
+            const acc = accessLabel(room.access);
+            const childLink = openChildLink(room.childToken);
+            return (
+              <li key={room.parentToken} className="rounded-2xl border border-white/10 bg-white/[.04] p-3.5">
+                <div className="flex items-center gap-3">
+                  <RoyalAvatar character={c} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[16px] font-semibold">{room.childName}</p>
+                    <p className="truncate text-[12.5px] opacity-65">con {c.name}</p>
+                    <p className={`text-[12px] font-semibold ${acc.tone}`}>{acc.text}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[13.5px]">
+                  <Link href={`/paje/${room.parentToken}`} className="grid min-h-11 place-items-center rounded-xl bg-[#5eead4] font-bold text-[#04302b] active:scale-[0.98]">
+                    Abrir panel de {room.childName}
+                  </Link>
+                  <button type="button" onClick={() => copy(`c-${room.parentToken}`, childLink)} className="min-h-11 rounded-xl bg-white/10 font-semibold active:scale-[0.98]">
+                    {copied === `c-${room.parentToken}` ? '¡Copiado!' : 'Copiar enlace del peque'}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {billing.enabled && trialRoom && (offerOpen ? (
+          <PassOffer billing={billing} roomToken={trialRoom.parentToken} title="Pase de Navidad para toda la familia" tone="panel" />
+        ) : (
+          <button type="button" onClick={() => setOfferOpen(true)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#5eead4]/40 bg-[#5eead4]/[.06] px-4 text-[14px] font-semibold text-[#5eead4] active:scale-[0.99]">
+            ✨ Pase de Navidad para toda la familia · {billing.price}
+          </button>
+        ))}
+
+        <Link href="/#crear" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl border border-[#f6d77a]/50 px-4 text-center font-bold text-[#f6d77a] active:scale-[0.98]">
+          + Preparar otra sala
+        </Link>
+
         <section role="note" className="space-y-2.5 rounded-2xl border-2 border-[#f6d77a]/60 bg-[#f6d77a]/[.08] p-4 text-[13.5px] leading-snug">
           <p className="text-[15px] font-extrabold text-[#f6d77a]">⭐ Guarda este enlace</p>
           <p className="opacity-85"><R>Con él recuperáis todas las salas desde cualquier móvil, aunque borréis el navegador. Mandáoslo por WhatsApp o por correo y no lo compartáis con los peques.</R></p>
@@ -129,42 +170,6 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
           <p className="text-[11.5px] opacity-55"><R>Solo se ve en esta página y en el asunto del correo. Mejor un apodo que un apellido.</R></p>
           {msg && <p role="status" className="text-[12px] text-[#7ee2a8]">{msg}</p>}
         </section>
-
-        <ul className="space-y-3" aria-label="Salas de la familia">
-          {family.rooms.map((room) => {
-            const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale });
-            const acc = accessLabel(room.access);
-            const childLink = openChildLink(room.childToken);
-            return (
-              <li key={room.parentToken} className="rounded-2xl border border-white/10 bg-white/[.04] p-3.5">
-                <div className="flex items-center gap-3">
-                  <RoyalAvatar character={c} size={44} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[16px] font-semibold">{room.childName}</p>
-                    <p className="truncate text-[12.5px] opacity-65">con {c.name}</p>
-                    <p className={`text-[12px] font-semibold ${acc.tone}`}>{acc.text}</p>
-                  </div>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[13.5px]">
-                  <Link href={`/paje/${room.parentToken}`} className="grid min-h-11 place-items-center rounded-xl bg-[#5eead4] font-bold text-[#04302b] active:scale-[0.98]">
-                    Abrir panel de {room.childName}
-                  </Link>
-                  <button type="button" onClick={() => copy(`c-${room.parentToken}`, childLink)} className="min-h-11 rounded-xl bg-white/10 font-semibold active:scale-[0.98]">
-                    {copied === `c-${room.parentToken}` ? '¡Copiado!' : <R>Enlace del móvil del peque</R>}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {billing.enabled && trialRoom && (
-          <PassOffer billing={billing} roomToken={trialRoom.parentToken} title="Pase de Navidad para toda la familia" tone="panel" />
-        )}
-
-        <Link href="/" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl border border-[#f6d77a]/50 font-bold text-[#f6d77a] active:scale-[0.98]">
-          + Preparar otra sala (otro peque u otro personaje)
-        </Link>
       </div>
     </div>
   );
