@@ -8,6 +8,7 @@ import { LocaleSwitch } from './LocaleSwitch';
 import { MyRooms } from './MyRooms';
 import type { BillingInfo } from './PassOffer';
 import { PassWelcome } from './PassWelcome';
+import { PricingSection } from './PricingSection';
 import { DEMO_NOEL } from './demoData';
 
 export function RoyalLanding({ billing, locale }: { billing: BillingInfo; locale: Locale }) {
@@ -32,6 +33,11 @@ export function RoyalLanding({ billing, locale }: { billing: BillingInfo; locale
           <a href="#crear" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg active:scale-[0.99]">
             Crear la sala de mi peque
           </a>
+          {billing.enabled && (
+            <a href="#pase" className="mt-2.5 inline-block text-[13px] text-[#f6d77a]/85 underline underline-offset-2">
+              Ver el Pase de Navidad · {billing.price}
+            </a>
+          )}
         </header>
 
         <PassWelcome />
@@ -43,6 +49,8 @@ export function RoyalLanding({ billing, locale }: { billing: BillingInfo; locale
           </h2>
           <DemoChat embedded character={resolveCharacter(CHARACTERS.papa_noel, { locale })} childName="Lucía" initial={DEMO_NOEL} />
         </section>
+
+        <PricingSection billing={billing} />
 
         <section id="crear" aria-label="Crear la sala" className="scroll-mt-4">
           <CreateRoomForm billing={billing} />

@@ -22,7 +22,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const create = async (name, reading) => {
     await page.fill('#child', name);
     if (reading) await page.getByRole('radio', { name: reading }).click();
-    await page.getByRole('checkbox').first().check();
+    await page.locator('form').getByRole('checkbox').check();
     await page.getByRole('button', { name: /Crear la sala/ }).click();
   };
   const linksAfterCreate = async () => {
@@ -49,7 +49,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();
   await create('Lola');
   await page.getByText(/Ya has creado todas las salas de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
-  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todas las salas de prueba gratis/).count()) > 0 && await page.getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
+  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todas las salas de prueba gratis/).count()) > 0 && await page.locator('form').getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
 
   // Panel y niño de la sala 1
   const panel = await ctxA.newPage();
@@ -107,7 +107,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const other = await ctxB.newPage();
   await other.goto(BASE + '/', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
-  await other.getByRole('checkbox').first().check();
+  await other.locator('form').getByRole('checkbox').check();
   await other.getByRole('button', { name: /Crear la sala/ }).click();
   await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const martinaPanel = local(await other.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
@@ -124,10 +124,32 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('regalo: con un toque, desbloqueada', (await other.locator('#reply').count()) === 1);
   await other.goto(BASE + '/', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Sofia');
-  await other.getByRole('checkbox').first().check();
+  await other.locator('form').getByRole('checkbox').check();
   await other.getByRole('button', { name: /Crear la sala/ }).click();
   await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('regalo: su siguiente sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
+
+  // Comprar el Pase desde la portada, antes de crear nada (p. ej. unos abuelos que lo regalan)
+  const ctxD = await b.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (comprador directo) E2E' });
+  const buyer = await ctxD.newPage();
+  buyer.on('pageerror', (e) => errs.push(e.message));
+  await buyer.goto(BASE + '/', { waitUntil: 'networkidle' });
+  check('portada: enlace al Pase junto al botón principal', await buyer.getByRole('link', { name: /Ver el Pase de Navidad · 3,99/ }).isVisible());
+  check('portada: sección "Elige cómo empezar" con las dos opciones', await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).isVisible() && await buyer.getByRole('heading', { name: 'Prueba gratis' }).isVisible() && await buyer.getByRole('heading', { name: 'Pase de Navidad' }).isVisible());
+  check('portada: explica las ventajas del Pase', await buyer.getByText('Incluye un pase para regalar a otra familia').isVisible() && await buyer.getByText(/hasta el 20 de enero/).first().isVisible());
+  await buyer.getByRole('button', { name: /Conseguir el Pase/ }).click();
+  check('portada: sin la casilla legal no se abre el pago', await buyer.getByText('Marca la casilla para continuar.').isVisible());
+  await buyer.getByText(/Quiero que el pase se active ya/).click();
+  await Promise.all([buyer.waitForURL(/\/pase\/listo/, { timeout: 20000 }), buyer.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
+  check('comprar desde la portada: muestra el pase y el regalo', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible() && await buyer.getByRole('link', { name: 'Regalar por WhatsApp' }).isVisible());
+  await buyer.getByRole('link', { name: 'Crear una sala' }).click();
+  await buyer.locator('#child').waitFor({ timeout: 15000 });
+  check('con el pase ya comprado, la portada deja de ofrecerlo', (await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).count()) === 0);
+  await buyer.fill('#child', 'Julia');
+  await buyer.locator('form').getByRole('checkbox').check();
+  await buyer.getByRole('button', { name: /Crear la sala/ }).click();
+  await buyer.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  check('la sala creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
 
   // Webhook de Stripe: firma obligatoria e idempotente
   const hook = async (body, sig) => (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', headers: { 'stripe-signature': sig, 'content-type': 'application/json' }, body })).status;

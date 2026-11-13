@@ -45,7 +45,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
           </Link>
         )}
         {!back && (
-          <Link href="/" className="flex min-h-12 items-center justify-center rounded-2xl bg-[#5eead4] font-bold text-[#04302b]">
+          <Link href="/#crear" className="flex min-h-12 items-center justify-center rounded-2xl bg-[#5eead4] font-bold text-[#04302b]">
             Crear una sala
           </Link>
         )}
