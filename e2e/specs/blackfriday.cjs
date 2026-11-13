@@ -16,11 +16,11 @@ const phase = today >= day('11-01') && today < day('12-01') ? 'elf-pre' : today 
   : today >= day('12-15') && today < day('12-26') ? 'noel' : (today >= day('12-26') || now.getTime() < t('01-07')) ? 'reyes' : now.getTime() >= t('10-15') && now.getTime() < t('11-01') ? 'noel' : 'raton';
 const daysLeft = day('12-01') - today;
 const EXPECT = {
-  'elf-pre': { h1: /Un elfo travieso va a colarse en tu casa/, demo: /Soy Chispa/, char: 'duende_chispa' },
-  elf: { h1: /¡El elfo travieso ya está en casa!/, demo: /Soy Chispa/, char: 'duende_chispa' },
-  noel: { h1: /antes de abrir los regalos, hable con Papá Noel/, demo: /Feliz Navidad, Lucía/, char: 'papa_noel' },
-  reyes: { h1: /Que los Reyes Magos le contesten en directo/, demo: /Soy Melchor/, char: 'melchor' },
-  raton: { h1: /Que el Ratoncito Pérez le escriba/, demo: /se te ha caído un diente/, char: 'raton_perez' },
+  'elf-pre': { h1: /Un elfo travieso va a colarse en tu casa/, demo: /Soy Chispa/, char: 'duende_chispa', tag: 'Un elfo muy travieso' },
+  elf: { h1: /¡El elfo travieso ya está en casa!/, demo: /Soy Chispa/, char: 'duende_chispa', tag: 'Un elfo muy travieso' },
+  noel: { h1: /antes de abrir los regalos, hable con Papá Noel/, demo: /Feliz Navidad, Lucía/, char: 'papa_noel', tag: 'Desde el Polo Norte' },
+  reyes: { h1: /Que los Reyes Magos le contesten en directo/, demo: /Soy Melchor/, char: 'melchor', tag: 'Cariñoso y abuelete' },
+  raton: { h1: /Que el Ratoncito Pérez le escriba/, demo: /se te ha caído un diente/, char: 'raton_perez', tag: 'Recoge dientes' },
 }[phase];
 
 (async () => {
@@ -47,7 +47,8 @@ const EXPECT = {
   // Portada de temporada
   check(`portada de temporada (${phase}): titular`, await page.getByRole('heading', { level: 1 }).filter({ hasText: EXPECT.h1 }).isVisible());
   check(`portada de temporada (${phase}): el chat de ejemplo es del personaje de la época`, await page.getByText(EXPECT.demo).first().isVisible());
-  check(`portada de temporada (${phase}): sale preseleccionado ${EXPECT.char}`, (await page.locator('input[name=character]:checked').getAttribute('value')) === EXPECT.char);
+  check(`portada de temporada (${phase}): ningún personaje viene marcado (se ven todos)`, (await page.locator('input[name=character]:checked').count()) === 0);
+  check(`portada de temporada (${phase}): ${EXPECT.char} lleva la etiqueta "De temporada"`, (await page.locator('label', { hasText: EXPECT.tag }).filter({ hasText: 'De temporada' }).count()) === 1 && (await page.getByText('De temporada').count()) === 1);
   if (phase === 'elf-pre') {
     const txt = daysLeft <= 1 ? '¡Llega mañana!' : `faltan ${daysLeft} días`;
     check(`cuenta atrás hasta la llegada del elfo (${txt})`, await page.getByText(txt, { exact: false }).first().isVisible());

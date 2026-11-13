@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, ensureChar } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
 (async () => {
@@ -9,6 +9,13 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   check('portada sin salas guardadas: no aparece "Tus salas"', (await page.getByText('Tus salas en este móvil').count()) === 0);
 
+  // Sin personaje elegido no se crea la sala: pide elegir
+  await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check();
+  check('al empezar, ningún personaje viene marcado', (await page.locator('input[name=character]:checked').count()) === 0);
+  await page.getByRole('button', { name: /Crear la sala/ }).click();
+  check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige quién le va a contestar a tu peque.').isVisible() && (await page.getByText('La sala real está lista').count()) === 0);
+  await page.fill('#child', ''); await page.locator('form').getByRole('checkbox').uncheck();
+
   // Al elegir un personaje, el selector se pliega y se ve lo siguiente ("¿ya lee?")
   check('selector de personajes abierto al principio', await page.getByText('Melchor').first().isVisible());
   await page.getByText('Baltasar', { exact: false }).first().click();
@@ -17,14 +24,14 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
   check('"Cambiar" vuelve a mostrar todos los personajes', await page.getByText('Melchor').first().isVisible());
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).click();
-  check('también se pliega al tocar el que ya estaba marcado', (await page.getByText('Melchor').count()) === 0);
+  check('también se pliega al elegir otro distinto', (await page.getByText('Melchor').count()) === 0);
   await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
 
   const create = async (name, character) => {
     await page.fill('#child', name);
     if (character) await page.getByText(character, { exact: false }).first().click();
     await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: /Crear la sala/ }).click();
+    await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
     await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   };
   await create('Lucía');

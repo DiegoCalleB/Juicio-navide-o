@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, ensureChar } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
@@ -14,7 +14,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía');
   await parent.getByRole('checkbox').check();
-  await parent.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));

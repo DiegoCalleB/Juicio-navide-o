@@ -1,5 +1,5 @@
 // Idioma: detección por el navegador, selector manual y sala que manda su propio idioma.
-const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
@@ -38,7 +38,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // Sala creada en Latinoamérica: el panel, abierto desde un móvil de España, sigue en su variante
   await pMx.fill('#child', 'Valentina');
   await pMx.getByRole('checkbox').first().check();
-  await pMx.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(pMx); await pMx.getByRole('button', { name: /Crear la sala/ }).click();
   await pMx.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('al crear en Latinoamérica: "Celular de Valentina"', (await pMx.getByText(/el celular de Valentina/).count()) === 1);
   const panelLink = local(await pMx.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
@@ -54,7 +54,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // Sala de España abierta desde un navegador mexicano: sigue en español de España
   await pEs.fill('#child', 'Lucía');
   await pEs.getByRole('checkbox').first().check();
-  await pEs.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(pEs); await pEs.getByRole('button', { name: /Crear la sala/ }).click();
   await pEs.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const esPanel = local(await pEs.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
   const panelEs = await cMx.newPage();

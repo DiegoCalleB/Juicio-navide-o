@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, ensureFixtures } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, ensureFixtures, ensureChar } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const pad = (n) => String(n).padStart(2, '0');
@@ -19,7 +19,7 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.getByRole('radio', { name: 'Es una elfa' }).click();
   await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/du1-selector.png' });
-  await parent.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('la sala usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');

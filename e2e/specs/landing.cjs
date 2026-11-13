@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, ensureChar } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   const b = await launch(['--no-sandbox']);
@@ -31,7 +31,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   // Panel: momentos + wake lock
   await page.evaluate(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
   await page.waitForSelector('text=La sala real está lista');
   const pajeHref = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const panel = await ctx.newPage();

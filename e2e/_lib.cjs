@@ -70,4 +70,10 @@ async function familyLinkOf(page) {
   return (await el.getAttribute('data-family-link')).trim();
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf };
+/** El formulario ya no marca ningún personaje: si la prueba no eligió uno, elige Papá Noel. */
+async function ensureChar(page) {
+  if (await page.getByRole('button', { name: 'Cambiar de personaje' }).isVisible().catch(() => false)) return;
+  await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).first().click();
+}
+
+module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar };

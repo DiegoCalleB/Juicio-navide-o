@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch, openChild } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -13,7 +13,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/rp1-selector.png' });
-  await parent.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('la sala se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');

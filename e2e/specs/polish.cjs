@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, openChild } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -44,7 +44,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
 
   // ── Reconexión: cortar la red al niño y ver el aviso; al volver, desaparece
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
   await page.waitForSelector('text=La sala real está lista');
   const childLink = (await childLinkOf(page));
   const child = await ctx.newPage();

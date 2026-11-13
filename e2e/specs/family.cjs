@@ -1,5 +1,5 @@
 // Familias: varios peques de golpe, enlace de familia que reconstruye los paneles, apodo y desplegable de peques.
-const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
@@ -25,7 +25,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.locator('fieldset', { hasText: 'Otro peque (2)' }).locator('select').last().selectOption('learning');
   await page.getByRole('checkbox').first().check();
   check('el botón anuncia las dos salas', await page.getByRole('button', { name: 'Crear las 2 salas reales' }).isVisible());
-  await page.getByRole('button', { name: 'Crear las 2 salas reales' }).click();
+  await ensureChar(page); await page.getByRole('button', { name: 'Crear las 2 salas reales' }).click();
   await page.waitForSelector('text=¡Las salas reales están listas!', { timeout: 30000 });
   check('aviso claro: guarda el enlace de la familia', await page.getByText('Guarda el enlace de tu familia ahora').isVisible());
   const familyLink = (await familyLinkOf(page));
@@ -106,7 +106,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // Una sala nueva desde ese móvil entra en la misma familia
   await fresh.fill('#child', 'Pablo');
   await fresh.getByRole('checkbox').first().check();
-  await fresh.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(fresh); await fresh.getByRole('button', { name: /Crear la sala/ }).click();
   await fresh.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const sameFamily = (await familyLinkOf(fresh));
   check('la sala nueva entra en la misma familia', sameFamily === familyLink);
@@ -135,7 +135,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await sneaky.reload({ waitUntil: 'networkidle' });
   await sneaky.fill('#child', 'Intruso');
   await sneaky.getByRole('checkbox').first().check();
-  await sneaky.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(sneaky); await sneaky.getByRole('button', { name: /Crear la sala/ }).click();
   await sneaky.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const sneakyLink = (await familyLinkOf(sneaky));
   check('un enlace de familia inexistente no se adopta: se crea una familia nueva', !sneakyLink.endsWith('C'.repeat(43)));

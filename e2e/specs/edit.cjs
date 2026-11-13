@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch, openChild, pinSetup } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, openChild, pinSetup, ensureChar } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const openSetup = pinSetup; // fija abiertos los Preparativos (se pliegan solos cuando el niño abre o escribe)
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
@@ -9,7 +9,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
   await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
-  await parent.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));

@@ -1,5 +1,5 @@
 // Prueba gratis (acortada a 45 s), Pase de Navidad con Stripe simulado, pase de regalo y nivel de lectura.
-const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
 // Se lanza aparte: npm run test:e2e -- --billing
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
@@ -23,7 +23,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
     await page.fill('#child', name);
     if (reading) await page.getByRole('radio', { name: reading }).click();
     await page.locator('form').getByRole('checkbox').check();
-    await page.getByRole('button', { name: /Crear la sala/ }).click();
+    await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
   };
   const linksAfterCreate = async () => {
     await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
@@ -108,7 +108,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await other.goto(BASE + '/', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
   await other.locator('form').getByRole('checkbox').check();
-  await other.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
   await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   const martinaPanel = local(await other.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
   await other.goto(local(giftLink), { waitUntil: 'networkidle' });
@@ -125,7 +125,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await other.goto(BASE + '/', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Sofia');
   await other.locator('form').getByRole('checkbox').check();
-  await other.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
   await other.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('regalo: su siguiente sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
 
@@ -147,7 +147,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('con el pase ya comprado, la portada deja de ofrecerlo', (await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).count()) === 0);
   await buyer.fill('#child', 'Julia');
   await buyer.locator('form').getByRole('checkbox').check();
-  await buyer.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(buyer); await buyer.getByRole('button', { name: /Crear la sala/ }).click();
   await buyer.waitForSelector('text=La sala real está lista', { timeout: 30000 });
   check('la sala creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
 

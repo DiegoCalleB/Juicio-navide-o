@@ -17,15 +17,16 @@ import { R, useLocale, useRegional } from '@/components/LocaleProvider';
 const CARD = 'rounded-3xl border border-white/10 bg-[#1d0b3a]/80 p-5 shadow-2xl backdrop-blur';
 
 type Reading = 'yes' | 'learning' | 'no';
-interface Extra { name: string; characterId: CharacterId; reading: Reading }
+interface Extra { name: string; characterId: CharacterId | ''; reading: Reading }
 interface CreatedRoom { name: string; characterId: CharacterId; alias: string; gender: 'm' | 'f'; child: string; parent: string }
 
-export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { billing: BillingInfo; defaultCharacter?: CharacterId }) {
+export function CreateRoomForm({ billing, defaultCharacter }: { billing: BillingInfo; defaultCharacter?: CharacterId }) {
+  // `defaultCharacter` ya no se marca solo: se destaca como "De temporada" y se obliga a elegir, para que se vean todas las opciones.
   const locale = useLocale();
   const r = useRegional();
   const [pending, startTransition] = useTransition();
   const [childName, setChildName] = useState('');
-  const [characterId, setCharacterId] = useState<CharacterId>(defaultCharacter);
+  const [characterId, setCharacterId] = useState<CharacterId | null>(null);
   const [alias, setAlias] = useState('');
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [reading, setReading] = useState<Reading>('yes');
@@ -75,13 +76,22 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
     const passToken = loadPass() ?? undefined;
     const base = { consent, website: trap, locale, ...(passToken ? { passToken } : {}) };
     const kids: { name: string; characterId: CharacterId; reading: Reading; alias: string; gender: 'm' | 'f'; payload: Record<string, unknown> }[] = [];
+    if (!characterId) {
+      setPickerOpen(true);
+      setError('Elige quién le va a contestar a tu peque.');
+      return;
+    }
     const isElf = characterId === 'duende_chispa';
     kids.push({
       name: childName.trim(), characterId, reading, alias, gender,
       payload: { ...base, childName, characterId, readingLevel: reading, ...(isElf ? { characterAlias: alias.trim() || undefined, characterGender: gender } : {}) },
     });
     for (const x of extras) {
-      kids.push({ name: x.name.trim(), characterId: x.characterId, reading: x.reading, alias: '', gender: 'm', payload: { ...base, childName: x.name, characterId: x.characterId, readingLevel: x.reading } });
+      if (!x.characterId) {
+        setError(`Elige quién le contesta a ${x.name.trim() || 'el otro peque'}.`);
+        return;
+      }
+      kids.push({ name: x.name.trim(), characterId: x.characterId as CharacterId, reading: x.reading, alias: '', gender: 'm', payload: { ...base, childName: x.name, characterId: x.characterId, readingLevel: x.reading } });
     }
     // Se valida todo antes de crear nada: o salen todas las salas o ninguna por un dato mal puesto.
     for (const k of kids) {
@@ -196,6 +206,7 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
               setError(null);
               setChildName('');
               setExtras([]);
+              setCharacterId(null);
               setPickerOpen(true);
               setConsent(false);
             }}
@@ -242,7 +253,7 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
               </div>
             </div>
   );
-  const picked = resolveCharacter(CHARACTERS[characterId], { alias, gender, locale });
+  const picked = characterId ? resolveCharacter(CHARACTERS[characterId], { alias, gender, locale }) : null;
 
   return (
     <>
@@ -278,7 +289,7 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
 
       <fieldset className="space-y-3">
         <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
-        {!pickerOpen && (
+        {!pickerOpen && picked && characterId && (
           <>
             <div className="flex items-center gap-3 rounded-2xl border border-[#f6d77a] bg-[#f6d77a]/10 p-3">
               <RoyalAvatar character={picked} size={52} />
@@ -304,6 +315,9 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
                   <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${group.ids.length === 1 ? 'flex-row' : 'flex-col text-center'} ${selected ? 'border-[#f6d77a] bg-[#f6d77a]/10' : 'border-white/10 bg-white/[.03]'}`}>
                     <input type="radio" name="character" value={id} checked={selected} onChange={() => setCharacterId(id)} onClick={() => setPickerOpen(false)} className="sr-only" />
                     <RoyalAvatar character={c} size={group.ids.length === 1 ? 52 : 48} />
+                    {defaultCharacter === id && (
+                      <span className="rounded-full bg-[#7ee2a8]/15 px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wide text-[#7ee2a8]">De temporada</span>
+                    )}
                     <span className={group.ids.length === 1 ? '' : 'contents'}>
                       <span className="block text-[14px] font-bold text-[#fff6dc]">{group.ids.length === 1 ? c.name : c.shortName}</span>
                       <span className="block text-[11px] leading-tight text-[#fff6dc]/55">{c.tagline}</span>
@@ -374,9 +388,10 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
               Le contesta
               <select
                 value={x.characterId}
-                onChange={(e) => setExtras((list) => list.map((y, j) => (j === i ? { ...y, characterId: e.target.value as CharacterId } : y)))}
+                onChange={(e) => setExtras((list) => list.map((y, j) => (j === i ? { ...y, characterId: e.target.value as CharacterId | '' } : y)))}
                 className="mt-1 min-h-11 w-full rounded-xl border border-white/15 bg-[#120822] px-2 text-[14px] text-[#fff6dc]"
               >
+                <option value="">Elige…</option>
                 {CHARACTER_GROUPS.flatMap((g) => g.ids).map((id) => <option key={id} value={id}>{resolveCharacter(CHARACTERS[id], { locale }).name}</option>)}
               </select>
             </label>
@@ -401,7 +416,7 @@ export function CreateRoomForm({ billing, defaultCharacter = 'papa_noel' }: { bi
       {extras.length < 4 && (
         <button
           type="button"
-          onClick={() => setExtras((list) => [...list, { name: '', characterId: 'papa_noel', reading: 'yes' }])}
+          onClick={() => setExtras((list) => [...list, { name: '', characterId: '', reading: 'yes' }])}
           className="min-h-11 w-full rounded-2xl border border-dashed border-[#f6d77a]/40 text-[14px] font-semibold text-[#f6d77a]/90 active:scale-[0.99]"
         >
           + Añadir otro peque (salas a la vez)
