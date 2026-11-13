@@ -1,0 +1,15 @@
+{
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/api/family/[token]/route": "app/api/family/[token]/route.js",
+  "/api/rooms/[token]/messages/route": "app/api/rooms/[token]/messages/route.js",
+  "/api/rooms/[token]/events/route": "app/api/rooms/[token]/events/route.js",
+  "/api/rooms/[token]/opened/route": "app/api/rooms/[token]/opened/route.js",
+  "/apple-icon.png/route": "app/apple-icon.png/route.js",
+  "/api/rooms/[token]/typing/route": "app/api/rooms/[token]/typing/route.js",
+  "/api/rooms/[token]/reply/route": "app/api/rooms/[token]/reply/route.js",
+  "/page": "app/page.js",
+  "/terminos/page": "app/terminos/page.js",
+  "/r/[token]/page": "app/r/[token]/page.js",
+  "/paje/[token]/page": "app/paje/[token]/page.js",
+  "/familia/[token]/page": "app/familia/[token]/page.js"
+}

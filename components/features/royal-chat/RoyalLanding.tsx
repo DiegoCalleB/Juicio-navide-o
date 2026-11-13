@@ -21,59 +21,63 @@ export function RoyalLanding({ billing, locale, now, initialCharacter }: { billi
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
-      <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-8">
+      <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-8 lg:max-w-6xl lg:px-10 lg:pt-10">
         {billing.enabled && billing.campaign && (
-          <a href="#pase" className="mb-5 flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[#f6d77a]/70 bg-black/70 px-3 py-2 text-center text-[13px] font-bold leading-tight text-[#fff6dc] active:scale-[0.99]">
+          <a href="#pase" className="mx-auto mb-5 flex min-h-12 items-center justify-center gap-2 rounded-2xl lg:max-w-3xl border border-[#f6d77a]/70 bg-black/70 px-3 py-2 text-center text-[13px] font-bold leading-tight text-[#fff6dc] active:scale-[0.99]">
             <span aria-hidden>🖤</span>
             <span><span className="text-[#f6d77a]">{billing.campaign.label}</span> · Pase de Navidad a {billing.price} hasta el {billing.campaign.until}</span>
             <span aria-hidden className="text-[#f6d77a]">→</span>
           </a>
         )}
-        <header className="mb-6 text-center">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:py-8">
+        <header className="mb-6 text-center lg:mb-0 lg:text-left">
           <p className="font-serif text-[20px] leading-none text-[#f6d77a]">✨ {BRAND}</p>
           <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/75">{hero.tagline}</p>
-          <h1 className="mt-4 font-serif text-[30px] leading-[1.12] text-[#fff6dc]">{hero.title}</h1>
+          <h1 className="mt-4 font-serif text-[30px] leading-[1.12] text-[#fff6dc] lg:mt-8 lg:text-[56px] lg:leading-[1.06]">{hero.title}</h1>
           {hero.countdown && (
-            <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#7ee2a8]/50 bg-[#7ee2a8]/10 px-3 py-1 text-[12.5px] font-bold text-[#7ee2a8]">
+            <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full lg:mx-0 lg:mt-5 border border-[#7ee2a8]/50 bg-[#7ee2a8]/10 px-3 py-1 text-[12.5px] font-bold text-[#7ee2a8]">
               <span aria-hidden>🎄</span> {hero.countdown}
             </p>
           )}
-          <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#fff6dc]/75">
+          <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#fff6dc]/75 lg:mx-0 lg:mt-5 lg:max-w-lg lg:text-[19px]">
             {r(hero.subtitle)}
           </p>
-          <ul className="mt-4 flex flex-wrap justify-center gap-1.5" aria-label="Ventajas">
+          <ul className="mt-4 flex flex-wrap justify-center gap-1.5 lg:mt-6 lg:justify-start lg:gap-2" aria-label="Ventajas">
             {perks.map((p) => (
               <li key={p} className="rounded-full border border-[#f6d77a]/30 bg-[#f6d77a]/[.07] px-2.5 py-1 text-[11.5px] font-semibold text-[#f6d77a]/90">{p}</li>
             ))}
           </ul>
-          <a href="#crear" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg active:scale-[0.99]">
+          <a href="#crear" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
             Crear la sala de mi peque
           </a>
           {(hero.phase === 'elf' || hero.phase === 'elf-pre') && (
-            <Link href="/ideas-elfo" className="mt-2.5 block text-[13.5px] font-semibold text-[#7ee2a8] underline underline-offset-2">
+            <Link href="/ideas-elfo" className="mt-2.5 block text-[13.5px] font-semibold text-[#7ee2a8] underline underline-offset-2 lg:mt-4">
               🧝 Ver las 24 trastadas del elfo (gratis)
             </Link>
           )}
           {billing.enabled && (
-            <a href="#pase" className="mt-2.5 inline-block text-[13px] text-[#f6d77a]/85 underline underline-offset-2">
+            <a href="#pase" className="mt-2.5 inline-block text-[13px] text-[#f6d77a]/85 underline underline-offset-2 lg:ml-5">
               Ver el Pase de Navidad · {billing.price}
             </a>
           )}
         </header>
 
-        <PassWelcome />
-        <MyRooms />
-
-        <section aria-labelledby="demo-title" className="mb-8">
+        <section aria-labelledby="demo-title" className="mb-8 lg:mx-auto lg:mb-0 lg:w-full lg:max-w-[26rem]">
           <h2 id="demo-title" className="mb-2.5 text-center text-[12px] font-semibold uppercase tracking-widest text-[#fff6dc]/55">
             Así lo verá tu peque · pruébalo
           </h2>
           <DemoChat embedded character={resolveCharacter(CHARACTERS[demoCharacter], { alias: 'Chispa', gender: 'm', locale })} childName="Lucía" initial={demoFor(demoGroup)} />
         </section>
+        </div>
+
+        <div className="lg:mx-auto lg:max-w-2xl">
+          <PassWelcome />
+          <MyRooms />
+        </div>
 
         <PricingSection billing={billing} />
 
-        <section id="crear" aria-label="Crear la sala" className="scroll-mt-4">
+        <section id="crear" aria-label="Crear la sala" className="scroll-mt-4 lg:mx-auto lg:max-w-2xl">
           <CreateRoomForm billing={billing} defaultCharacter={hero.defaultCharacter} initialCharacter={initialCharacter} />
         </section>
 

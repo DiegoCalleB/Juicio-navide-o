@@ -1,0 +1,19 @@
+{
+  "node": {
+    "403109c4020a35bab56d65495b628100b610b9b7b7": {
+      "workers": {
+        "app/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2FJuicio-navide-o%2Fapp%2Freyes%2Factions.ts%22%2C%5B%7B%22id%22%3A%22403109c4020a35bab56d65495b628100b610b9b7b7%22%2C%22exportedName%22%3A%22createRoomAction%22%2C%22filename%22%3A%22app%2Freyes%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      },
+      "filename": "app/reyes/actions.ts",
+      "exportedName": "createRoomAction"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "D0yZqnJrhtJJFYqHKO7BendIkjjXmRcswTHYY2z/XGs="
+}

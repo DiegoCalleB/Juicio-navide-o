@@ -160,3 +160,10 @@ Ideas aparcadas. No están construidas ni verificadas.
 - En el móvil con PIN la portada solo enseña "Zona de los padres" (marca local `magic-lock`; no oculta nombres de peques ni salas).
 - Límite honesto: durante los 30 minutos posteriores a meter el PIN, el panel está abierto en ese móvil.
 - Pendiente: mencionar el PIN y la cookie `lm_u_*` en la política de privacidad si se revisa el texto legal.
+
+## Diseño para ordenadores
+
+- Portada a dos columnas desde 1024 px (texto y botón a la izquierda, demo a la derecha), planes en dos columnas, formulario centrado. En móvil sigue igual.
+- Panel de padres: ventana de 4xl centrada con tarjetas de preparativos en dos columnas. Familia: salas en dos columnas (centrada si hay una). Sala del peque: marco de móvil centrado.
+- Prueba `desktop`: sin desbordes horizontales a 1440, 1024, 768 y 390 px en 7 pantallas.
+- Pendiente: lista de personajes del formulario en rejilla en escritorio; probar en un ordenador real con pantalla muy ancha (>1920 px) y en Safari.

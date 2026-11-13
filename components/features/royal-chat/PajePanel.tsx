@@ -480,8 +480,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-center bg-black">
-      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff]">
+    <div className="fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#12203a,#04070d)]">
+      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff] lg:h-[min(calc(100dvh-3rem),58rem)] lg:max-w-4xl lg:overflow-hidden lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-[0_30px_90px_rgba(0,0,0,.6)]">
         <div className="flex items-center justify-center gap-2 bg-[#5eead4] px-3 pb-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] text-[10.5px] font-bold uppercase tracking-[.08em] text-[#04302b]">
           <span aria-hidden>🔒</span> Zona secreta de los padres · {childName} no ve esta pantalla
         </div>
@@ -550,7 +550,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           </div>
         )}
 
-        <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6">
           <button
             type="button"
             aria-expanded={setupVisible}
@@ -562,7 +562,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <span aria-hidden className={`transition-transform ${setupVisible ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
-          <div id="panel-setup" hidden={!setupVisible} className="space-y-3" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
+          <div id="panel-setup" hidden={!setupVisible} className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#5eead4]"><R>Enlace para el móvil de {childName}</R></p>
             <p className="mt-1 text-[#e8f1ff]/70"><R>Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</R></p>
@@ -1032,7 +1032,7 @@ function PanelMessage({
   const child = m.from === 'child';
   return (
     <div className={`flex ${child ? 'justify-start' : 'justify-end'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#fde68a] text-[#2b1b0e]' : 'rounded-br-md bg-[#eaf2ff] text-[#2b1b0e]'}`}>
+      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow lg:max-w-[68%] ${child ? 'rounded-bl-md bg-[#fde68a] text-[#2b1b0e]' : 'rounded-br-md bg-[#eaf2ff] text-[#2b1b0e]'}`}>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : character.name}</p>
         {m.kind === 'voice' && <VoiceNote id={m.id} followUps={followUps} duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />}
         {m.kind === 'photo' && m.imageUrl && (
