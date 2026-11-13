@@ -26,7 +26,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   check('ningún personaje viene marcado', !(await parent.getByRole('radio', { name: /Papá Noel/ }).isChecked()));
   await parent.getByRole('checkbox').check();
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   check('se generan enlaces de niño y padres', /\/paje\/[\w-]{43}$/.test(pajeHref) && /\/r\/[\w-]{43}$/.test(childLink), pajeHref.slice(-12));

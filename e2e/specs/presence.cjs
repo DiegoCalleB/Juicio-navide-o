@@ -15,7 +15,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.fill('#child', 'Lucía');
   await parent.getByRole('checkbox').check();
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const childToken = childLink.split('/r/')[1];

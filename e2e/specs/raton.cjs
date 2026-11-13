@@ -14,7 +14,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/rp1-selector.png' });
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
   check('la sala se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));

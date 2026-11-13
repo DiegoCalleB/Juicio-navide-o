@@ -13,7 +13,7 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check();
   check('al empezar, ningún personaje viene marcado', (await page.locator('input[name=character]:checked').count()) === 0);
   await page.getByRole('button', { name: /Crear la sala/ }).click();
-  check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige quién le va a contestar a tu peque.').isVisible() && (await page.getByText('La sala real está lista').count()) === 0);
+  check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige quién le va a contestar a tu peque.').isVisible() && (await page.getByText('La sala está lista').count()) === 0);
   await page.fill('#child', ''); await page.locator('form').getByRole('checkbox').uncheck();
 
   // Al elegir un personaje, el selector se pliega y se ve lo siguiente ("¿ya lee?")
@@ -32,7 +32,7 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
     if (character) await page.getByText(character, { exact: false }).first().click();
     await page.getByRole('checkbox').check();
     await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
-    await page.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+    await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
   };
   await create('Lucía');
   check('al crear: avisa de guardar el enlace', await page.getByText('Guarda el enlace de tu familia ahora').isVisible());

@@ -141,7 +141,7 @@ export function CreateRoomForm({ billing, defaultCharacter }: { billing: Billing
       <div ref={doneRef} className={`${CARD} scroll-mt-4 space-y-4 animate-pop`}>
         <div className="text-center">
           <p aria-hidden className="text-4xl">🎉</p>
-          <p className="mt-1 font-serif text-[22px] leading-tight text-[#f6d77a]">{multi ? '¡Las salas reales están listas!' : '¡La sala real está lista!'}</p>
+          <p className="mt-1 font-serif text-[22px] leading-tight text-[#f6d77a]">{multi ? '¡Las salas están listas!' : '¡La sala está lista!'}</p>
           <p className="mt-1 text-[13.5px] text-[#fff6dc]/70">
             {multi ? `${created.map((x) => x.name).join(', ')} ya pueden escribir.` : `${first?.name} ya puede escribir a ${firstChar?.shortName}.`}
             {plan === 'trial' && ' Prueba gratis de 3 días.'}
@@ -446,7 +446,7 @@ export function CreateRoomForm({ billing, defaultCharacter }: { billing: Billing
 
       <button type="submit" disabled={pending}
         className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg disabled:opacity-60">
-        {pending ? 'Preparando la sala real…' : extras.length > 0 ? `Crear las ${extras.length + 1} salas reales` : 'Crear la sala real'}
+        {pending ? 'Preparando la sala…' : extras.length > 0 ? `Crear las ${extras.length + 1} salas` : 'Crear la sala'}
       </button>
       {billing.enabled && !hasPass && (
         <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>

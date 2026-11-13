@@ -45,7 +45,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   // ── Reconexión: cortar la red al niño y ver el aviso; al volver, desaparece
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
   await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
-  await page.waitForSelector('text=La sala real está lista');
+  await page.waitForSelector('text=La sala está lista');
   const childLink = (await childLinkOf(page));
   const child = await ctx.newPage();
   await openChild(child, childLink, {});

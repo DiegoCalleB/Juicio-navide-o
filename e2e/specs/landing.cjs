@@ -32,7 +32,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.evaluate(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
   await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
-  await page.waitForSelector('text=La sala real está lista');
+  await page.waitForSelector('text=La sala está lista');
   const pajeHref = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const panel = await ctx.newPage();
   await panel.addInitScript(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });

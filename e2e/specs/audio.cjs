@@ -11,7 +11,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
   check('consentimiento menciona audios', (await parent.getByText(/mensajes, audios y fotos/).count()) > 0);
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala real está lista');
+  await parent.waitForSelector('text=La sala está lista');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });

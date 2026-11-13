@@ -20,7 +20,7 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/du1-selector.png' });
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala real está lista', { timeout: 30000 });
+  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
   check('la sala usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
