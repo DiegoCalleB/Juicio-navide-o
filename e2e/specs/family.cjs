@@ -14,7 +14,8 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   check('portada: sin peques guardados no hay desplegable "Tus peques"', (await page.locator('#kid-pick').count()) === 0);
-  check('portada: el formulario no pide apodo (se pone luego en la página de familia)', (await page.locator('#family-nick').count()) === 0);
+  check('portada: ofrece apodo de la familia (opcional)', await page.locator('#family-nick').isVisible());
+  await page.fill('#family-nick', 'Los Estrella');
 
   // Dos peques de golpe
   await page.fill('#child', 'Lucía');
@@ -43,11 +44,6 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const fresh = await mk();
   fresh.on('pageerror', (e) => errs.push(e.message));
   await fresh.goto(local(familyLink), { waitUntil: 'networkidle' });
-  check('familia: sin apodo, se titula "Tu familia"', await fresh.getByRole('heading', { name: 'Tu familia' }).isVisible());
-  await fresh.fill('#family-name', 'Los Estrella');
-  await fresh.getByRole('button', { name: 'Guardar' }).click();
-  await fresh.getByText('Guardado.').waitFor({ timeout: 10000 });
-  await fresh.reload({ waitUntil: 'networkidle' });
   check('familia: título con el apodo', await fresh.getByRole('heading', { name: 'Los Estrella' }).isVisible());
   check('familia: aparecen las dos salas', await fresh.getByRole('link', { name: 'Abrir panel de Lucía' }).isVisible() && await fresh.getByRole('link', { name: 'Abrir panel de Mateo' }).isVisible());
   check('familia: cada sala dice su personaje', await fresh.getByText('con Papá Noel').isVisible() && await fresh.getByText(/con (el )?Ratoncito Pérez/).isVisible());
@@ -73,6 +69,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // El móvil nuevo recupera "Tus salas" y la familia
   await fresh.goto(BASE + '/', { waitUntil: 'networkidle' });
   check('móvil nuevo: "Tus salas" recupera las dos', await fresh.getByText(/Ya tengo salas en este móvil \(2\)/).isVisible());
+  check('móvil nuevo: ya no pide apodo (la familia está guardada)', (await fresh.locator('#family-nick').count()) === 0);
   check('móvil nuevo: la portada muestra el acceso a "Tu familia"', await fresh.getByRole('link', { name: /Tu familia/ }).isVisible());
   check('móvil nuevo: aparece el desplegable con los dos peques', (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Lucía') && (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Mateo'));
   await fresh.locator('#kid-pick').selectOption('Mateo');

@@ -39,6 +39,8 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   const [familyLink, setFamilyLink] = useState<string | null>(null);
   const [savedKids, setSavedKids] = useState<string[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
+  const [familyName, setFamilyName] = useState('');
+  const [hasFamily, setHasFamily] = useState(true);
   const doneRef = useRef<HTMLDivElement>(null);
   // Al crear, la confirmación se coloca arriba de la pantalla: es lo siguiente que hay que hacer.
   useEffect(() => {
@@ -46,6 +48,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
   }, [created]);
   useEffect(() => {
     setSavedKids([...new Set(loadRooms().map((x) => x.childName))]);
+    setHasFamily(!!loadFamily());
   }, [created]);
 
   const submit = (e: React.FormEvent) => {
@@ -77,7 +80,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
       const done: CreatedRoom[] = [];
       let lastPlan: 'free' | 'trial' | 'pass' = 'free';
       for (const [i, k] of kids.entries()) {
-        const res = await createRoomAction({ ...k.payload, ...(familyToken ? { familyToken } : {}), });
+        const res = await createRoomAction({ ...k.payload, ...(familyToken ? { familyToken } : {}), ...(i === 0 && !familyToken && familyName.trim() ? { familyName: familyName.trim() } : {}) });
         if (!res.ok) {
           if (res.error.code === 'TRIAL_USED') setTrialUsed(true);
           setError(done.length > 0 ? `${res.error.message} (Se han creado ${done.length} de ${kids.length} salas.)` : res.error.message);
@@ -103,7 +106,7 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
     const multi = created.length > 1;
     const first = created[0];
     const firstChar = first ? resolveCharacter(CHARACTERS[first.characterId], { alias: first.alias, gender: first.gender, locale }) : null;
-    const mailSubject = 'Tu enlace de Línea Mágica';
+    const mailSubject = `Tu enlace de Línea Mágica${familyName.trim() ? ` · ${familyName.trim()}` : ''}`;
     const familyPath = familyLink.replace(/^https?:\/\/[^/]+/, '');
     return (
       <div ref={doneRef} className={`${CARD} scroll-mt-4 space-y-4 animate-pop`}>
@@ -349,6 +352,14 @@ export function CreateRoomForm({ billing }: { billing: BillingInfo }) {
         </button>
       )}
 
+
+      {!hasFamily && (
+        <div className="space-y-1">
+          <label htmlFor="family-nick" className="block text-sm font-semibold text-[#fff6dc]/85">Apodo de la familia <span className="font-normal text-[#fff6dc]/50">(opcional)</span></label>
+          <input id="family-nick" value={familyName} maxLength={30} autoComplete="off" placeholder="Los Estrella" onChange={(e) => setFamilyName(e.target.value)}
+            className="min-h-11 w-full rounded-2xl border border-white/15 bg-[#120822] px-4 text-base text-[#fff6dc] placeholder:text-[#fff6dc]/30 focus:border-[#f6d77a] focus:outline-none" />
+        </div>
+      )}
 
       <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
