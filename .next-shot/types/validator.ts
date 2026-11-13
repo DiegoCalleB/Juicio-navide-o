@@ -362,6 +362,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/ideas-elfo/[noche]/imagen/route.tsx
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/ideas-elfo/[noche]/imagen">> = Specific
+  const handler = {} as typeof import("../../app/ideas-elfo/[noche]/imagen/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/paje/[token]/manifest.webmanifest/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/paje/[token]/manifest.webmanifest">> = Specific

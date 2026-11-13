@@ -14,14 +14,14 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   // Página principal
   await page.goto(BASE + '/ideas-elfo', { waitUntil: 'networkidle', timeout: 120000 });
-  check('título principal con las 24 trastadas', await page.getByRole('heading', { level: 1 }).filter({ hasText: '24 trastadas del elfo travieso' }).isVisible());
+  check('título principal con las 24 trastadas', await page.getByRole('heading', { level: 1 }).filter({ hasText: '24 mejores trastadas del elfo travieso' }).isVisible());
   check('hay 24 noches con idea y mensaje', (await page.locator('article[id^=noche-]').count()) === 24 && (await page.locator('blockquote').count()) === 24);
   check('los mensajes usan [nombre] y no quedan marcas sin rellenar', !/\{child\}|\{elf\}|\{o\}|\{el\}/.test(await page.locator('body').innerText()) && /\[nombre\]/.test(await page.locator('body').innerText()));
   check('no usa marcas registradas de terceros', !/elf on the shelf/i.test(await page.locator('body').innerText().then((t) => t.replace(/no está afiliada[^.]*\./i, ''))));
   check('hay un enlace a cada noche', (await page.locator('a[href^="/ideas-elfo/"]').count()) >= 24);
 
   // SEO
-  check('título de la pestaña descriptivo', /24 trastadas del elfo travieso/.test(await page.title()));
+  check('título de la pestaña descriptivo', /24 mejores trastadas del elfo travieso/.test(await page.title()));
   check('descripción', ((await meta(page, 'meta[name=description]')) ?? '').length > 80);
   check('canonical', /\/ideas-elfo$/.test((await meta(page, 'link[rel=canonical]')) ?? ''));
   check('Open Graph: título, descripción e imagen', !!(await meta(page, 'meta[property="og:title"]')) && !!(await meta(page, 'meta[property="og:description"]')) && !!(await meta(page, 'meta[property="og:image"]')));
@@ -47,8 +47,9 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   // Una noche concreta
   await page.goto(BASE + '/ideas-elfo/3', { waitUntil: 'networkidle' });
-  check('noche 3: título con su idea', await page.getByRole('heading', { level: 1 }).filter({ hasText: /nevera/i }).isVisible());
-  check('noche 3: mensaje del elfo', (await page.locator('blockquote').count()) === 1 && /nevera|calorcito|Brrr/i.test(await page.locator('blockquote').innerText()));
+  check('noche 3: título con gracia', await page.getByRole('heading', { level: 1 }).filter({ hasText: /Spa de nubes/i }).isVisible());
+  check('noche 3: paso a paso, ficha y por qué funciona', (await page.locator('#como + ol li').count()) >= 3 && await page.getByText(/min$/).first().isVisible() && await page.getByText(/jacuzzi de nubes/).isVisible());
+  check('noche 3: mensaje del elfo', (await page.locator('blockquote').count()) === 1 && /nubes/i.test(await page.locator('blockquote').innerText()));
   check('noche 3: título de la pestaña y canonical propios', /^Noche 3 del elfo travieso/.test(await page.title()) && /\/ideas-elfo\/3$/.test((await meta(page, 'link[rel=canonical]')) ?? ''));
   check('noche 3: navegación a la anterior y la siguiente', await page.getByRole('link', { name: '← Noche 2' }).isVisible() && await page.getByRole('link', { name: 'Noche 4 →' }).isVisible());
   const ogNight = local(await meta(page, 'meta[property="og:image"]'));
@@ -57,6 +58,16 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('la imagen de la noche es distinta de la principal', ogNight !== ogMain);
   const wa3 = decodeURIComponent((await page.locator('a[href^="https://wa.me/"]').first().getAttribute('href')) ?? '');
   check('noche 3: WhatsApp comparte su propia dirección', /\/ideas-elfo\/3\?utm_source=whatsapp/.test(wa3), wa3.slice(0, 140));
+  const pin = decodeURIComponent((await page.locator('a[href^="https://www.pinterest.com/pin/create/"]').first().getAttribute('href')) ?? '');
+  check('noche 3: Pinterest con su imagen vertical, su enlace y etiquetas', /media=http.*\/ideas-elfo\/3\/imagen/.test(pin) && /url=http.*\/ideas-elfo\/3\?utm_source=pinterest/.test(pin) && /#TrastadasDelElfo/.test(pin), pin.slice(0, 160));
+  const others = await Promise.all(['facebook.com/sharer', 'twitter.com/intent', 't.me/share'].map(async (h) => decodeURIComponent((await page.locator(`a[href*="${h}"]`).first().getAttribute('href')) ?? '')));
+  check('noche 3: Facebook, X y Telegram con utm propio', /utm_source=facebook/.test(others[0]) && /utm_source=x/.test(others[1]) && /utm_source=telegram/.test(others[2]));
+  const vert = await fetch(BASE + '/ideas-elfo/3/imagen');
+  const vbuf = Buffer.from(await vert.arrayBuffer());
+  check('imagen vertical para Pinterest/Instagram: PNG 1000x1500', vert.status === 200 && /image\/png/.test(vert.headers.get('content-type') ?? '') && vbuf.readUInt32BE(16) === 1000 && vbuf.readUInt32BE(20) === 1500);
+  const dl = await fetch(BASE + '/ideas-elfo/3/imagen?descargar=1');
+  check('"Guardar imagen" la descarga como archivo', /attachment; filename="trastada-elfo-3\.png"/.test(dl.headers.get('content-disposition') ?? '') && await page.getByRole('link', { name: 'Guardar imagen' }).isVisible());
+  check('imagen de una trastada que no existe → 404', (await fetch(BASE + '/ideas-elfo/25/imagen')).status === 404);
   check('la primera noche no tiene "anterior" y la última no tiene "siguiente"', await (async () => {
     await page.goto(BASE + '/ideas-elfo/1', { waitUntil: 'networkidle' });
     const a = (await page.getByRole('link', { name: /← Noche/ }).count()) === 0;

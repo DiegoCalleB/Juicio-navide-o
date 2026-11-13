@@ -1,11 +1,1 @@
-{
-  "version": 4,
-  "routes": {},
-  "dynamicRoutes": {},
-  "notFoundRoutes": [],
-  "preview": {
-    "previewModeId": "7bffe7078a2b9bf5ae30082b46ef12ce",
-    "previewModeSigningKey": "2ad7ed21d0930c16273bbb83e0c4f4e1692f18118a78e2df1f90a7c8111e391b",
-    "previewModeEncryptionKey": "eae1f209c8513a75e6f49286c91c6ed678b2213ec62ee95537ca348a5cecc5f7"
-  }
-}
+{"version":4,"routes":{"/ideas-elfo/1":{},"/ideas-elfo/2":{},"/ideas-elfo/3":{},"/ideas-elfo/4":{},"/ideas-elfo/5":{},"/ideas-elfo/6":{},"/ideas-elfo/7":{},"/ideas-elfo/8":{},"/ideas-elfo/9":{},"/ideas-elfo/10":{},"/ideas-elfo/11":{},"/ideas-elfo/12":{},"/ideas-elfo/13":{},"/ideas-elfo/14":{},"/ideas-elfo/15":{},"/ideas-elfo/16":{},"/ideas-elfo/17":{},"/ideas-elfo/18":{},"/ideas-elfo/19":{},"/ideas-elfo/20":{},"/ideas-elfo/21":{},"/ideas-elfo/22":{},"/ideas-elfo/23":{},"/ideas-elfo/24":{}},"dynamicRoutes":{"/ideas-elfo/[noche]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/ideas-elfo/[noche]","routeRegex":"^\\/ideas\\-elfo\\/([^/]+?)(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"27d9105633b8fc6ad615eb47a019b493","previewModeSigningKey":"36f776805b6a454ac0d783d944a0684b60397e216257975dfa783b7496a9e9d0","previewModeEncryptionKey":"32965fda802851a9d161ae825517aa2983895e33cbc95b6735087c5a802d496a"}}

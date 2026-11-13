@@ -167,3 +167,11 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Panel de padres: ventana de 4xl centrada con tarjetas de preparativos en dos columnas. Familia: salas en dos columnas (centrada si hay una). Sala del peque: marco de móvil centrado.
 - Prueba `desktop`: sin desbordes horizontales a 1440, 1024, 768 y 390 px en 7 pantallas.
 - Pendiente: lista de personajes del formulario en rejilla en escritorio; probar en un ordenador real con pantalla muy ancha (>1920 px) y en Safari.
+
+## Las 24 trastadas (versión viral)
+
+- Reescritas con los clásicos que más se repiten en internet (tirolina, pesca en el váter, láseres de lana, bigotes en las fotos, nevera con ojos, puerta envuelta, leche verde…), adaptadas a seguras y baratas. No hay un ranking oficial de "las más virales": es una selección editorial.
+- Cada una: título con gracia, paso a paso, material, minutos, nivel de lío, "por qué arrasa" y mensaje del elfo. El panel de padres usa la misma fuente.
+- Compartir: menú nativo con la imagen (Instagram, TikTok, estados), WhatsApp, Pinterest (con imagen vertical), Facebook, X, Telegram, copiar enlace y guardar imagen. Todo con utm_source. Etiqueta #TrastadasDelElfo.
+- Imagen vertical 1000x1500 por trastada: `/ideas-elfo/N/imagen` (`?descargar=1` para bajarla).
+- Ideas siguientes: compartir la foto real de la trastada desde el panel (sin la cara del peque), un reto en redes con premio, y medir en analítica qué red trae más visitas.

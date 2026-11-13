@@ -42,7 +42,8 @@ export function IdeasList({ character, selectedDay, onPick, onClose }: Props) {
                 <span className="font-bold text-[#5eead4]">Día {day.day}</span>
                 <span>{dateOf(day.day)}</span>
               </div>
-              <p className="mt-1 text-[14px] leading-snug text-[#e8f1ff]">{day.idea}</p>
+              <p className="mt-1 text-[15px] font-bold leading-snug text-[#e8f1ff]">{day.title}</p>
+              <p className="mt-0.5 text-[13.5px] leading-snug text-[#e8f1ff]/80">{day.idea} <span className="text-[#e8f1ff]/50">· {day.minutes} min · {day.need}</span></p>
               <button
                 type="button"
                 onClick={() => {
