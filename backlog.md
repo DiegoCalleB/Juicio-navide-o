@@ -175,3 +175,4 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Compartir: menú nativo con la imagen (Instagram, TikTok, estados), WhatsApp, Pinterest (con imagen vertical), Facebook, X, Telegram, copiar enlace y guardar imagen. Todo con utm_source. Etiqueta #TrastadasDelElfo.
 - Imagen vertical 1000x1500 por trastada: `/ideas-elfo/N/imagen` (`?descargar=1` para bajarla).
 - Ideas siguientes: compartir la foto real de la trastada desde el panel (sin la cara del peque), un reto en redes con premio, y medir en analítica qué red trae más visitas.
+- 15 trastadas exprés ("sin tiempo / se me olvidó"): página `/ideas-elfo/sin-tiempo` con chuleta vertical para Pinterest (`/ideas-elfo/sin-tiempo/imagen`) y pestaña "⚡ Sin tiempo" en el panel de padres que rellena el mensaje.

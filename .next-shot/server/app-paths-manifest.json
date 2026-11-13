@@ -1,7 +1,3 @@
 {
-  "/ideas-elfo/[noche]/imagen/route": "app/ideas-elfo/[noche]/imagen/route.js",
-  "/icon.svg/route": "app/icon.svg/route.js",
-  "/privacidad/page": "app/privacidad/page.js",
-  "/ideas-elfo/[noche]/page": "app/ideas-elfo/[noche]/page.js",
-  "/ideas-elfo/page": "app/ideas-elfo/page.js"
+  "/ideas-elfo/sin-tiempo/imagen/route": "app/ideas-elfo/sin-tiempo/imagen/route.js"
 }

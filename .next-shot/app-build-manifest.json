@@ -1,45 +1,9 @@
 {
   "pages": {
-    "/layout": [
+    "/ideas-elfo/sin-tiempo/imagen/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
-    ],
-    "/error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/error.js"
-    ],
-    "/loading": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/loading.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
-    ],
-    "/privacidad/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/privacidad/page.js"
-    ],
-    "/ideas-elfo/[noche]/imagen/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/ideas-elfo/[noche]/imagen/route.js"
-    ],
-    "/ideas-elfo/[noche]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/ideas-elfo/[noche]/page.js"
-    ],
-    "/ideas-elfo/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/ideas-elfo/page.js"
+      "static/chunks/app/ideas-elfo/sin-tiempo/imagen/route.js"
     ]
   }
 }

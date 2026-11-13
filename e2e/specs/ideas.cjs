@@ -97,6 +97,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('robots: permite /ideas-elfo y sigue bloqueando las salas', /Allow: \/ideas-elfo/.test(robots) && /Disallow: \/paje\//.test(robots));
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
+  // Trastadas exprés (sin tiempo / se me olvidó)
+  check('mapa del sitio: incluye la página "sin tiempo"', /\/ideas-elfo\/sin-tiempo</.test(sm));
+  await page.goto(BASE + '/ideas-elfo', { waitUntil: 'networkidle' });
+  await page.getByRole('link', { name: /Se te ha olvidado mover el elfo/ }).click();
+  await page.waitForURL(/\/ideas-elfo\/sin-tiempo$/);
+  check('sin tiempo: se llega desde la lista de las 24', true);
+  check('sin tiempo: 15 trastadas exprés, cada una con su mensaje', (await page.locator('ol[aria-label="Trastadas exprés"] > li').count()) === 15 && (await page.locator('blockquote').count()) === 15);
+  check('sin tiempo: título propio', /^15 trastadas del elfo para cuando no hay tiempo/.test(await page.title()));
+  const pinQ = decodeURIComponent((await page.locator('a[href^="https://www.pinterest.com/pin/create/"]').first().getAttribute('href')) ?? '');
+  check('sin tiempo: Pinterest con su chuleta vertical', /media=http.*\/ideas-elfo\/sin-tiempo\/imagen/.test(pinQ));
+  const ch = await fetch(BASE + '/ideas-elfo/sin-tiempo/imagen');
+  const cb = Buffer.from(await ch.arrayBuffer());
+  check('sin tiempo: chuleta PNG 1000x1500', ch.status === 200 && cb.readUInt32BE(16) === 1000 && cb.readUInt32BE(20) === 1500);
+  const ogQ = await meta(page, 'meta[property="og:image"]');
+  check('sin tiempo: vista previa propia', /sin-tiempo\/opengraph-image/.test(ogQ ?? ''), ogQ);
+
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
   await b.close();
   process.exit(results.every(Boolean) ? 0 : 1);

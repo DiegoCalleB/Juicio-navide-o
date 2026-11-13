@@ -40,3 +40,17 @@ export const MESS_LABEL: Record<1 | 2 | 3, string> = { 1: 'Poco lío', 2: 'Algo 
 
 /** Etiquetas para redes. */
 export const ELF_HASHTAGS = '#ElfoTravieso #TrastadasDelElfo #Navidad';
+
+export interface QuickNight {
+  id: string;
+  title: string;
+  how: string;
+  joke: string;
+  message: string;
+}
+
+/** Las 15 trastadas exprés (sin tiempo, sin ganas o se ha olvidado). */
+export function elfQuick(): QuickNight[] {
+  const elf = resolveCharacter(CHARACTERS.duende_chispa, { alias: 'Chispa', gender: 'm', locale: 'es' });
+  return (elf.mischief?.quick ?? []).map((q) => ({ id: q.id, title: q.title, how: q.how, joke: q.joke, message: fillChild(q.suggestion, '[nombre]') }));
+}

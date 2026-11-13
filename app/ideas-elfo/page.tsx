@@ -88,6 +88,15 @@ export default function IdeasElfoPage() {
           </div>
         </header>
 
+        <Link href="/ideas-elfo/sin-tiempo" className="mt-6 flex items-center gap-3 rounded-2xl border border-[#f6d77a]/50 bg-[#f6d77a]/[.08] p-4 active:scale-[0.99]">
+          <span aria-hidden className="text-3xl">⚡</span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-[#f6d77a]">¿Se te ha olvidado mover el elfo?</span>
+            <span className="block text-[13.5px] text-[#fff6dc]/75">15 trastadas de emergencia en menos de un minuto, sin material.</span>
+          </span>
+          <span aria-hidden className="text-[#f6d77a]">→</span>
+        </Link>
+
         <section aria-labelledby="como" className="mt-8 rounded-3xl border border-white/10 bg-white/[.04] p-5">
           <h2 id="como" className="font-serif text-2xl text-[#f6d77a]">Cómo usar esta lista</h2>
           <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[15px] leading-relaxed text-[#fff6dc]/80">

@@ -83,6 +83,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/ideas-elfo/sin-tiempo/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/ideas-elfo/sin-tiempo">> = Specific
+  const handler = {} as typeof import("../../app/ideas-elfo/sin-tiempo/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
@@ -366,6 +375,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/ideas-elfo/[noche]/imagen">> = Specific
   const handler = {} as typeof import("../../app/ideas-elfo/[noche]/imagen/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/ideas-elfo/sin-tiempo/imagen/route.tsx
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/ideas-elfo/sin-tiempo/imagen">> = Specific
+  const handler = {} as typeof import("../../app/ideas-elfo/sin-tiempo/imagen/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

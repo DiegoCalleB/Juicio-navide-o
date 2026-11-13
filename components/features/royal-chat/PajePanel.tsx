@@ -99,7 +99,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
   const [planner, setPlanner] = useState(false);
-  const [ideasOpen, setIdeasOpen] = useState(false);
+  const [ideasOpen, setIdeasOpen] = useState<boolean | 'quick'>(false);
   /** Idea de travesura elegida a mano (si no, la de hoy). */
   const [pickedDay, setPickedDay] = useState<number | null>(null);
   /** Programar para otro momento (fecha y hora a elegir). */
@@ -696,14 +696,17 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               <p className="font-semibold text-[#5eead4]">🧝 Idea de travesura · día {todayMischief.day}</p>
               <p className="mt-1 text-[#e8f1ff]/80"><strong className="font-semibold">Monta esta noche:</strong> {todayMischief.idea}</p>
               <p className="mt-1 text-[12px] text-[#e8f1ff]/55">Después haz una foto, escribe lo que quieras y prográmalo para la mañana.</p>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setIdeasOpen(true)} className="min-h-10 flex-1 rounded-xl border border-white/20 font-semibold text-[#e8f1ff]/85 active:scale-[0.98]">
                   Otras ideas
+                </button>
+                <button type="button" onClick={() => setIdeasOpen('quick')} className="min-h-10 flex-1 rounded-xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.98]">
+                  ⚡ Sin tiempo
                 </button>
                 <button
                   type="button"
                   onClick={() => setText(fillChild(todayMischief.suggestion, childName).slice(0, MAX_CHARS))}
-                  className="min-h-10 flex-1 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
+                  className="col-span-2 min-h-10 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
                 >
                   Ver una sugerencia de mensaje
                 </button>
@@ -939,7 +942,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         </footer>
         )}
 
-        {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onClose={() => setIdeasOpen(false)} />}
+        {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onUseText={(t) => setText(fillChild(t, childName).slice(0, MAX_CHARS))} initialTab={ideasOpen === 'quick' ? 'quick' : 'nights'} onClose={() => setIdeasOpen(false)} />}
 
         {planner && (
           <SchedulePlanner

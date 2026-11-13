@@ -66,10 +66,23 @@ export interface MischiefDay {
   suggestion: string;
 }
 
+/** Trastada exprés: para cuando no hay tiempo, ni ganas, o se ha olvidado. */
+export interface QuickMischief {
+  id: string;
+  title: string;
+  /** Qué hacer (segundos). */
+  how: string;
+  /** Por qué funciona, en broma. */
+  joke: string;
+  suggestion: string;
+}
+
 export interface MischiefCalendar {
   /** Día en que empieza ("MM-DD"). */
   startDate: string;
   days: MischiefDay[];
+  /** Trastadas exprés (sin tiempo, sin ganas o se olvidó). */
+  quick: QuickMischief[];
 }
 
 export interface CharacterProfile {
@@ -521,6 +534,23 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
     ],
     mischief: {
       startDate: '12-01',
+      quick: [
+        { id: "dormido", title: "Se ha quedado dormido", how: "No lo muevas: tápalo con una servilleta o un pañuelo, como si fuera una manta.", joke: "La excusa perfecta para el día que se te olvidó. Literalmente no has hecho nada y aun así cuenta.", suggestion: "¡Buaaa! Perdona, {child}: anoche estaba tan cansad{o} de tanta travesura que me quedé dormid{o} aquí mismo. ¿He roncado mucho?" },
+        { id: "huelga", title: "Elfo en huelga", how: "Un papelito al lado que diga: «EN HUELGA. Pido más galletas».", joke: "Un cartel y listo. Y además te sirve para negociar el desayuno.", suggestion: "Hoy estoy en huelga, {child}. Mis peticiones: una galleta, un abrazo y un dibujo. Cuando las cumplas, vuelvo a hacer trastadas." },
+        { id: "resfriado", title: "Resfriado polar", how: "Déjalo donde esté con un pañuelo de papel arrugado al lado.", joke: "Hasta los elfos se ponen malitos. Tu peque se pasará el día cuidándolo (y tú, tan tranquilo).", suggestion: "¡Achís! Creo que me he resfriado con tanto frío, {child}. Hoy me quedo quiet{o}. ¿Me cuidas un poquito?" },
+        { id: "libro", title: "Leyendo a escondidas", how: "Ponle delante el primer libro o cuento que pilles, abierto.", joke: "Cero preparación, y de paso le haces publicidad a la lectura.", suggestion: "Anoche encontré este libro y no pude parar de leer, {child}. ¿Me cuentas tú cómo termina?" },
+        { id: "peluche", title: "Abrazo de peluche", how: "Siéntalo abrazado al peluche que tengas más cerca.", joke: "Lo más tierno del mes en tres segundos.", suggestion: "Esta noche hacía frío y tu peluche me ha dado un abrazo enorme, {child}. Ya somos mejores amigos." },
+        { id: "galleta", title: "Pillado con la galleta", how: "Ponle una galleta, un cereal o una miga en la mano.", joke: "El clásico «yo no he sido» con las pruebas en la mano.", suggestion: "Yo no he sido, {child}. Esta galleta ya estaba en mi mano cuando me desperté. Qué misterio, ¿verdad?" },
+        { id: "calcetin", title: "Atrapado en un calcetín", how: "Mételo en un calcetín (limpio, por favor) con la cabeza fuera.", joke: "Calcetín más elfo igual a carcajada asegurada. Matemáticas navideñas.", suggestion: "Me metí en tu calcetín para estar calentit{o} y ahora no sé salir, {child}. ¿Me rescatas?" },
+        { id: "bocabajo", title: "Boca abajo", how: "Déjalo en el mismo sitio, pero dado la vuelta.", joke: "Dos segundos de trabajo. Y lo vende como si fuera un número de circo.", suggestion: "¡Mira, {child}! Hoy he aprendido a hacer el pino. Llevo así toda la noche. Creo que ya veo las cosas al revés." },
+        { id: "desayuno", title: "Te espera en el desayuno", how: "Siéntalo junto a su taza o su bol, con una cuchara.", joke: "Lo pones mientras haces el café. Nadie sabrá que fue a las 7:58.", suggestion: "¡Buenos días, {child}! Te he guardado el sitio en el desayuno. Yo ya he desayunado: tres migas y una gota de leche." },
+        { id: "zapato", title: "Dentro de una zapatilla", how: "Mételo en una de sus zapatillas o zapatos.", joke: "Se lo encontrará al calzarse. Sorpresa garantizada y cero esfuerzo.", suggestion: "¡Sorpresa, {child}! Me he escondido en tu zapatilla. Huele a aventuras. Bueno… y un poco a pie." },
+        { id: "ventana", title: "Esperando la nieve", how: "Ponlo en la ventana, mirando hacia fuera.", joke: "Poético, sencillo y válido para cualquier día. Ni siquiera hace falta que nieve.", suggestion: "Me he pasado la noche mirando por la ventana, {child}, a ver si nevaba. ¿Tú crees que nevará esta Navidad?" },
+        { id: "capa", title: "Superelfo", how: "Átale una servilleta o un trocito de tela al cuello, como una capa.", joke: "Con capa, cualquier día se convierte en una película de superhéroes.", suggestion: "¡Ta-chán! Soy Superelf{o}, {child}. Mis superpoderes: hacer trastadas y comer galletas a la velocidad de la luz." },
+        { id: "escondite", title: "El escondite más fácil del mundo", how: "No lo muevas y deja una nota: «Hoy no me he escondido. ¿Me has encontrado igual?».", joke: "La trampa perfecta: es tan obvio que nadie lo busca ahí.", suggestion: "¡Te he engañado, {child}! Hoy me he quedado en el mismo sitio y seguro que me has buscado por toda la casa. Ji, ji, ji." },
+        { id: "nota", title: "Una nota y nada más", how: "Escribe en un papel «Vuelvo enseguida. Firmado: {elf}» y déjalo donde estaba.", joke: "Para la mañana de pánico: el elfo también tiene recados.", suggestion: "Esta mañana he tenido que ir corriendo al Polo Norte a por más purpurina, {child}. ¡Vuelvo esta noche con una trastada gorda!" },
+        { id: "selfie", title: "Foto con su peque", how: "Hazle una foto al elfo junto a su foto (o un dibujo suyo) y mándasela por el chat.", joke: "Con Línea Mágica ni lo tocas: el elfo escribe y manda la foto mientras tú desayunas.", suggestion: "Mira, {child}: anoche me hice una foto contigo. ¿A que salimos guapísimos? Me la quedo de recuerdo." },
+      ],
       days: [
         { day: 1, title: "Ha aterrizado un elfo (y trae pasaporte)", idea: "Siéntalo junto a una maleta pequeña y su pasaporte del Polo Norte.", steps: ["Haz una maleta con una cajita y un trozo de cinta.", "Dibuja un pasaporte en un papel: foto del elfo, nombre y «Destino: casa de [nombre]».", "Déjalo todo donde tu peque desayuna."], need: "Una cajita, papel y un boli", minutes: 5, mess: 1, why: "Primera impresión: un elfo con los papeles en regla es mucho más creíble que uno indocumentado.", suggestion: "¡Hola, {child}! Anoche aterricé desde el Polo Norte y he pasado la aduana con mi pasaporte. Me llamo {elf}, me encantan las travesuras y cada mañana estaré en un sitio distinto. ¿Me buscas?" },
         { day: 2, title: "Tirolina por el salón", idea: "Colgado de una cuerda tendida entre dos sillas, como si cruzara el salón volando.", steps: ["Ata un cordel o lana entre dos sillas (o del pomo de una puerta a una silla), bien tenso y a poca altura.", "Cuelga al elfo con una pinza de la ropa o una percha pequeña.", "Ponle los brazos hacia arriba: parece que va a toda velocidad."], need: "Un cordel o lana y una pinza", minutes: 5, mess: 1, why: "El clásico absoluto de internet: parece que ha volado por tu casa y solo has gastado un trozo de cuerda.", suggestion: "¡Wiiiii! ¡He cruzado el salón en tirolina, {child}! Iba tan rápid{o} que casi me como la lámpara. ¿Mañana me cronometras?" },

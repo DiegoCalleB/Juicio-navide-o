@@ -87,6 +87,8 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
           </aside>
         </div>
 
+        <p className="mt-6 text-center text-[14px] text-[#fff6dc]/70">¿Hoy no te da la vida? <Link href="/ideas-elfo/sin-tiempo" className="font-semibold text-[#f6d77a] underline underline-offset-2">⚡ 15 trastadas en menos de un minuto</Link></p>
+
         <section className="mt-7 rounded-3xl border-2 border-[#f6d77a]/60 bg-gradient-to-b from-[#f6d77a]/[.13] to-transparent p-5 text-center">
           <p className="font-serif text-xl">Que el elfo se lo escriba de verdad</p>
           <p className="mx-auto mt-1.5 max-w-sm text-[14.5px] text-[#fff6dc]/75">Tu peque recibe este mensaje en su chat, con la foto de la trastada, y tú contestas como el elfo sin que se entere.</p>
