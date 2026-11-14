@@ -44,8 +44,21 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
     } catch (e) { console.log('   ' + e.message.split('\n')[0]); return false; }
   };
   await parent.screenshot({ path: S + '/me2b-parent-photo-menu-open.png' });
-  check('padres: tocar "Hacer una foto" abre la cámara de verdad', await realPick(parent, 'Adjuntar una foto', /Hacer una foto/, FIX + '/foto-padres.png'));
+  // "Hacer una foto" abre la cámara DENTRO de la web (en Android, saltar a la app de cámara puede cerrar Chrome por memoria)
+  await parent.getByRole('menuitem', { name: /Hacer una foto/ }).click();
+  const camOpen = await parent.getByRole('dialog', { name: 'Cámara' }).waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const camLive = camOpen && (await parent.waitForFunction(() => { const v = document.querySelector('[data-testid=in-app-camera]'); return v && v.videoWidth > 0; }, null, { timeout: 10000 }).then(() => true, () => false));
+  check('padres: "Hacer una foto" abre la cámara dentro de la web', camOpen && camLive);
+  await parent.screenshot({ path: S + '/me2c-in-app-camera.png' });
+  if (camLive) await parent.getByRole('button', { name: 'Hacer la foto' }).click();
+  check('padres: la foto hecha con la cámara de la web queda lista', camLive && (await parent.getByText('Foto lista').waitFor({ timeout: 10000 }).then(() => true, () => false)));
+  check('la cámara se apaga al hacer la foto', (await parent.getByRole('dialog', { name: 'Cámara' }).count()) === 0);
   await parent.getByRole('button', { name: 'Quitar la foto' }).click().catch(() => undefined);
+  // Cancelar cierra sin adjuntar nada
+  await parent.getByRole('button', { name: 'Adjuntar una foto' }).click();
+  await parent.getByRole('menuitem', { name: /Hacer una foto/ }).click();
+  await parent.getByRole('button', { name: 'Cancelar' }).click();
+  check('Cancelar cierra la cámara sin adjuntar foto', (await parent.getByRole('dialog', { name: 'Cámara' }).count()) === 0 && (await parent.getByText('Foto lista').count()) === 0);
   check('padres: tocar "Elegir una foto" abre la galería de verdad', await realPick(parent, 'Adjuntar una foto', /Elegir una foto/, FIX + '/foto-padres.png'));
   await parent.getByRole('button', { name: 'Quitar la foto' }).click().catch(() => undefined);
   check('niño: tocar "Elegir una foto" abre la galería de verdad', await realPick(child, 'Enviar una foto', /Elegir una foto/, FIX + '/foto-nino.jpg'));
