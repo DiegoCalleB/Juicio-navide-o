@@ -142,6 +142,8 @@ export interface RoomStore {
   sumVoiceCharsSince(sinceIso: string): Promise<number>;
   uploadFile(bucket: Bucket, path: string, data: Buffer, contentType: string): Promise<void>;
   signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>>;
+  /** ¿Existe ya este archivo? (para reutilizar audios generados, como el saludo). */
+  fileExists(bucket: Bucket, path: string): Promise<boolean>;
   /** Borra salas caducadas (y sus mensajes y archivos). */
   deleteExpired(nowIso: string): Promise<{ rooms: number; files: number }>;
 

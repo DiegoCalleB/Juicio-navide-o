@@ -17,7 +17,7 @@ export default async function PrivacidadPage() {
       <LegalSection title="Qué datos guardamos">
         <ul className="list-disc space-y-1 pl-5">
           <li>El nombre de pila del niño (nunca apellidos) y el personaje elegido.</li>
-          <li>Los mensajes escritos, los audios del niño y las fotos (y, solo si algún día se activa, las respuestas con voz del personaje).</li>
+          <li>Los mensajes escritos, los audios del niño, las fotos y las notas de voz del personaje (también el saludo inicial con el nombre del niño).</li>
           <li>Si los padres lo ponen, un apodo de la familia (no hace falta apellido), que solo se ve dentro de su página de familia.</li>
           <li>Si los padres lo indican, si el niño ya lee (para mostrarle el texto en mayúsculas y dar consejos a los padres).</li>
           <li>{r('Un identificador técnico anónimo (hash) para limitar abusos y el número de pruebas gratis por móvil. No es reversible.')}</li>
@@ -28,7 +28,7 @@ export default async function PrivacidadPage() {
       </LegalSection>
 
       <LegalSection title="Servicios que intervienen">
-        <p>Alojamos los datos en Supabase y el servicio en Railway. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Si se activa la voz del personaje, el texto de la respuesta se envía a ElevenLabs para convertirlo en audio; no se envían nombres ni datos del niño más allá de lo que los padres escriban en ese mensaje.</p>
+        <p>Alojamos los datos en Supabase y el servicio en Railway. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Para la voz del personaje usamos ElevenLabs, que convierte texto en audio con inteligencia artificial: le enviamos el texto de los mensajes que los padres eligen mandar con voz y, para el saludo inicial, solo el nombre de pila del niño. No le enviamos ningún otro dato. Los audios se guardan con el resto de la sala y se borran con ella.</p>
       </LegalSection>
 
       <LegalSection title="Quién puede verlo">

@@ -278,6 +278,10 @@ export class MemoryRoomStore implements RoomStore {
     state().files.set(`${bucket}/${path}`, { data, contentType });
   }
 
+  async fileExists(bucket: Bucket, path: string): Promise<boolean> {
+    return state().files.has(`${bucket}/${path}`);
+  }
+
   async signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {
     return new Map(paths.map((p) => [p, `/api/dev-media/${bucket}/${p}`]));
   }

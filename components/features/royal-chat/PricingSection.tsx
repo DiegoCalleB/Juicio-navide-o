@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { loadPass, startCheckout } from '@/lib/myPass';
 import type { BillingInfo } from './PassOffer';
+import { KING_VOICE_ENABLED } from '@/lib/features';
 
 /**
  * "Elige cómo empezar": la prueba gratis y el Pase de Navidad, uno al lado del otro, explicados.
@@ -43,6 +44,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
             <li>✓ 3 días para probarlo con vuestros peques</li>
             <li>✓ Una sala por cada peque (hasta 5)</li>
             <li>✓ Mensajes y fotos, sin registrarte</li>
+            {KING_VOICE_ENABLED && <li>✓ 🎙️ Le saluda por su nombre y 3 mensajes con voz</li>}
           </ul>
           <a href="#crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] hover:bg-white/5 active:scale-[0.98] lg:mt-auto">
             Empezar gratis
@@ -61,6 +63,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
           </p>
           <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/85">
             <li>✓ La magia sigue hasta el 20 de enero</li>
+            {KING_VOICE_ENABLED && <li>✓ 🎙️ El personaje le habla con su voz en cada mensaje</li>}
             <li>✓ Todos los peques y todos los personajes (hasta 10 salas)</li>
             <li>✓ 🎁 Incluye un pase para regalar a otra familia</li>
             <li>✓ Se activa al momento, sin esperas</li>

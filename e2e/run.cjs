@@ -37,7 +37,9 @@ const env = {
   NEXT_DIST_DIR: '.next-e2e',
   ...(nowArg ? { STRIPE_FAKE: '1', FAKE_NOW: nowArg, STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
   ...(withBilling ? { STRIPE_FAKE: '1', TRIAL_TEST_SECONDS: '45', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
-  ...(withVoice ? { NEXT_PUBLIC_ENABLE_VOICE: '1', VOICE_ROOM_DAILY_LIMIT: '2', NODE_USE_ENV_PROXY: '1' } : {}),
+  // Sin --voice, la voz va apagada (no gasta créditos). Con --voice: voz real, en modo prueba gratis (Stripe simulado).
+  NEXT_PUBLIC_ENABLE_VOICE: withVoice ? '1' : '0',
+  ...(withVoice ? { VOICE_ROOM_DAILY_LIMIT: '5', NODE_USE_ENV_PROXY: '1', STRIPE_FAKE: '1', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
 };
 
 async function waitReady() {

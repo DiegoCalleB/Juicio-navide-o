@@ -5,7 +5,7 @@ import { vibrate } from '@/lib/haptics';
 import { fillChild, type CharacterProfile } from '@/lib/characters';
 import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
-import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
+import { REPLY_DELAYS, TRIAL_VOICE_MESSAGES, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
@@ -232,6 +232,32 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
   };
 
+  const [previewing, setPreviewing] = useState(false);
+  const previewAudio = useRef<HTMLAudioElement | null>(null);
+  /** Escuchar antes de enviar: lo que suena aquí es exactamente lo que recibirá el niño. */
+  const preview = async () => {
+    if (!text.trim() || previewing) return;
+    setPreviewing(true);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/rooms/${token}/voice-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.trim() }) });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as ApiResult<null> | null;
+        throw new Error(j?.error?.message ?? 'No se pudo preparar la voz.');
+      }
+      const url = URL.createObjectURL(await res.blob());
+      previewAudio.current?.pause();
+      const a = new Audio(url);
+      previewAudio.current = a;
+      a.onended = () => URL.revokeObjectURL(url);
+      await a.play().catch(() => undefined);
+    } catch (err) {
+      setNotice({ tone: 'warn', msg: err instanceof Error ? err.message : 'No se pudo preparar la voz.' });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const canSend = (text.trim().length > 0 || photo !== null) && !sending;
 
   const send = async () => {
@@ -260,10 +286,10 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         res = await fetch(`/api/rooms/${token}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: KING_VOICE_ENABLED ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
+          body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: voiceAvailable ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
         });
       }
-      const json = (await res.json().catch(() => null)) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }> | null;
+      const json = (await res.json().catch(() => null)) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' | 'trial' }> | null;
       if (!json) throw new Error(res.status === 413 ? 'La foto es demasiado grande.' : `No se pudo enviar (error ${res.status}). Inténtalo de nuevo.`);
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
@@ -280,7 +306,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       if (fb) {
         setNotice({
           tone: 'warn',
-          msg: `${fb === 'limit' ? 'Se ha alcanzado el límite diario de voz' : 'La voz no está disponible ahora'}: se ha enviado por escrito. ${when}`,
+          msg: `${fb === 'trial' ? `Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba` : fb === 'limit' ? 'Se ha alcanzado el límite diario de voz' : 'La voz no está disponible ahora'}: se ha enviado por escrito. ${when}`,
         });
       } else {
         setNotice({ tone: 'ok', msg: when });
@@ -478,7 +504,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   };
 
   const activeMoment = character.moments.find((m) => m.id === momentId) ?? character.moments[0];
-  const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
+  // Prueba gratis: unos pocos mensajes con voz (el servidor también lo comprueba).
+  const voiceUsed = messages.filter((m) => m.from === 'king' && m.kind === 'voice').length;
+  const trialVoiceLeft = access.plan === 'trial' ? Math.max(0, TRIAL_VOICE_MESSAGES - voiceUsed) : null;
+  const voiceAvailable = KING_VOICE_ENABLED && !access.locked && trialVoiceLeft !== 0;
+  const voiceNow = voiceAvailable && mode === 'voice' && !photo;
 
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#12203a,#04070d)]">
@@ -853,23 +883,49 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#e8f1ff]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
-          {KING_VOICE_ENABLED && !photo && (
-            <div className="flex items-center gap-2">
-              <span className="w-14 text-[12px] text-[#e8f1ff]/60">Como</span>
-              <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
-                {(['voice', 'text'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={mode === m}
-                    onClick={() => setMode(m)}
-                    className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
-                  >
-                    {m === 'voice' ? 'Nota de voz' : 'Por escrito'}
-                  </button>
-                ))}
-              </div>
+          {KING_VOICE_ENABLED && !photo && !access.locked && (
+            <div className="space-y-1.5">
+              {trialVoiceLeft !== 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="w-14 text-[12px] text-[#e8f1ff]/60">Como</span>
+                  <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
+                    {(['voice', 'text'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        role="radio"
+                        aria-checked={mode === m}
+                        onClick={() => setMode(m)}
+                        className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
+                      >
+                        {m === 'voice' ? '🎙️ Con voz' : '✏️ Solo texto'}
+                      </button>
+                    ))}
+                  </div>
+                  {voiceNow && (
+                    <button
+                      type="button"
+                      onClick={preview}
+                      disabled={!text.trim() || previewing}
+                      className="shrink-0 rounded-xl border border-[#5eead4]/50 px-2.5 py-1.5 text-[12px] font-bold text-[#5eead4] disabled:opacity-40"
+                    >
+                      {previewing ? 'Preparando…' : '▶ Escuchar'}
+                    </button>
+                  )}
+                </div>
+              ) : null}
+              {trialVoiceLeft !== null && (
+                <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">
+                  {trialVoiceLeft > 0
+                    ? `🎙️ Prueba gratis: ${trialVoiceLeft === 1 ? 'te queda 1 mensaje' : `te quedan ${trialVoiceLeft} mensajes`} con la voz de ${short}.`
+                    : `🎙️ Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba.`}{' '}
+                  {billing?.enabled && (
+                    <button type="button" onClick={() => setOfferOpen(true)} className="font-bold underline underline-offset-2">
+                      Con el Pase, todos con voz
+                    </button>
+                  )}
+                </p>
+              )}
             </div>
           )}
 

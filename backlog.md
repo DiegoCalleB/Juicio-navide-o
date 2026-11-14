@@ -182,3 +182,11 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Generadas con Gemini (gemini-3.1-flash-image) a partir de una imagen de referencia de Chispa (elfo rojo de fieltro, delgado, sin bufanda, botas marrón oscuro). Sin texto dentro de las imágenes.
 - Archivos: `public/elfo/trastadas/1..24.jpg` (1024x768). Se muestran en la lista, la ficha, la imagen para compartir y la vista previa; la foto del chat de muestra de la portada es la de la trastada 10.
 - Pendiente (opcional): ilustraciones de las 15 trastadas "sin tiempo".
+
+## Voz de los personajes (activada el 14-nov)
+- Voces (las más usadas en castellano de la biblioteca de ElevenLabs): Papá Noel = Julio Alonso, Chispa = Johnny The Rogue, Ratoncito = Raquel; Reyes sin cambios (Luis, Antonio Lobo, Rafael). Modelo eleven_v3.
+- Padres: «Con voz / Solo texto» por mensaje (voz por defecto) y «▶ Escuchar» antes de enviar (se reutiliza el audio al enviar).
+- Prueba gratis: 3 mensajes con voz (servidor y panel). Pase: sin ese límite, con tope por sala/día (VOICE_ROOM_DAILY_LIMIT=40) y global (VOICE_DAILY_CHAR_LIMIT=20000).
+- Saludo al abrir el sello: «¡Hola, {nombre}!» generado por sala + cuerpo pregrabado (public/voces/saludo). Elfa: sin saludo hablado (la voz es de chico) → pendiente voz femenina.
+- El plan Creator de ElevenLabs no permite sobrecoste: sin créditos, todo va por escrito.
+- Pendiente: voz de elfa; notas de voz pregrabadas de las trastadas.

@@ -40,7 +40,7 @@ export function voiceIdFor(character: CharacterId): string {
 export function voiceLimits(): { dailyChars: number; roomDailyReplies: number } {
   const num = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : d);
   return {
-    dailyChars: num(process.env.VOICE_DAILY_CHAR_LIMIT, 150_000),
+    dailyChars: num(process.env.VOICE_DAILY_CHAR_LIMIT, 20_000), // ~210.000 créditos al mes en el plan Creator: que un día de mucho uso no gaste el mes
     roomDailyReplies: num(process.env.VOICE_ROOM_DAILY_LIMIT, 40),
   };
 }
@@ -54,16 +54,19 @@ export function prepareSpeechText(input: string): string {
     .trim();
 }
 
+/** Modelo: eleven_v3 (el más expresivo: risas, susurros, emoción). Se puede cambiar con ELEVENLABS_MODEL. */
+export function voiceModel(): string {
+  return process.env.ELEVENLABS_MODEL?.trim() || 'eleven_v3';
+}
+
 async function requestOnce(character: CharacterId, text: string): Promise<Response> {
+  const model = voiceModel();
+  // eleven_v3 solo admite estabilidad 0 / 0,5 / 1 y no usa style ni speaker_boost: se dejan sus valores por defecto.
+  const settings = model.startsWith('eleven_v3') ? undefined : { stability: 0.5, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true };
   return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceIdFor(character)}?output_format=mp3_44100_64`, {
     method: 'POST',
     headers: { 'xi-api-key': getElevenLabsKey(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      model_id: process.env.ELEVENLABS_MODEL?.trim() || 'eleven_multilingual_v2',
-      language_code: 'es',
-      voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true },
-    }),
+    body: JSON.stringify({ text, model_id: model, language_code: 'es', ...(settings ? { voice_settings: settings } : {}) }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   });
@@ -73,8 +76,10 @@ async function requestOnce(character: CharacterId, text: string): Promise<Respon
 export async function synthesizeKingVoice(
   character: CharacterId,
   rawText: string,
+  /** Texto propio con etiquetas de emoción ([risas], [susurra]…): no se limpia. Solo para frases internas, nunca texto de usuarios. */
+  opts?: { trusted?: boolean },
 ): Promise<{ audio: Buffer; seconds: number; spokenChars: number }> {
-  const text = prepareSpeechText(rawText);
+  const text = opts?.trusted ? rawText.trim() : prepareSpeechText(rawText);
   if (!text) throw new VoiceError('unavailable', 'texto vacío tras limpiar');
 
   let res: Response | undefined;
@@ -95,4 +100,16 @@ export async function synthesizeKingVoice(
   const audio = Buffer.from(await res.arrayBuffer());
   if (audio.length < 200) throw new VoiceError('unavailable', 'audio vacío');
   return { audio, seconds: Math.max(1, Math.round(((audio.length * 8) / BITRATE) * 10) / 10), spokenChars: text.length };
+}
+
+/**
+ * Primera frase del saludo con el nombre del niño ("¡Hola, Lucía!"). El resto del saludo está grabado
+ * una sola vez por personaje en /public/voces/saludo/. El nombre se limpia: solo letras, espacios y guiones.
+ */
+export function greetingNameLine(character: CharacterId, childName: string): string | null {
+  const name = childName.normalize('NFC').replace(/[^\p{L}\p{M}' -]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  if (!name) return null;
+  if (character === 'papa_noel') return `[risas] ¡Jo, jo, jo! ¡Hola, ${name}!`;
+  if (character === 'duende_chispa') return `[susurra] ¡Psss! ¡Hola, ${name}!`;
+  return `¡Hola, ${name}!`;
 }

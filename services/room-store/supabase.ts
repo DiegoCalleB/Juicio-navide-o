@@ -353,6 +353,15 @@ export class SupabaseRoomStore implements RoomStore {
     if (error) throw new Error(`upload: ${error.message}`);
   }
 
+  async fileExists(bucket: Bucket, path: string): Promise<boolean> {
+    const slash = path.lastIndexOf('/');
+    const folder = slash >= 0 ? path.slice(0, slash) : '';
+    const name = path.slice(slash + 1);
+    const { data, error } = await getAdminClient().storage.from(bucket).list(folder, { search: name, limit: 5 });
+    if (error) return false;
+    return (data ?? []).some((f) => f.name === name);
+  }
+
   async signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {
     const urls = new Map<string, string>();
     if (paths.length === 0) return urls;

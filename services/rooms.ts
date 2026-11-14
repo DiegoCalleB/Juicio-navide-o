@@ -1,10 +1,10 @@
 import 'server-only';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { CHARACTERS, fillChild, isCharacterId, resolveCharacter, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
-import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
+import { TRIAL_VOICE_MESSAGES, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, deriveParentToken, hashToken, newFamilySeed, newToken, TOKEN_REGEX } from '@/lib/tokens';
-import { prepareSpeechText, synthesizeKingVoice, voiceLimits, VoiceError } from '@/lib/voice';
+import { greetingNameLine, prepareSpeechText, synthesizeKingVoice, voiceLimits, voiceModel, voiceIdFor, VoiceError } from '@/lib/voice';
 import { publish, publishRefresh, type Audience } from '@/services/realtime';
 import { parseLocale, type Locale } from '@/lib/i18n';
 import { RoomError } from '@/services/room-errors';
@@ -264,8 +264,56 @@ export async function addChildVoice(room: Room, audio: Buffer, mime: string, sec
 
 export interface ReplyOutcome {
   delivered: 'voice' | 'text';
-  /** Si se pidió voz y se entregó por escrito, por qué. */
-  fallback?: 'limit' | 'unavailable';
+  /** Si se pidió voz y se entregó por escrito, por qué ('trial' = ya se usaron los mensajes con voz de la prueba). */
+  fallback?: 'limit' | 'unavailable' | 'trial';
+}
+
+// ── Voz: "escuchar antes de enviar" sin pagar dos veces ─────────────────────
+// La escucha previa se guarda unos minutos; si los padres envían el mismo texto, se reutiliza ese audio.
+type Synth = { audio: Buffer; seconds: number; spokenChars: number };
+const PREVIEW_TTL_MS = 15 * 60_000;
+const previewCache = (): Map<string, { synth: Synth; exp: number }> => {
+  const g = globalThis as unknown as { __voicePreview?: Map<string, { synth: Synth; exp: number }> };
+  return (g.__voicePreview ??= new Map());
+};
+const previewKey = (room: Room, text: string) =>
+  createHash('sha256').update(`${room.id}|${voiceIdFor(room.character)}|${voiceModel()}|${prepareSpeechText(text)}`).digest('base64url');
+
+/** ¿Puede esta sala usar la voz ahora? Devuelve el motivo si no. */
+async function voiceAllowance(room: Room, text: string): Promise<'ok' | 'trial' | 'limit'> {
+  const store = getRoomStore();
+  if (roomAccess(room).plan === 'trial') {
+    const used = await store.countVoiceRepliesSince(room.id, new Date(0).toISOString());
+    if (used >= TRIAL_VOICE_MESSAGES) return 'trial';
+  }
+  const limits = voiceLimits();
+  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const [roomReplies, totalChars] = await Promise.all([store.countVoiceRepliesSince(room.id, since), store.sumVoiceCharsSince(since)]);
+  if (roomReplies >= limits.roomDailyReplies || totalChars + text.length > limits.dailyChars) return 'limit';
+  return 'ok';
+}
+
+/** Escucha previa para los padres: genera el audio (sin enviarlo) y lo guarda unos minutos para reutilizarlo al enviar. */
+export async function previewVoice(room: Room, text: string): Promise<{ ok: true; audio: Buffer } | { ok: false; reason: 'trial' | 'limit' | 'unavailable' | 'empty' }> {
+  assertOpen(room);
+  if (!KING_VOICE_ENABLED) return { ok: false, reason: 'unavailable' };
+  if (!prepareSpeechText(text)) return { ok: false, reason: 'empty' };
+  const allowed = await voiceAllowance(room, text);
+  if (allowed !== 'ok') return { ok: false, reason: allowed };
+  const key = previewKey(room, text);
+  const cache = previewCache();
+  const hit = cache.get(key);
+  if (hit && hit.exp > Date.now()) return { ok: true, audio: hit.synth.audio };
+  try {
+    const synth = await synthesizeKingVoice(room.character, text);
+    const now = Date.now();
+    for (const [k, v] of cache) if (v.exp <= now) cache.delete(k);
+    cache.set(key, { synth, exp: now + PREVIEW_TTL_MS });
+    return { ok: true, audio: synth.audio };
+  } catch (err) {
+    console.error('[voice-preview]', err instanceof VoiceError ? err.message : err);
+    return { ok: false, reason: err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable' };
+  }
 }
 
 export async function addKingReply(
@@ -291,18 +339,22 @@ export async function addKingReply(
   if (mode === 'text' || !KING_VOICE_ENABLED || effect === 'surprise') return sendText();
   if (!prepareSpeechText(text)) return sendText();
 
-  // Topes de coste: por sala y diario global. Si se superan, se entrega por escrito.
-  const limits = voiceLimits();
-  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
-  const [roomReplies, totalChars] = await Promise.all([store.countVoiceRepliesSince(room.id, since), store.sumVoiceCharsSince(since)]);
-  if (roomReplies >= limits.roomDailyReplies || totalChars + text.length > limits.dailyChars) return sendText('limit');
+  // Prueba gratis: unos pocos mensajes con voz. Topes de coste: por sala y diario global. Si no, por escrito.
+  const allowed = await voiceAllowance(room, text);
+  if (allowed !== 'ok') return sendText(allowed);
 
-  let synth: Awaited<ReturnType<typeof synthesizeKingVoice>>;
-  try {
-    synth = await synthesizeKingVoice(room.character, text);
-  } catch (err) {
-    console.error('[voice]', err instanceof VoiceError ? err.message : err);
-    return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
+  let synth: Synth;
+  const cached = previewCache().get(previewKey(room, text));
+  if (cached && cached.exp > Date.now()) {
+    synth = cached.synth; // lo que los padres escucharon es exactamente lo que recibe el niño
+    previewCache().delete(previewKey(room, text));
+  } else {
+    try {
+      synth = await synthesizeKingVoice(room.character, text);
+    } catch (err) {
+      console.error('[voice]', err instanceof VoiceError ? err.message : err);
+      return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
+    }
   }
   const { audio, seconds } = synth;
   const path = `${room.id}/${randomUUID()}.mp3`;
@@ -318,6 +370,46 @@ export async function addKingReply(
   });
   notify(room, rec);
   return { delivered: 'voice' };
+}
+
+// ── Saludo con el nombre ("¡Hola, Lucía!") ───────────────────────────────────
+// Se genera una vez por sala, la primera vez que el niño abre el sello, y se guarda en la carpeta de la sala
+// (se borra con ella). El resto del saludo está pregrabado por personaje.
+const greetingPath = (room: Room) => `${room.id}/saludo.mp3`;
+const greetingInFlight = (): Map<string, Promise<string | null>> => {
+  const g = globalThis as unknown as { __greetingInFlight?: Map<string, Promise<string | null>> };
+  return (g.__greetingInFlight ??= new Map());
+};
+
+export async function greetingAudioUrl(room: Room): Promise<string | null> {
+  if (!KING_VOICE_ENABLED) return null;
+  // La elfa usa la voz del elfo (de chico): mejor sin saludo hablado que con una voz que no le pega.
+  if (room.character === 'duende_chispa' && room.characterGender === 'f') return null;
+  const line = greetingNameLine(room.character, room.childName);
+  if (!line) return null;
+  const inflight = greetingInFlight();
+  const running = inflight.get(room.id);
+  if (running) return running;
+  const job = (async () => {
+    const store = getRoomStore();
+    const path = greetingPath(room);
+    try {
+      if (!(await store.fileExists('voices', path))) {
+        const { audio } = await synthesizeKingVoice(room.character, line, { trusted: true });
+        await store.uploadFile('voices', path, audio, 'audio/mpeg').catch((e) => {
+          if (!/exist|duplicate/i.test(String(e))) throw e; // otra petición lo subió a la vez
+        });
+      }
+      return (await store.signedUrls('voices', [path])).get(path) ?? null;
+    } catch (err) {
+      console.error('[greeting]', err instanceof VoiceError ? err.message : err);
+      return null;
+    } finally {
+      inflight.delete(room.id);
+    }
+  })();
+  inflight.set(room.id, job);
+  return job;
 }
 
 /** Cancela un mensaje programado que aún no se ha entregado. */
@@ -381,6 +473,7 @@ export async function eraseRoom(room: Room): Promise<void> {
   for (const f of await store.listFilePaths(room.id)) {
     await store.removeFile(f.bucket, f.path).catch(() => undefined);
   }
+  await store.removeFile('voices', greetingPath(room)).catch(() => undefined);
   await store.deleteRoom(room.id);
   publishRefresh(room.id);
 }
