@@ -1,4 +1,3 @@
-import { ELF_PRANK_SCENE } from '@/lib/demoScenes';
 import type { ChatMessage } from './types';
 
 export const DEMO_REYES: ChatMessage[] = [
@@ -24,7 +23,7 @@ export const DEMO_RATON: ChatMessage[] = [
 
 export const DEMO_DUENDE: ChatMessage[] = [
   { id: '1', from: 'king', kind: 'text', time: '07:58', text: '¡Ji, ji, ji! ¡Buenos días, Lucía! Soy Chispa, el elfo travieso 😈' },
-  { id: '2', from: 'king', kind: 'photo', time: '07:58', src: ELF_PRANK_SCENE, caption: '¡Mira la trastada que he hecho esta noche! 🧻' },
+  { id: '2', from: 'king', kind: 'photo', time: '07:58', src: '/elfo/trastadas/10.jpg', caption: '¡Mira la trastada que he hecho esta noche! 🧻' },
   { id: '3', from: 'child', kind: 'text', time: '07:59', text: '¡¡Has llenado el árbol de papel higiénico!! 😂' },
   { id: '4', from: 'king', kind: 'text', time: '07:59', text: 'Shhh… que no se entere Papá Noel. ¡Esta noche tengo otra preparada!' },
 ];

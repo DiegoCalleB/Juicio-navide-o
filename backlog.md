@@ -177,3 +177,8 @@ Ideas aparcadas. No están construidas ni verificadas.
 - Ideas siguientes: compartir la foto real de la trastada desde el panel (sin la cara del peque), un reto en redes con premio, y medir en analítica qué red trae más visitas.
 - 15 trastadas exprés ("sin tiempo / se me olvidó"): página `/ideas-elfo/sin-tiempo` con chuleta vertical para Pinterest (`/ideas-elfo/sin-tiempo/imagen`) y pestaña "⚡ Sin tiempo" en el panel de padres que rellena el mensaje.
 - Ilustraciones con IA por trastada (elfo propio "Chispa", rojo, sin copiar el muñeco de la marca): `public/elfo/trastadas/N.jpg` (1024x768). Se convierten con `node scripts/elf-art.mjs <png> <noche>`. Si existe, sale en la lista, en la página de la noche (con "Ilustración creada con IA"), en la imagen para Pinterest y en la vista previa de WhatsApp. Generadas en Fish Audio (gpt-image-2, plan gratis: 3 al día).
+
+## Ilustraciones de las 24 trastadas (hecho)
+- Generadas con Gemini (gemini-3.1-flash-image) a partir de una imagen de referencia de Chispa (elfo rojo de fieltro, delgado, sin bufanda, botas marrón oscuro). Sin texto dentro de las imágenes.
+- Archivos: `public/elfo/trastadas/1..24.jpg` (1024x768). Se muestran en la lista, la ficha, la imagen para compartir y la vista previa; la foto del chat de muestra de la portada es la de la trastada 10.
+- Pendiente (opcional): ilustraciones de las 15 trastadas "sin tiempo".
