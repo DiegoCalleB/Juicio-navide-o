@@ -33,6 +33,38 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.getByRole('button', { name: 'Adjuntar una foto' }).click();
   check('padres: también pueden hacer una foto o elegirla', await parent.getByRole('menuitem', { name: /Hacer una foto/ }).isVisible() && (await parent.getByTestId('camera-input').getAttribute('capture')) === 'environment');
   await parent.screenshot({ path: S + '/me2-parent-photo-menu.png' });
+  // Toque real (como un dedo): si algo tapa el menú, Playwright no puede pulsarlo.
+  const realPick = async (page, btnName, item, file) => {
+    if ((await page.getByRole('menu').count()) === 0) await page.getByRole('button', { name: btnName }).click();
+    await page.waitForTimeout(400);
+    try {
+      const [fc] = await Promise.all([page.waitForEvent('filechooser', { timeout: 5000 }), page.getByRole('menuitem', { name: item }).click({ timeout: 4000 })]);
+      await fc.setFiles(file);
+      return true;
+    } catch (e) { console.log('   ' + e.message.split('\n')[0]); return false; }
+  };
+  await parent.screenshot({ path: S + '/me2b-parent-photo-menu-open.png' });
+  check('padres: tocar "Hacer una foto" abre la cámara de verdad', await realPick(parent, 'Adjuntar una foto', /Hacer una foto/, FIX + '/foto-padres.png'));
+  await parent.getByRole('button', { name: 'Quitar la foto' }).click().catch(() => undefined);
+  check('padres: tocar "Elegir una foto" abre la galería de verdad', await realPick(parent, 'Adjuntar una foto', /Elegir una foto/, FIX + '/foto-padres.png'));
+  await parent.getByRole('button', { name: 'Quitar la foto' }).click().catch(() => undefined);
+  check('niño: tocar "Elegir una foto" abre la galería de verdad', await realPick(child, 'Enviar una foto', /Elegir una foto/, FIX + '/foto-nino.jpg'));
+  // Foto enorme (48 MP, como las de los móviles nuevos): se prepara y se envía igual.
+  const fs = require('fs');
+  if (!fs.existsSync(FIX + '/foto-48mp.jpg')) {
+    await require('sharp')({ create: { width: 8064, height: 6048, channels: 3, background: { r: 200, g: 60, b: 60 } } }).jpeg({ quality: 95 }).toFile(FIX + '/foto-48mp.jpg');
+  }
+  {
+    await parent.getByTestId('photo-input').setInputFiles(FIX + '/foto-48mp.jpg');
+    const ok48 = await parent.getByText('Foto lista').waitFor({ timeout: 20000 }).then(() => true, () => false);
+    let sent48 = false;
+    if (ok48) {
+      const before = await child.locator('[role=log] img').count();
+      await parent.getByRole('button', { name: /Enviar foto como/ }).click();
+      sent48 = await child.waitForFunction((n) => document.querySelectorAll('[role=log] img').length > n, before, { timeout: 20000 }).then(() => true, () => false);
+    }
+    check('padres: una foto de 48 MP se prepara y le llega al niño', ok48 && sent48);
+  }
   await parent.getByTestId('camera-input').setInputFiles(FIX + '/foto-padres.png');
   check('padres: la foto de la cámara queda lista para enviar', await parent.getByText('Foto lista').waitFor({ timeout: 10000 }).then(() => true, () => false));
 

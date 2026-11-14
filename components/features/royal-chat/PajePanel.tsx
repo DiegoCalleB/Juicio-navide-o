@@ -263,7 +263,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: KING_VOICE_ENABLED ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
         });
       }
-      const json = (await res.json()) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }>;
+      const json = (await res.json().catch(() => null)) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }> | null;
+      if (!json) throw new Error(res.status === 413 ? 'La foto es demasiado grande.' : `No se pudo enviar (error ${res.status}). Inténtalo de nuevo.`);
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
       setPhoto(null);
