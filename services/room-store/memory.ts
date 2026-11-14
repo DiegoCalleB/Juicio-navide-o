@@ -37,6 +37,8 @@ export class MemoryRoomStore implements RoomStore {
       familyHash: room.familyHash ?? null,
       familySeed: room.familySeed ?? null,
       familyName: room.familyName ?? null,
+      parentPin: room.parentPin ?? null,
+      pinRecovery: room.pinRecovery ?? null,
       trialEndsAt: room.trialEndsAt ?? null,
       passId: room.passId ?? null,
       creatorHash: room.creatorHash,
@@ -176,6 +178,15 @@ export class MemoryRoomStore implements RoomStore {
     return [...state().rooms.values()]
       .filter((r) => r.familyHash === hash && Date.parse(r.expiresAt) > Date.now())
       .sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  async setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void> {
+    for (const r of state().rooms.values()) {
+      if (scope.familyHash ? r.familyHash === scope.familyHash : r.id === scope.roomId) {
+        r.parentPin = pin;
+        r.pinRecovery = recovery;
+      }
+    }
   }
 
   async updateFamilyName(hash: string, name: string | null): Promise<void> {

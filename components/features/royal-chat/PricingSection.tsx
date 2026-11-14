@@ -31,25 +31,25 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
   };
 
   return (
-    <section id="pase" aria-labelledby="pase-title" className="mb-8 scroll-mt-4">
-      <h2 id="pase-title" className="mb-3 text-center font-serif text-2xl text-[#fff6dc]">Elige cómo empezar</h2>
-      <div className="space-y-3">
-        <article className="rounded-3xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+    <section id="pase" aria-labelledby="pase-title" className="mb-8 scroll-mt-4 lg:mb-14">
+      <h2 id="pase-title" className="mb-3 text-center font-serif text-2xl text-[#fff6dc] lg:mb-8 lg:text-4xl">Elige cómo empezar</h2>
+      <div className="space-y-3 lg:mx-auto lg:grid lg:max-w-4xl lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
+        <article className="flex flex-col rounded-3xl border border-white/10 bg-[#1d0b3a]/70 p-4 lg:p-7">
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[16px] font-bold text-[#fff6dc]">Prueba gratis</h3>
             <p className="text-[13px] font-semibold text-[#7ee2a8]">0 €</p>
           </div>
-          <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/75">
+          <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/75 lg:mb-4 lg:text-[15px]">
             <li>✓ 3 días para probarlo con vuestros peques</li>
             <li>✓ Una sala por cada peque (hasta 5)</li>
             <li>✓ Mensajes y fotos, sin registrarte</li>
           </ul>
-          <a href="#crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] active:scale-[0.98]">
+          <a href="#crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] hover:bg-white/5 active:scale-[0.98] lg:mt-auto">
             Empezar gratis
           </a>
         </article>
 
-        <article className="relative rounded-3xl border-2 border-[#f6d77a] bg-gradient-to-b from-[#f6d77a]/[.13] to-[#f6d77a]/[.04] p-4 shadow-lg">
+        <article className="relative rounded-3xl lg:p-7 border-2 border-[#f6d77a] bg-gradient-to-b from-[#f6d77a]/[.13] to-[#f6d77a]/[.04] p-4 shadow-lg">
           <p className="absolute -top-3 left-4 rounded-full bg-[#f6d77a] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#2a0f4a]">{billing.campaign ? `🖤 ${billing.campaign.label}` : 'Recomendado'}</p>
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[17px] font-bold text-[#f6d77a]">Pase de Navidad</h3>

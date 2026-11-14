@@ -56,6 +56,13 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.getByRole('button', { name: 'Ver una sugerencia de mensaje' }).click();
   const sug = await parent.inputValue('#reply');
   check('la sugerencia es opcional, editable y con el nombre del niño', sug.includes('Lucía') && !/\{/.test(sug), sug.slice(0, 70));
+  // Sin tiempo: trastadas exprés que rellenan el mensaje al momento (en femenino y con su nombre)
+  await parent.getByRole('button', { name: '⚡ Sin tiempo' }).click();
+  const quick = parent.getByRole('dialog', { name: 'Ideas de travesuras' });
+  check('pestaña "Sin tiempo" con 15 trastadas exprés', (await quick.getByRole('button', { name: 'Usar su mensaje' }).count()) === 15 && (await quick.getByRole('tab', { name: '⚡ Sin tiempo' }).getAttribute('aria-selected')) === 'true');
+  await quick.getByRole('button', { name: 'Usar su mensaje' }).first().click();
+  const q1 = await parent.inputValue('#reply');
+  check('la trastada exprés rellena el mensaje (femenino, con el nombre)', /cansada/.test(q1) && /dormida/.test(q1) && q1.includes('Lucía') && !/\{/.test(q1), q1.slice(0, 80));
   await parent.fill('#reply', 'Hoy Chispita se ha escondido en el frutero. ¡A ver si la encuentras!');
   await parent.screenshot({ path: S + '/du3-idea.png' });
 

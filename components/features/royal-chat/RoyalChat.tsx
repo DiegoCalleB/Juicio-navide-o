@@ -111,9 +111,9 @@ export function RoyalChat({
   };
 
   return (
-    <div className={embedded ? 'relative flex justify-center' : 'fixed inset-0 z-40 flex justify-center bg-black'}>
+    <div className={embedded ? 'relative flex justify-center' : 'fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#2a0f4a,#060210)]'}>
       <div
-        className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh'}`}
+        className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh lg:h-[min(calc(100dvh-3rem),52rem)] lg:max-w-lg lg:rounded-[32px] lg:border lg:border-white/15 lg:shadow-[0_30px_90px_rgba(0,0,0,.6)]'}`}
         style={{ background: theme.bg }}
       >
         <MagicScene sky={theme.sky} />

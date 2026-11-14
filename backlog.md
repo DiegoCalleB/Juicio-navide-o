@@ -149,3 +149,36 @@ Ideas aparcadas. No están construidas ni verificadas.
 
 - **Migraciones a aplicar antes de desplegar, por orden:** `20261109000000_message_edit.sql` y `20261110000000_elf_alias.sql` (nombre y género del elfo). Ambas son aditivas.
 - El calendario ya no programa 24 mensajes escritos por nosotros: la app propone la escena y los padres escriben y eligen las fotos, programándolas para cuando quieran.
+
+## Bloqueo de padres con PIN
+
+- **Migración a aplicar ANTES de desplegar:** `20261116000000_parent_pin.sql` (columnas `parent_pin` y `pin_recovery` en `rooms`; aditiva). El código las lee.
+- El PIN (4–6 cifras) y el código de rescate se guardan solo como hash (scrypt). Nadie, tampoco nosotros, puede recuperarlos: si se pierden ambos, no hay vuelta atrás.
+- Con PIN, el servidor no envía NINGÚN dato del panel ni de la familia sin la cookie de desbloqueo (`lm_u_*`, httpOnly, firmada, 30 min). Punto único de control: `findRoomByToken`.
+- Límite de intentos en memoria (5 fallos → 15 min, se duplica hasta 6 h). Vale con una sola réplica; con varias habría que moverlo a la base de datos.
+- Bloqueo automático al volver a la app tras más de 1 minuto fuera. Botón 🔒 en el panel.
+- En el móvil con PIN la portada solo enseña "Zona de los padres" (marca local `magic-lock`; no oculta nombres de peques ni salas).
+- Límite honesto: durante los 30 minutos posteriores a meter el PIN, el panel está abierto en ese móvil.
+- Pendiente: mencionar el PIN y la cookie `lm_u_*` en la política de privacidad si se revisa el texto legal.
+
+## Diseño para ordenadores
+
+- Portada a dos columnas desde 1024 px (texto y botón a la izquierda, demo a la derecha), planes en dos columnas, formulario centrado. En móvil sigue igual.
+- Panel de padres: ventana de 4xl centrada con tarjetas de preparativos en dos columnas. Familia: salas en dos columnas (centrada si hay una). Sala del peque: marco de móvil centrado.
+- Prueba `desktop`: sin desbordes horizontales a 1440, 1024, 768 y 390 px en 7 pantallas.
+- Pendiente: lista de personajes del formulario en rejilla en escritorio; probar en un ordenador real con pantalla muy ancha (>1920 px) y en Safari.
+
+## Las 24 trastadas (versión viral)
+
+- Reescritas con los clásicos que más se repiten en internet (tirolina, pesca en el váter, láseres de lana, bigotes en las fotos, nevera con ojos, puerta envuelta, leche verde…), adaptadas a seguras y baratas. No hay un ranking oficial de "las más virales": es una selección editorial.
+- Cada una: título con gracia, paso a paso, material, minutos, nivel de lío, "por qué arrasa" y mensaje del elfo. El panel de padres usa la misma fuente.
+- Compartir: menú nativo con la imagen (Instagram, TikTok, estados), WhatsApp, Pinterest (con imagen vertical), Facebook, X, Telegram, copiar enlace y guardar imagen. Todo con utm_source. Etiqueta #TrastadasDelElfo.
+- Imagen vertical 1000x1500 por trastada: `/ideas-elfo/N/imagen` (`?descargar=1` para bajarla).
+- Ideas siguientes: compartir la foto real de la trastada desde el panel (sin la cara del peque), un reto en redes con premio, y medir en analítica qué red trae más visitas.
+- 15 trastadas exprés ("sin tiempo / se me olvidó"): página `/ideas-elfo/sin-tiempo` con chuleta vertical para Pinterest (`/ideas-elfo/sin-tiempo/imagen`) y pestaña "⚡ Sin tiempo" en el panel de padres que rellena el mensaje.
+- Ilustraciones con IA por trastada (elfo propio "Chispa", rojo, sin copiar el muñeco de la marca): `public/elfo/trastadas/N.jpg` (1024x768). Se convierten con `node scripts/elf-art.mjs <png> <noche>`. Si existe, sale en la lista, en la página de la noche (con "Ilustración creada con IA"), en la imagen para Pinterest y en la vista previa de WhatsApp. Generadas en Fish Audio (gpt-image-2, plan gratis: 3 al día).
+
+## Ilustraciones de las 24 trastadas (hecho)
+- Generadas con Gemini (gemini-3.1-flash-image) a partir de una imagen de referencia de Chispa (elfo rojo de fieltro, delgado, sin bufanda, botas marrón oscuro). Sin texto dentro de las imágenes.
+- Archivos: `public/elfo/trastadas/1..24.jpg` (1024x768). Se muestran en la lista, la ficha, la imagen para compartir y la vista previa; la foto del chat de muestra de la portada es la de la trastada 10.
+- Pendiente (opcional): ilustraciones de las 15 trastadas "sin tiempo".

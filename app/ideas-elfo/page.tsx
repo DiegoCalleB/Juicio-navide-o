@@ -2,11 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
-import { elfNights, nightDate } from '@/lib/elfIdeas';
+import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
+import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
-const TITLE = '24 trastadas del elfo travieso: una idea por noche, con el mensaje';
+const TITLE = 'Las 24 mejores trastadas del elfo travieso (los clásicos de internet)';
 const DESCRIPTION =
-  'Ideas fáciles y rápidas para las trastadas del elfo de Navidad, una por noche del 1 al 24 de diciembre, con el mensaje que el elfo puede dejar a tu peque cada mañana.';
+  'Los clásicos de internet del elfo de Navidad: tirolina, pesca en el váter, la puerta envuelta… Una trastada por noche del 1 al 24 de diciembre, paso a paso, con el material y el mensaje del elfo para tu peque.';
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -49,7 +50,7 @@ export default function IdeasElfoPage() {
         name: TITLE,
         description: DESCRIPTION,
         numberOfItems: days.length,
-        itemListElement: days.map((d) => ({ '@type': 'ListItem', position: d.day, name: `Noche ${d.day}: ${d.idea}` })),
+        itemListElement: days.map((d) => ({ '@type': 'ListItem', position: d.day, name: `Noche ${d.day}: ${d.title}` })),
       },
       {
         '@type': 'FAQPage',
@@ -57,7 +58,7 @@ export default function IdeasElfoPage() {
       },
     ],
   };
-  const shareText = '24 trastadas del elfo travieso, una idea por noche (con el mensaje del elfo):';
+  const shareText = 'Las 24 mejores trastadas del elfo travieso, una por noche y con el mensaje del elfo. Ya tengo plan para diciembre:';
 
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822] text-[#fff6dc]">
@@ -71,10 +72,11 @@ export default function IdeasElfoPage() {
 
         <header>
           <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#7ee2a8]">🧝 Ideas gratis para Navidad</p>
-          <h1 className="mt-2 font-serif text-[32px] leading-[1.1] sm:text-[40px]">24 trastadas del elfo travieso, una por noche</h1>
+          <h1 className="mt-2 font-serif text-[32px] leading-[1.1] sm:text-[40px]">Las 24 mejores trastadas del elfo travieso</h1>
           <p className="mt-3 text-[16px] leading-relaxed text-[#fff6dc]/80">
-            Una idea fácil para cada noche, del 1 al 24 de diciembre, con el <strong>mensaje</strong> que el elfo puede dejar a tu peque
-            por la mañana. Sin gastar dinero y casi todo con cosas que ya tienes en casa.
+            Los clásicos que más se repiten en internet (la tirolina, la pesca en el váter, la puerta envuelta…), elegidos y adaptados
+            para que sean <strong>baratos, seguros y rápidos</strong>. Una por noche, del 1 al 24 de diciembre, con el paso a paso y el
+            <strong> mensaje</strong> que el elfo deja a tu peque por la mañana.
           </p>
           <div className="mt-5 flex flex-wrap gap-2.5">
             <Link href={CTA_HREF} className="flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] px-5 font-bold text-[#2a0f4a] active:scale-[0.99]">
@@ -83,9 +85,18 @@ export default function IdeasElfoPage() {
           </div>
           <div className="mt-3">
             <p className="mb-1.5 text-[12.5px] font-semibold text-[#fff6dc]/60">Compártelo con otras familias</p>
-            <ShareBar path="/ideas-elfo" text={shareText} title={TITLE} />
+            <ShareBar path="/ideas-elfo" text={shareText} title={TITLE} hashtags={ELF_HASHTAGS} />
           </div>
         </header>
+
+        <Link href="/ideas-elfo/sin-tiempo" className="mt-6 flex items-center gap-3 rounded-2xl border border-[#f6d77a]/50 bg-[#f6d77a]/[.08] p-4 active:scale-[0.99]">
+          <span aria-hidden className="text-3xl">⚡</span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-[#f6d77a]">¿Se te ha olvidado mover el elfo?</span>
+            <span className="block text-[13.5px] text-[#fff6dc]/75">15 trastadas de emergencia en menos de un minuto, sin material.</span>
+          </span>
+          <span aria-hidden className="text-[#f6d77a]">→</span>
+        </Link>
 
         <section aria-labelledby="como" className="mt-8 rounded-3xl border border-white/10 bg-white/[.04] p-5">
           <h2 id="como" className="font-serif text-2xl text-[#f6d77a]">Cómo usar esta lista</h2>
@@ -94,6 +105,7 @@ export default function IdeasElfoPage() {
             <li><strong>Haz una foto</strong> de la trastada para guardarla de recuerdo.</li>
             <li><strong>Deja el mensaje del elfo</strong>: en una nota, o escrito por ti en un chat para que lo lea tu peque al despertar.</li>
             <li>Cámbiale el nombre al elfo por el vuestro. Aquí lo llamamos <em>Chispa</em>.</li>
+            <li><strong>Compártela</strong> con <strong>#TrastadasDelElfo</strong> (mejor sin la cara de tu peque): cada trastada tiene su imagen lista para Pinterest, Instagram y TikTok.</li>
           </ol>
           <p className="mt-3 rounded-xl bg-[#f6d77a]/10 p-3 text-[13.5px] leading-snug text-[#fff6dc]/85">
             🛟 <strong>Seguridad:</strong> elige solo las ideas sin riesgo en tu casa. Nada de velas, cosas calientes, cuerdas o alturas que tu peque pueda querer imitar, y no pegues nada que dañe la pintura.
@@ -108,14 +120,26 @@ export default function IdeasElfoPage() {
               const message = d.message;
               return (
                 <li key={d.day} className="contents">
-                  <article id={`noche-${d.day}`} className="scroll-mt-4 rounded-2xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+                  <article id={`noche-${d.day}`} className="scroll-mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+                    {(() => {
+                      const art = elfArt(d.day);
+                      return art ? (
+                        <Link href={`/ideas-elfo/${d.day}`} className="-mx-4 -mt-4 mb-3 block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${d.title}`} title={AI_ART_NOTE} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                        </Link>
+                      ) : null;
+                    })()}
                     <p className="text-[11.5px] font-bold uppercase tracking-widest text-[#7ee2a8]">Noche {d.day} · {nightDate(d.day)}</p>
-                    <h3 className="mt-1.5 text-[15.5px] font-bold leading-snug"><Link href={`/ideas-elfo/${d.day}`} className="hover:underline">{d.idea}</Link></h3>
+                    <h3 className="mt-1.5 font-serif text-[21px] leading-tight"><Link href={`/ideas-elfo/${d.day}`} className="hover:underline">{d.title}</Link></h3>
+                    <p className="mt-1.5 text-[14px] leading-snug text-[#fff6dc]/80">{d.idea}</p>
+                    <p className="mt-2 text-[12px] font-semibold text-[#fff6dc]/55">⏱ {d.minutes} min · 🧹 {MESS_LABEL[d.mess]} · 🧺 {d.need}</p>
+                    <p className="mt-2 text-[13.5px] italic leading-snug text-[#f6d77a]">😂 {d.why}</p>
                     <p className="mt-2.5 text-[11.5px] font-semibold uppercase tracking-wide text-[#fff6dc]/50">Mensaje del elfo</p>
                     <blockquote className="mt-1 rounded-xl bg-[#fbf5e6] px-3 py-2 text-[14.5px] leading-snug text-[#3a2208]">{message}</blockquote>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <CopyMessage text={message} />
-                      <ShareBar path={`/ideas-elfo/${d.day}`} text={`Noche ${d.day} del elfo travieso: ${d.idea}`} title={`Noche ${d.day} del elfo travieso`} compact />
+                      <ShareBar path={`/ideas-elfo/${d.day}`} text={`Trastada ${d.day} del elfo travieso: ${d.title}. ${d.why}`} title={`Trastada ${d.day} del elfo travieso`} image={`/ideas-elfo/${d.day}/imagen`} hashtags={ELF_HASHTAGS} compact />
                     </div>
                   </article>
                   {(i + 1) % 8 === 0 && i + 1 < days.length && (

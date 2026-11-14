@@ -7,3 +7,4 @@ next-env.d.ts
 e2e/out
 e2e/.fixtures
 .next-e2e
+.shots/
