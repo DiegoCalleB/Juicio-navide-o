@@ -12,12 +12,12 @@ import { getElevenLabsKey } from '@/lib/env.server';
  * (El Abuelo Charlie y Lulu se descartaron por eso.)
  */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
-  papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, anciano contador de historias, cálido (provisional hasta que el cliente elija)
+  papa_noel: '7qXldmK3yFlWBHejdkpP', // Julio Alonso – castellano, anciano, grave y con dicción perfecta (la más usada de las candidatas, 14-nov)
   melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
   gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
-  duende_chispa: 'xH6DmlUWSqhSmFog5gxa', // Dani – castellano, joven y enérgico (provisional)
-  raton_perez: 'ODQQw99uvxi7piSglbBJ', // Carlota – castellana, aguda, dulce y alegre, pensada para niños (provisional)
+  duende_chispa: 'HMCmDsbKeaSZp5LMOYKR', // Johnny The Rogue – castellano, pícaro y burlón de dibujos (la más usada de las candidatas, 14-nov)
+  raton_perez: '1eHrpOW5l98cxiSRjbzJ', // Raquel – castellana, joven, alegre y luminosa (la más usada de las candidatas, 14-nov)
 };
 
 const BITRATE = 64_000;
