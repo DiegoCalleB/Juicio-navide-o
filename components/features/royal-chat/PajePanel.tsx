@@ -11,6 +11,7 @@ import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
 import { IdeasList } from './IdeasList';
+import { AssistantBox } from './AssistantBox';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
@@ -32,6 +33,8 @@ const TYPING_SIGNAL_EVERY_MS = 2500;
 const DELAY_LABEL: Record<ReplyDelay, string> = { 0: 'Ahora', 2: '2 min', 10: '10 min', 30: '30 min' };
 
 interface PajePanelProps {
+  /** Ayudante para escribir (Gemini) disponible en el servidor. */
+  assistant?: boolean;
   token: string;
   childLink: string;
   character: CharacterProfile;
@@ -62,7 +65,7 @@ function timeLeft(iso: string): string {
 }
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
-export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing, hasPin = false }: PajePanelProps) {
+export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing, hasPin = false, assistant = false }: PajePanelProps) {
   useAutoLock(hasPin, token);
   const r = useRegional();
   const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
@@ -857,6 +860,10 @@ export function PajePanel({ token, childLink, character, childName, characterAli
                 <IconClose className="size-5" />
               </button>
             </div>
+          )}
+
+          {assistant && !access.locked && (
+            <AssistantBox token={token} childName={childName} characterShort={short} onPick={(t) => setText(t.slice(0, MAX_CHARS))} />
           )}
 
           <div className="relative">

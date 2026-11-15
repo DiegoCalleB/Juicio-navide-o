@@ -20,7 +20,7 @@ const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
-const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'phase1', ...(withVoice ? ['voice'] : [])];
+const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', ...(withVoice ? ['voice'] : [])];
 const selected = nowArg ? ['blackfriday'] : withBilling ? ['billing'] : SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {
@@ -39,6 +39,8 @@ const env = {
   ...(withBilling ? { STRIPE_FAKE: '1', TRIAL_TEST_SECONDS: '45', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
   // Sin --voice, la voz va apagada (no gasta créditos). Con --voice: voz real, en modo prueba gratis (Stripe simulado).
   NEXT_PUBLIC_ENABLE_VOICE: withVoice ? '1' : '0',
+  // Ayudante de mensajes con Gemini simulado (sin red, sin gasto).
+  GEMINI_FAKE: '1',
   ...(withVoice ? { VOICE_ROOM_DAILY_LIMIT: '5', NODE_USE_ENV_PROXY: '1', STRIPE_FAKE: '1', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
 };
 

@@ -8,6 +8,7 @@ import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { originFromHeaders } from '@/lib/site';
 import { deriveChildToken } from '@/lib/tokens';
 import { billingInfo } from '@/lib/billing';
+import { assistantEnabled } from '@/lib/assistant';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,7 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
       readingLevel={found.room.readingLevel}
       hasPin={found.room.hasPin}
       billing={billingInfo()}
+      assistant={assistantEnabled()}
     />
     </LocaleProvider>
   );
