@@ -12,6 +12,7 @@ import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
 import { IdeasList } from './IdeasList';
 import { AssistantBox } from './AssistantBox';
+import { MagicSceneDialog } from './MagicSceneDialog';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
@@ -236,6 +237,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   };
 
   // «✨ Mejorar con magia»: reescribe el texto de los padres con la voz del personaje y sin faltas.
+  const [magicSrc, setMagicSrc] = useState<string | null>(null);
   const [polishing, setPolishing] = useState(false);
   const [beforePolish, setBeforePolish] = useState<string | null>(null);
   const polish = async () => {
@@ -780,7 +782,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           )}
 
           {messages.map((m, i) => (
-            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} onErase={eraseMessage} onEdit={editMessage} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
+            <PanelMessage key={m.id} m={m} character={character} childName={childName} onOpenPhoto={setLightbox} onCancel={cancelPending} onErase={eraseMessage} onEdit={editMessage} onMagic={assistant && !access.locked ? setMagicSrc : undefined} followUps={m.kind === 'voice' ? voiceFollowUps(messages, i, (x) => ({ id: x.id, from: x.from, voiceSrc: x.kind === 'voice' ? x.audioUrl : undefined })) : undefined} />
           ))}
 
           {childTyping && (
@@ -1049,6 +1051,20 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
         {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onUseText={(t) => setText(fillChild(t, childName).slice(0, MAX_CHARS))} initialTab={ideasOpen === 'quick' ? 'quick' : 'nights'} onClose={() => setIdeasOpen(false)} />}
 
+        {magicSrc && (
+          <MagicSceneDialog
+            token={token}
+            src={magicSrc}
+            childName={childName}
+            characterShort={short}
+            onClose={() => setMagicSrc(null)}
+            onSent={() => {
+              setMagicSrc(null);
+              setNotice({ tone: 'ok', msg: `${short} ya ha enviado la escena mágica.` });
+              void refresh();
+            }}
+          />
+        )}
         {planner && (
           <SchedulePlanner
             token={token}
@@ -1120,7 +1136,9 @@ function PanelMessage({
   onErase,
   onEdit,
   followUps,
+  onMagic,
 }: {
+  onMagic?: (src: string) => void;
   m: RoomMessageDTO;
   character: CharacterProfile;
   childName: string;
@@ -1147,6 +1165,11 @@ function PanelMessage({
           <button type="button" onClick={() => onOpenPhoto(m.imageUrl!)} className="block w-56 overflow-hidden rounded-xl" aria-label="Ver la foto en grande">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={m.imageUrl} alt={m.text || 'Foto'} loading="lazy" decoding="async" className="max-h-60 w-full object-cover" />
+          </button>
+        )}
+        {child && m.kind === 'photo' && m.imageUrl && onMagic && (
+          <button type="button" onClick={() => onMagic(m.imageUrl!)} className="mt-1.5 w-full rounded-lg bg-[#2a0f4a] py-1.5 text-[12.5px] font-bold text-[#f6d77a] active:opacity-80">
+            ✨ Convertir en escena mágica
           </button>
         )}
         {m.text && (m.kind === 'text' || m.kind === 'photo') && <p className="mt-1 whitespace-pre-line text-[15px] leading-snug">{m.text}</p>}

@@ -1,7 +1,8 @@
 // Ayudante «✨ Ayúdame a escribirlo» (Gemini simulado con GEMINI_FAKE=1)
-const { OUT: S, BASE, launch, pinSetup, ensureChar } = require('../_lib.cjs');
+const { OUT: S, BASE, FIX, launch, pinSetup, ensureChar, ensureFixtures, openChild, childLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
+  await ensureFixtures();
   const b = await launch(['--no-sandbox']);
   const parent = await (await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
   const errs = []; parent.on('pageerror', (e) => errs.push(e.message));
@@ -10,6 +11,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
+  const childLink = await childLinkOf(parent);
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await pinSetup(parent);
 
@@ -41,6 +43,22 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('mejorar: el texto cambia y conserva el nombre', improved !== 'oy lucía as rrecojido los juguetes muy bien' && /Lucía/.test(improved), improved);
   await parent.getByRole('button', { name: 'Deshacer' }).click();
   check('«Deshacer» recupera lo que habían escrito', (await parent.inputValue('#reply')) === 'oy lucía as rrecojido los juguetes muy bien');
+
+  // «✨ Convertir en escena mágica»: el dibujo del niño → ilustración → los padres la aprueban → le llega
+  const child = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  await openChild(child, childLink, {});
+  await child.getByTestId('photo-input').setInputFiles(FIX + '/foto-nino.jpg');
+  const magicBtn = parent.getByRole('button', { name: /Convertir en escena mágica/ });
+  await magicBtn.first().waitFor({ timeout: 15000 });
+  check('junto al dibujo del niño aparece «✨ Convertir en escena mágica»', await magicBtn.first().isVisible());
+  await magicBtn.first().click();
+  const dlg = parent.getByRole('dialog', { name: 'Escena mágica' });
+  await dlg.getByRole('img', { name: /Escena mágica creada/ }).waitFor({ timeout: 20000 });
+  check('se ve la escena antes de enviarla (no se envía sola)', (await child.locator('[role=log] img').count()) === 1);
+  await parent.screenshot({ path: S + '/as2-escena.png' });
+  await dlg.getByRole('button', { name: /Enviar a Lucía/ }).click();
+  await child.waitForFunction(() => document.querySelectorAll('[role=log] img').length >= 2, null, { timeout: 15000 }).then(() => check('al aprobarla, al niño le llega la escena con su texto', true), () => check('al aprobarla, al niño le llega la escena', false));
+  check('el pie de foto menciona su dibujo', await child.getByText(/Mira lo que ha pasado con tu dibujo, Lucía/).first().isVisible().catch(() => false));
 
   // Validación: idea demasiado corta
   const short = await parent.evaluate(async () => { const t = location.pathname.split('/paje/')[1]; const r = await fetch('/api/rooms/' + t + '/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idea: 'a' }) }); return r.status; });
