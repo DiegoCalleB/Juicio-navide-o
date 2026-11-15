@@ -27,7 +27,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // Crea una sala (y su familia) en un contexto nuevo y devuelve los enlaces
   const createRoom = async (name) => {
     const x = await mk();
-    await x.p.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+    await x.p.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
     await x.p.fill('#child', name); await x.p.locator('form').getByRole('checkbox').check();
     await ensureChar(x.p); await x.p.getByRole('button', { name: /Crear la sala/ }).click();
     await x.p.waitForSelector('text=La sala está lista', { timeout: 30000 });

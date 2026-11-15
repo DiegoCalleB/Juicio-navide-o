@@ -7,7 +7,7 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   const b = await launch();
   const mobile = await b.newContext({ viewport: { width: 390, height: 844 } });
   const p = await mobile.newPage();
-  await p.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await p.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await p.fill('#child', 'Valentina'); await p.locator('form').getByRole('checkbox').check();
   await ensureChar(p); await p.getByRole('button', { name: /Crear la sala/ }).click();
   await p.waitForSelector('text=La sala está lista', { timeout: 30000 });

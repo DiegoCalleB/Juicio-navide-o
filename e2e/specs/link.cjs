@@ -6,7 +6,7 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   const b = await launch();
   const mk = async () => (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   const parent = await mk(), child = await mk();
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista');

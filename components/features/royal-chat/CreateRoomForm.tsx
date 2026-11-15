@@ -46,6 +46,19 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
   const [pinDone, setPinDone] = useState(false);
   /** El selector de personajes se pliega al elegir uno, para que se vea lo que sigue. */
   const [pickerOpen, setPickerOpen] = useState(!initialCharacter);
+  /** Paso a paso: 1 = el peque (nombre, lectura, consentimiento) · 2 = el personaje y crear. */
+  const [step, setStep] = useState<1 | 2>(1);
+  const goStep = (n: 1 | 2) => {
+    setStep(n);
+    setError(null);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('[data-scroll-root]')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const next = () => {
+    if (!childName.trim()) return setError('Escribe el nombre de tu peque.');
+    if (!consent) return setError('Necesitamos tu consentimiento para crear la sala.');
+    goStep(2);
+  };
   const [familyName, setFamilyName] = useState('');
   const [hasFamily, setHasFamily] = useState(true);
   const doneRef = useRef<HTMLDivElement>(null);
@@ -223,6 +236,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
             type="button"
             onClick={() => {
               setCreated(null);
+              setStep(1);
               setFamilyLink(null);
               setError(null);
               setChildName('');
@@ -280,10 +294,15 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
   return (
     <>
     <div className="mb-3 text-center">
-      <h2 className="font-serif text-2xl text-[#fff6dc]">Crea la sala de tu peque</h2>
-      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">Sin registrarte. Tarda un minuto.</p>
+      <p className="text-[12px] font-bold uppercase tracking-[.2em] text-[#f6d77a]/80">Paso {step} de 2</p>
+      <div aria-hidden className="mx-auto mt-2 flex max-w-[10rem] gap-1.5">
+        {[1, 2].map((n) => <span key={n} className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#f6d77a]' : 'bg-white/15'}`} />)}
+      </div>
+      <h2 className="mt-3 font-serif text-2xl text-[#fff6dc]">{step === 1 ? 'Cuéntanos de tu peque' : '¿Quién le va a contestar?'}</h2>
+      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Sin registrarte. Tarda un minuto.' : `Elige el personaje que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
     </div>
     <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
+      {step === 1 && (<>
       <div className="space-y-1.5">
         {savedKids.length > 0 && (
           <div className="mb-2">
@@ -309,6 +328,48 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         <p className="text-xs text-[#fff6dc]/50">Solo el nombre de pila. Nunca pedimos apellidos ni dirección.</p>
       </div>
 
+      <fieldset className="space-y-1.5">
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿{childName.trim() || 'Tu peque'} ya lee?</legend>
+        <div role="radiogroup" aria-label="Nivel de lectura" className="grid grid-cols-3 gap-2">
+          {([['yes', 'Sí'], ['learning', 'Está empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={reading === v}
+              onClick={() => setReading(v)}
+              className={`min-h-11 rounded-2xl border px-1 text-[13px] font-bold leading-tight ${reading === v ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {reading !== 'yes' && (
+          <p className="text-xs leading-snug text-[#fff6dc]/55">
+            {reading === 'learning'
+              ? 'Verá todo en MAYÚSCULAS y te daremos consejos para escribirle frases fáciles. ¡Querrá leer cada mensaje!'
+              : 'Verá todo en MAYÚSCULAS. Leedlo juntos y usad fotos: él puede contestar con notas de voz.'}
+          </p>
+        )}
+      </fieldset>
+
+      <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
+        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
+        <span>
+          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos se guarden en privado, solo para esta conversación, y se borren solos a los 45 días o pasadas las fiestas.{' '}
+          <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
+        </span>
+      </label>
+
+      {error && <p role="alert" className="text-sm text-[#ff8a8c]">{error}</p>}
+      <button type="button" onClick={next}
+        className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg">
+        Siguiente →
+      </button>
+
+      </>)}
+
+      {step === 2 && (<>
       <fieldset className="space-y-3">
         <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
         {!pickerOpen && picked && characterId && (
@@ -351,31 +412,6 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           {group.id === 'duende' && elfBlock}
           </div>
         ))}
-      </fieldset>
-
-      <fieldset className="space-y-1.5">
-        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿{childName.trim() || 'Tu peque'} ya lee?</legend>
-        <div role="radiogroup" aria-label="Nivel de lectura" className="grid grid-cols-3 gap-2">
-          {([['yes', 'Sí'], ['learning', 'Está empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={reading === v}
-              onClick={() => setReading(v)}
-              className={`min-h-11 rounded-2xl border px-1 text-[13px] font-bold leading-tight ${reading === v ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {reading !== 'yes' && (
-          <p className="text-xs leading-snug text-[#fff6dc]/55">
-            {reading === 'learning'
-              ? 'Verá todo en MAYÚSCULAS y te daremos consejos para escribirle frases fáciles. ¡Querrá leer cada mensaje!'
-              : 'Verá todo en MAYÚSCULAS. Leedlo juntos y usad fotos: él puede contestar con notas de voz.'}
-          </p>
-        )}
       </fieldset>
 
       {extras.map((x, i) => (
@@ -454,14 +490,6 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         </div>
       )}
 
-      <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
-        <span>
-          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos se guarden en privado, solo para esta conversación, y se borren solos a los 45 días o pasadas las fiestas.{' '}
-          <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
-        </span>
-      </label>
-
       <Honeypot value={trap} onChange={setTrap} />
       {error && <p role="alert" className="text-sm text-[#ff8a8c]">{error}</p>}
       {trialUsed && billing.enabled && <PassOffer billing={billing} title="Pase de Navidad" tone="landing" />}
@@ -474,6 +502,10 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>
       )}
       {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
+      <button type="button" onClick={() => goStep(1)} className="mx-auto block text-[13px] text-[#fff6dc]/60 underline underline-offset-2">
+        ← Volver
+      </button>
+      </>)}
     </form>
     </>
   );

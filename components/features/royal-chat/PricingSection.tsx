@@ -46,7 +46,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
             <li>✓ Mensajes y fotos, sin registrarte</li>
             {KING_VOICE_ENABLED && <li>✓ 🎙️ Le saluda por su nombre y 3 mensajes con voz</li>}
           </ul>
-          <a href="#crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] hover:bg-white/5 active:scale-[0.98] lg:mt-auto">
+          <a href="/crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] hover:bg-white/5 active:scale-[0.98] lg:mt-auto">
             Empezar gratis
           </a>
         </article>

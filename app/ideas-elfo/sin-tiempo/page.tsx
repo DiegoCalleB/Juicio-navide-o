@@ -8,7 +8,7 @@ import { AI_ART_NOTE, quickArt } from '@/lib/elfArt';
 const TITLE = '15 trastadas del elfo para cuando no hay tiempo (o se te ha olvidado)';
 const DESCRIPTION =
   'Trastadas exprés del elfo travieso: menos de un minuto y sin material, para las mañanas sin ganas, sin tiempo o de “¡se me ha olvidado mover el elfo!”. Con el mensaje del elfo para tu peque.';
-const CTA_HREF = '/?personaje=duende_chispa#crear';
+const CTA_HREF = '/crear?personaje=duende_chispa';
 
 export const metadata: Metadata = {
   title: TITLE,

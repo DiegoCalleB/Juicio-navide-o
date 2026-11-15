@@ -6,7 +6,7 @@ import { ShareBar } from '@/components/features/ShareBar';
 import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
-const CTA_HREF = '/?personaje=duende_chispa#crear';
+const CTA_HREF = '/crear?personaje=duende_chispa';
 
 export function generateStaticParams() {
   return elfNights().map((n) => ({ noche: String(n.day) }));

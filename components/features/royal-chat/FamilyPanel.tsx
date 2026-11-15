@@ -139,7 +139,7 @@ export function FamilyPanel({ familyToken, family, origin, billing, hasPin = fal
           </button>
         ))}
 
-        <Link href="/#crear" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl lg:col-span-2 border border-[#f6d77a]/50 px-4 text-center font-bold text-[#f6d77a] active:scale-[0.98]">
+        <Link href="/crear" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl lg:col-span-2 border border-[#f6d77a]/50 px-4 text-center font-bold text-[#f6d77a] active:scale-[0.98]">
           + Preparar otra sala
         </Link>
 

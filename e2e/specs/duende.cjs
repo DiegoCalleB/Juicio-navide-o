@@ -9,7 +9,7 @@ const pad = (n) => String(n).padStart(2, '0');
   const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   check('el selector ofrece al elfo travieso', (await parent.getByRole('radio', { name: /Elfo Chispa/ }).count()) === 1);
   await parent.fill('#child', 'Lucía');
   check('sin elegir al elfo, no se piden nombre ni género', (await parent.locator('#elf-alias').count()) === 0);

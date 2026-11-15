@@ -73,7 +73,7 @@ const get = async (path) => fetch(BASE + path);
 
   // ── Manifiestos de sala, panel y familia
   const p = await mk();
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await p.fill('#child', 'Lucía'); await p.locator('form').getByRole('checkbox').check();
   await ensureChar(p); await p.getByRole('button', { name: /Crear la sala/ }).click();
   await p.waitForSelector('text=La sala está lista', { timeout: 30000 });

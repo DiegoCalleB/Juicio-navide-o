@@ -5,7 +5,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const b = await launch(['--no-sandbox']);
   const parent = await (await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
   const errs = []; parent.on('pageerror', (e) => errs.push(e.message));
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox', { name: /Soy su madre/ }).check();
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista');

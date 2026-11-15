@@ -7,7 +7,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
   await parent.fill('#child', 'Lucía');
   await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();

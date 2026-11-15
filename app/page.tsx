@@ -1,4 +1,5 @@
 import type { Viewport } from 'next';
+import { redirect } from 'next/navigation';
 import { RoyalLanding } from '@/components/features/royal-chat/RoyalLanding';
 import { isCharacterId } from '@/lib/characters';
 import { billingInfo } from '@/lib/billing';
@@ -11,8 +12,8 @@ export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {
-  // /?personaje=duende_chispa (enlaces de campañas y de la página de trastadas) deja elegido a ese personaje.
+  // Enlaces antiguos /?personaje=duende_chispa (campañas, trastadas): van directos a crear la sala con ese personaje.
   const { personaje } = await searchParams;
-  const initialCharacter = personaje && isCharacterId(personaje) ? personaje : undefined;
-  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} initialCharacter={initialCharacter} />;
+  if (personaje && isCharacterId(personaje)) redirect(`/crear?personaje=${personaje}`);
+  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} />;
 }

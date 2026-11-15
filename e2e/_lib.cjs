@@ -71,9 +71,19 @@ async function familyLinkOf(page) {
 }
 
 /** El formulario ya no marca ningún personaje: si la prueba no eligió uno, elige Papá Noel. */
+/** Paso a paso de /crear: del paso 1 (el peque) al paso 2 (el personaje). */
+async function nextStep(page) {
+  const next = page.getByRole('button', { name: /Siguiente/ });
+  if (await next.isVisible().catch(() => false)) {
+    await next.click();
+    await page.getByRole('heading', { name: /Quién le va a contestar/ }).waitFor({ timeout: 10000 });
+  }
+}
+
 async function ensureChar(page) {
+  await nextStep(page);
   if (await page.getByRole('button', { name: 'Cambiar de personaje' }).isVisible().catch(() => false)) return;
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).first().click();
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar };
+module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };

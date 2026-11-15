@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: '#120822' };
 
-const CTA_HREF = '/?personaje=duende_chispa#crear';
+const CTA_HREF = '/crear?personaje=duende_chispa';
 
 const FAQ = [
   {

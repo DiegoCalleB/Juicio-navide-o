@@ -105,7 +105,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   // Pase de regalo en otra familia: tenía una sala en prueba y usa el pase con un toque
   const other = await ctxB.newPage();
-  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
   await other.locator('form').getByRole('checkbox').check();
   await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
@@ -122,7 +122,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).click();
   await other.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
   check('regalo: con un toque, desbloqueada', (await other.locator('#reply').count()) === 1);
-  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Sofia');
   await other.locator('form').getByRole('checkbox').check();
   await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
