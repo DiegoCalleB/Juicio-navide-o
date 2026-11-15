@@ -14,9 +14,9 @@ import { getElevenLabsKey } from '@/lib/env.server';
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
   papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, sabio y mágico, con ronquera suave (elegido el 15-nov)
   melchor: 'QtPMrakdgePQIUwOX7Ut', // Arconte – castellano, grave y elegante (elegido el 15-nov)
-  gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
-  baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
-  duende_chispa: 'HMCmDsbKeaSZp5LMOYKR', // Johnny The Rogue – castellano, pícaro y burlón de dibujos (la más usada de las candidatas, 14-nov)
+  gaspar: 'DDpfIxnPLRqm8Yhvf5Ou', // «Linea Magica - Rey Gaspar»: diseñada a medida, cálida y bondadosa (15-nov)
+  baltasar: 'LdvLRu0MKMGFvQ4uNHdR', // «Linea Magica - Rey Baltasar»: diseñada a medida, muy grave y aterciopelada (15-nov)
+  duende_chispa: 'GaI7phBFmsSUxElvPx8l', // «Linea Magica - Elfo Chispa»: diseñada a medida, muy aguda y traviesa (15-nov)
   raton_perez: 'gD1IexrzCvsXPHUuT0s3', // Sara Martín – castellana, joven (elegida el 15-nov)
 };
 

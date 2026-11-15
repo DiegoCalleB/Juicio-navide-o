@@ -8,12 +8,12 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const VOICES = {
   papa_noel: 'EGuq18jUC3ilTnuBn2wj',
-  duende_chispa: 'HMCmDsbKeaSZp5LMOYKR',
+  duende_chispa: 'GaI7phBFmsSUxElvPx8l',
   'duende_chispa-f': 'anxpogu2yu4T91ajAsSp',
   raton_perez: 'gD1IexrzCvsXPHUuT0s3',
   melchor: 'QtPMrakdgePQIUwOX7Ut',
-  gaspar: 'ewZshglVwjWcMIuBYCCS',
-  baltasar: 'orF2qy9215xjwqqxqsWW',
+  gaspar: 'DDpfIxnPLRqm8Yhvf5Ou',
+  baltasar: 'LdvLRu0MKMGFvQ4uNHdR',
 };
 const HOLA = {
   papa_noel: '[risas] ¡Jo, jo, jo! ¡Hola!',
