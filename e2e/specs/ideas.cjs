@@ -115,7 +115,12 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.waitForURL(/\/ideas-elfo\/sin-tiempo$/);
   check('sin tiempo: se llega desde la lista de las 24', true);
   check('sin tiempo: 15 trastadas exprés, cada una con su mensaje', (await page.locator('ol[aria-label="Trastadas exprés"] > li').count()) === 15 && (await page.locator('blockquote').count()) === 15);
-  check('sin tiempo: título propio', /^15 trastadas del elfo para cuando no hay tiempo/.test(await page.title()));
+  // Tras navegar en el cliente el título tarda un instante en cambiar: se espera a que cambie.
+  const qTitle = await page.waitForFunction(() => /^15 trastadas del elfo para cuando no hay tiempo/.test(document.title), null, { timeout: 8000 }).then(() => true, () => false);
+  check('sin tiempo: título propio', qTitle, await page.title());
+  const qImgs = await page.locator('ol[aria-label="Trastadas exprés"] > li figure img').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
+  const qOk = await Promise.all(qImgs.map((src) => fetch(BASE + src).then((r) => r.ok && /image\/jpeg/.test(r.headers.get('content-type') || ''))));
+  check('sin tiempo: las 15 tienen su ilustración y cargan', qImgs.length === 15 && qOk.every(Boolean), qImgs.length + ' imágenes');
   const pinQ = decodeURIComponent((await page.locator('a[href^="https://www.pinterest.com/pin/create/"]').first().getAttribute('href')) ?? '');
   check('sin tiempo: Pinterest con su chuleta vertical', /media=http.*\/ideas-elfo\/sin-tiempo\/imagen/.test(pinQ));
   const ch = await fetch(BASE + '/ideas-elfo/sin-tiempo/imagen');

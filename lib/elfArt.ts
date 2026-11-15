@@ -24,4 +24,11 @@ export function elfArtDataUri(day: number): string | null {
   return existsSync(file) ? `data:image/jpeg;base64,${readFileSync(file).toString('base64')}` : null;
 }
 
+/** Ilustraciones de las trastadas exprés («sin tiempo»): public/elfo/sin-tiempo/<id>.jpg. */
+export function quickArt(id: string): ElfArt | null {
+  if (!/^[a-z]+$/.test(id)) return null;
+  const file = path.join(process.cwd(), 'public', 'elfo', 'sin-tiempo', `${id}.jpg`);
+  return existsSync(file) ? { src: `/elfo/sin-tiempo/${id}.jpg`, width: 1024, height: 768 } : null;
+}
+
 export const AI_ART_NOTE = 'Ilustración creada con IA';

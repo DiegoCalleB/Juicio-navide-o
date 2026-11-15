@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
 import { ELF_HASHTAGS, elfQuick } from '@/lib/elfIdeas';
+import { AI_ART_NOTE, quickArt } from '@/lib/elfArt';
 
 const TITLE = '15 trastadas del elfo para cuando no hay tiempo (o se te ha olvidado)';
 const DESCRIPTION =
@@ -45,6 +46,16 @@ export default function SinTiempoPage() {
         <ol className="mt-8 grid gap-3.5 sm:grid-cols-2" aria-label="Trastadas exprés">
           {ideas.map((q, i) => (
             <li key={q.id} id={q.id} className="scroll-mt-4 rounded-2xl border border-[#f6d77a]/25 bg-[#1d0b3a]/70 p-4">
+              {(() => {
+                const art = quickArt(q.id);
+                return art ? (
+                  <figure className="-mx-4 -mt-4 mb-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={art.src} width={art.width} height={art.height} alt={`El elfo: ${q.title.toLowerCase()}`} loading={i < 2 ? 'eager' : 'lazy'} className="aspect-[4/3] w-full rounded-t-2xl object-cover" />
+                    <figcaption className="sr-only">{AI_ART_NOTE}</figcaption>
+                  </figure>
+                ) : null;
+              })()}
               <p className="text-[11.5px] font-bold uppercase tracking-widest text-[#f6d77a]">⚡ Exprés {i + 1} de {ideas.length}</p>
               <h2 className="mt-1.5 font-serif text-[21px] leading-tight">{q.title}</h2>
               <p className="mt-1.5 text-[14.5px] leading-snug text-[#fff6dc]/85">{q.how}</p>
