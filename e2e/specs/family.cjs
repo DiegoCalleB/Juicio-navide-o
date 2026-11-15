@@ -1,6 +1,6 @@
 // Familias: varios peques de golpe, enlace de familia que reconstruye los paneles, apodo y desplegable de peques.
 const { childLinkOf, familyLinkOf, ensureChar , nextStep } = require('../_lib.cjs');
-const { BASE, launch, openChild } = require('../_lib.cjs');
+const { BASE, launch, openChild, adultFetch } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
@@ -38,8 +38,11 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('un botón de panel por peque', (await page.getByRole('link', { name: 'Abrir el panel de Lucía' }).count()) === 1 && (await page.getByRole('link', { name: 'Abrir el panel de Mateo' }).count()) === 1);
 
   // Cabeceras: el enlace de familia no se filtra por Referer ni se cachea
-  const hdr = await fetch(local(familyLink)).then((r) => ({ ref: r.headers.get('referrer-policy'), cache: r.headers.get('cache-control') }));
+  const hdr = await adultFetch(local(familyLink)).then((r) => ({ ref: r.headers.get('referrer-policy'), cache: r.headers.get('cache-control') }));
   check('el enlace de familia va sin Referer ni caché', hdr.ref === 'no-referrer' && /no-store/.test(hdr.cache ?? ''), JSON.stringify(hdr));
+  const gate = await fetch(local(familyLink), { redirect: 'manual' });
+  const gatePage = await fetch(BASE + (gate.headers.get('location') || '').replace(/^https?:\/\/[^/]+/, ''));
+  check('sin sesión, la puerta (que lleva el enlace en ?next=) tampoco filtra Referer ni cachea', gate.headers.get('referrer-policy') === 'no-referrer' && gatePage.headers.get('referrer-policy') === 'no-referrer' && /no-store/.test(gatePage.headers.get('cache-control') ?? ''), `${gate.headers.get('referrer-policy')} | ${gatePage.headers.get('referrer-policy')} | ${gatePage.headers.get('cache-control')}`);
 
   // Un móvil nuevo, sin nada guardado, abre el enlace de familia
   const fresh = await mk();

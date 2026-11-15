@@ -51,6 +51,14 @@ const config: NextConfig = {
           { key: 'Cache-Control', value: 'private, no-store' },
         ],
       },
+      {
+        // La puerta de mayores puede llevar un enlace secreto en ?next=: tampoco se filtra ni se guarda.
+        source: '/mayores',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'private, no-store' },
+        ],
+      },
     ];
   },
 };

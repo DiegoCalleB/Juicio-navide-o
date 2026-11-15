@@ -20,7 +20,8 @@ export async function middleware(req: NextRequest) {
   url.search = `?next=${encodeURIComponent(pathname + search)}`;
   const res = NextResponse.redirect(url);
   res.headers.set('X-Robots-Tag', 'noindex, nofollow');
-  res.headers.set('Cache-Control', 'no-store');
+  res.headers.set('Cache-Control', 'private, no-store');
+  res.headers.set('Referrer-Policy', 'no-referrer'); // ?next= puede llevar un enlace secreto
   return res;
 }
 
