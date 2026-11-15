@@ -1,0 +1,43 @@
+# Línea Mágica · Reglas del proyecto
+
+## REGLA DE ORO (prevalece sobre cualquier otra cosa)
+
+**Nada en la web, en la app ni en el contenido de redes puede hacer dudar a un niño de que es real.**
+
+Para un niño, Papá Noel, los Reyes Magos, el elfo Chispa y el Ratoncito Pérez existen y le escriben de verdad.
+Cualquier cosa que un peque pueda ver, leer u oír, aunque llegue por casualidad, tiene que mantener esa
+fantasía intacta. Si hay duda entre «más claro para los padres» y «más seguro para la fantasía», gana la fantasía.
+
+### Qué implica
+
+- **Lo que ve el niño** (`/r/<token>`, el chat, el sello, las notificaciones, los audios, el saludo):
+  el personaje habla siempre en primera persona y como si fuera real. Nunca aparece «app», «IA», «voz sintetizada»,
+  «tus padres contestan», «mensaje programado», «paje», ni ningún aviso técnico que rompa la magia.
+  Los errores y estados sin conexión se explican con magia, no con lenguaje técnico.
+- **Lo que ven los padres** (`/paje/<token>`, `/familia`, `/crear`, `/precios`): están protegidos por PIN y
+  por no tener enlaces públicos; aun así, un niño puede llegar a ellos. Por eso toda página que explique que
+  los padres contestan, cómo se montan las trastadas o que los personajes no son reales debe estar detrás de la
+  **puerta de adultos** y no debe poder abrirse por casualidad desde el móvil de un peque.
+- **Nunca** escribas en ninguna página pública, metadato, vista previa de enlace (OG), `alt`, título, texto
+  de compartir, sitemap o mensaje de error frases como «no somos Papá Noel», «contestas en secreto»,
+  «tú escribes como si fueras…», «los padres hacen la trastada», «el elfo no se mueve solo»…
+- **Redes sociales** (vídeos, textos, bios, comentarios): se publica **la magia, no el truco**. Se enseña el
+  resultado («mirad lo que ha hecho Chispa esta noche»), nunca cómo se prepara ni quién lo hace. Las instrucciones
+  para los padres viven solo en la parte de la web detrás de la puerta de adultos. Sin niños en pantalla.
+  Se publica por la noche, cuando los peques duermen.
+- **Antes de dar algo por terminado** (texto, imagen, vídeo, error, correo, vista previa): pregúntate
+  «¿podría un niño de 6 años leerlo o verlo y sospechar algo?». Si la respuesta no es un «no» rotundo, se cambia.
+
+### Cómo comprobarlo
+
+- Revisar los textos nuevos con la lista de frases prohibidas de arriba.
+- Las pruebas E2E deben incluir una comprobación de «frases que delatan» en las páginas públicas.
+- Cualquier cambio en `lib/characters.ts`, mensajes del niño o páginas públicas requiere esta revisión.
+
+## Otras reglas del proyecto
+
+- Voces siempre en castellano de España. Nunca acento latinoamericano.
+- Web/PWA solo. Sin nombres, datos ni fotos de niños fuera de lo necesario; nunca niños en pantalla en redes.
+- No crear PRs sin que se pidan. Sin cambios destructivos en Supabase sin confirmación.
+- Los secretos (Railway, Stripe, claves de API) los pone el usuario; nunca pedirlos ni verlos en el chat.
+- Nada que parezca «hecho con IA» a la vista: sin avisos de IA ni ✨ decorativos en la interfaz.
