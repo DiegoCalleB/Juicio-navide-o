@@ -25,6 +25,8 @@ const csp = [
 ].join('; ');
 
 const config: NextConfig = {
+  // Grabaciones de vídeo y capturas: sin el indicador de desarrollo de Next (NEXT_DEV_INDICATORS=0).
+  ...(process.env.NEXT_DEV_INDICATORS === "0" ? { devIndicators: false as const } : {}),
   // Las pruebas E2E compilan en su propia carpeta para no mezclarse con el build de producción.
   distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
