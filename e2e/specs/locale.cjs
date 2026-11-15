@@ -14,26 +14,26 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // España (es-ES)
   const cEs = await ctx('es-ES');
   const pEs = await open(cEs);
-  check('es-ES: la portada habla de "móvil"', (await pEs.getByText(/contestas en secreto desde tu móvil/).count()) === 1);
+  check('es-ES: la portada habla de "móvil"', (await pEs.getByText(/al móvil de casa/).count()) === 1);
   check('es-ES: <html lang="es">', (await pEs.getAttribute('html', 'lang')) === 'es');
   check('es-ES: el selector marca España', (await pEs.getByRole('radio', { name: /España/ }).getAttribute('aria-checked')) === 'true');
 
   // Latinoamérica (es-MX)
   const cMx = await ctx('es-MX');
   const pMx = await open(cMx);
-  check('es-MX: la portada habla de "celular"', (await pMx.getByText(/contestas en secreto desde tu celular/).count()) === 1);
-  check('es-MX: ya no aparece "móvil" en la explicación', (await pMx.getByText(/desde tu móvil/).count()) === 0);
+  check('es-MX: la portada habla de "celular"', (await pMx.getByText(/al celular de casa/).count()) === 1);
+  check('es-MX: ya no aparece "móvil" en la explicación', (await pMx.getByText(/al móvil de casa/).count()) === 0);
   check('es-MX: <html lang="es-419">', (await pMx.getAttribute('html', 'lang')) === 'es-419');
   check('es-MX: el selector marca Latinoamérica', (await pMx.getByRole('radio', { name: /Latinoamérica/ }).getAttribute('aria-checked')) === 'true');
 
   // Selector manual: un navegador mexicano elige España y se recuerda
   await pMx.getByRole('radio', { name: /España/ }).click();
-  await pMx.getByText(/contestas en secreto desde tu móvil/).waitFor({ timeout: 15000 });
+  await pMx.getByText(/al móvil de casa/).waitFor({ timeout: 15000 });
   check('selector manual: elegir España cambia el texto', true);
   await pMx.reload({ waitUntil: 'networkidle' });
-  check('selector manual: la elección se recuerda al recargar', (await pMx.getByText(/contestas en secreto desde tu móvil/).count()) === 1);
+  check('selector manual: la elección se recuerda al recargar', (await pMx.getByText(/al móvil de casa/).count()) === 1);
   await pMx.getByRole('radio', { name: /Latinoamérica/ }).click();
-  await pMx.getByText(/desde tu celular/).waitFor({ timeout: 15000 });
+  await pMx.getByText(/al celular de casa/).waitFor({ timeout: 15000 });
 
   // Sala creada en Latinoamérica: el panel, abierto desde un móvil de España, sigue en su variante
   await pMx.goto(BASE + '/crear', { waitUntil: 'networkidle' });

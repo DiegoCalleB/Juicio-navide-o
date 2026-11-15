@@ -1,5 +1,5 @@
 const { OUT: S, FIX, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
-const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, adultFetch } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
   // ── Metadatos, PWA, SEO y cabeceras (sin navegador)
@@ -8,14 +8,14 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   for (const ic of man.icons) { const r = await fetch(BASE + ic.src); check('icono accesible ' + ic.src, r.status === 200 && (r.headers.get('content-type') || '').includes('image/png')); }
   check('apple-touch-icon accesible', (await fetch(BASE + '/apple-icon.png')).status === 200);
   const robots = await (await fetch(BASE + '/robots.txt')).text();
-  check('robots.txt bloquea /r/, /paje/ y /api/', /Disallow: \/r\//.test(robots) && /Disallow: \/paje\//.test(robots) && /Disallow: \/api\//.test(robots) && /Sitemap:/.test(robots));
+  check('robots.txt bloquea /r/, /api/ y /mayores', /Disallow: \/r\//.test(robots) && /Disallow: \/mayores/.test(robots) && /Disallow: \/api\//.test(robots) && /Sitemap:/.test(robots));
   const sm = await (await fetch(BASE + '/sitemap.xml')).text();
-  check('sitemap incluye portada, privacidad y términos', /privacidad/.test(sm) && /terminos/.test(sm) && !/\/paje\//.test(sm));
+  check('sitemap: portada y diario de Chispa, nada de la zona de mayores', /diario-de-chispa/.test(sm) && !/privacidad|terminos|\/paje\//.test(sm));
   const home = await (await fetch(BASE + '/')).text();
   check('portada: viewport-fit=cover, theme-color y apple-mobile-web-app', /viewport-fit=cover/.test(home) && /theme-color/.test(home) && /apple-mobile-web-app-capable|mobile-web-app-capable/.test(home));
   const tok = 'A'.repeat(43);
   for (const path of ['/r/' + tok, '/paje/' + tok]) {
-    const r = await fetch(BASE + path);
+    const r = await (path.startsWith('/paje') ? adultFetch : fetch)(BASE + path);
     check(`ruta secreta ${path.slice(0, 7)}…: Referrer-Policy no-referrer + no-store`, r.headers.get('referrer-policy') === 'no-referrer' && /no-store/.test(r.headers.get('cache-control') || ''), `${r.headers.get('referrer-policy')} | ${r.headers.get('cache-control')}`);
     check(`ruta secreta ${path.slice(0, 7)}…: noindex`, /noindex/.test(await r.text()));
   }
@@ -35,8 +35,10 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.goto(BASE + '/terminos', { waitUntil: 'networkidle' });
   check('términos de uso disponibles', await page.getByRole('heading', { name: 'Términos de uso' }).isVisible());
   await page.screenshot({ path: S + '/u2-terms.png' });
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
+  check('zona de mayores: enlaces a Privacidad y Términos', await page.getByRole('link', { name: 'Privacidad' }).isVisible() && await page.getByRole('link', { name: /Términos/ }).isVisible());
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-  check('portada: pie con Privacidad y Términos', await page.getByRole('link', { name: 'Privacidad' }).isVisible() && await page.getByRole('link', { name: 'Términos de uso' }).isVisible());
+  check('portada: pie con la zona de mayores', await page.getByRole('link', { name: 'Zona de mayores' }).isVisible());
   // foco visible por teclado
   await page.keyboard.press('Tab');
   const outline = await page.evaluate(() => { const el = document.activeElement; const cs = getComputedStyle(el); return cs.outlineStyle + ' ' + cs.outlineWidth + ' ' + cs.outlineColor; });

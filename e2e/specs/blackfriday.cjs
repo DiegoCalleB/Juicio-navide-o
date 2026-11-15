@@ -30,13 +30,7 @@ const EXPECT = {
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
 
-  check(`portada: el enlace junto al botón principal muestra ${price}`, await page.getByRole('link', { name: new RegExp(`Pase de Navidad ${price}`) }).isVisible());
-  const banner = page.getByRole('link', { name: /Oferta Black Friday · Pase de Navidad a/ });
-  check(inBF ? 'durante la campaña: aparece el aviso de Black Friday' : 'fuera de la campaña: no hay aviso de Black Friday', inBF ? await banner.isVisible() : (await banner.count()) === 0);
-  if (inBF) {
-    const txt = (await banner.innerText()).replace(/\s+/g, ' ');
-    check('el aviso dice el precio y hasta cuándo', /2,99 €/.test(txt) && /hasta el lunes 30 de noviembre/.test(txt), txt);
-  }
+  check('portada (la puede ver un peque): sin precios ni ofertas', (await page.getByText(/€|Black Friday|Pase de Navidad/).count()) === 0);
   // Portada de temporada
   check(`portada de temporada (${phase}): titular`, await page.getByRole('heading', { level: 1 }).filter({ hasText: EXPECT.h1 }).isVisible());
   check(`portada de temporada (${phase}): el chat de ejemplo es del personaje de la época`, await page.getByText(EXPECT.demo).first().isVisible());
@@ -48,6 +42,14 @@ const EXPECT = {
   }
   if (phase === 'elf' || phase === 'elf-pre') check('el chat del elfo muestra la foto de la trastada', await page.getByRole('img', { name: /Mira la trastada/ }).isVisible());
 
+
+  // Zona de mayores: el enlace a precios lleva el del Pase y, en campaña, la oferta
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
+  const offer = page.getByRole('link', { name: new RegExp(`Pase de Navidad ${price}`) });
+  check(`zona de mayores: el enlace a precios muestra ${price}`, await offer.isVisible());
+  const offerTxt = (await offer.innerText()).replace(/\s+/g, ' ');
+  if (inBF) check('durante la campaña: dice Black Friday y hasta cuándo', /Oferta Black Friday/.test(offerTxt) && /hasta el lunes 30 de noviembre/i.test(offerTxt), offerTxt);
+  else check('fuera de la campaña: no hay aviso de Black Friday', !/Black Friday/.test(offerTxt), offerTxt);
 
   await page.goto(BASE + '/precios', { waitUntil: 'networkidle' });
   check(`precios: el botón del Pase muestra ${price}`, await page.getByRole('button', { name: new RegExp(`Conseguir el Pase · ${price.replace('.', '\\.')}`) }).isVisible());

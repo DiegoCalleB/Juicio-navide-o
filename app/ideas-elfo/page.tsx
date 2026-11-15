@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
-import { ShareBar } from '@/components/features/ShareBar';
 import { elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 

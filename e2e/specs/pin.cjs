@@ -155,9 +155,9 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('el PIN antiguo deja de valer y el nuevo sí', oldPin.status() === 400 && newPin.status() === 200);
 
   // La familia hereda el PIN: otro peque en la misma familia también queda protegido
-  await A.p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await A.p.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await A.p.getByRole('link', { name: /Zona de los padres/ }).waitFor({ timeout: 15000 });
-  check('portada de un móvil con PIN: solo "Zona de los padres" (sin salas, nombres ni enlaces)', (await A.p.locator('section[aria-labelledby=my-rooms]').count()) === 0 && (await A.p.getByText(/Tus salas en este móvil|Abrir panel de|Copiar enlace del peque/).count()) === 0 && !/Valentina/.test(await A.p.locator('body').innerText()));
+  check('zona de mayores de un móvil con PIN: solo "Zona de los padres" (sin salas, nombres ni enlaces)', (await A.p.locator('section[aria-labelledby=my-rooms]').count()) === 0 && (await A.p.getByText(/Tus salas en este móvil|Abrir panel de|Copiar enlace del peque/).count()) === 0 && !/Valentina/.test(await A.p.locator('body').innerText()));
   await A.p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await A.p.fill('#child', 'Mateo'); await A.p.locator('form').getByRole('checkbox').check();
   await ensureChar(A.p); await A.p.getByRole('button', { name: /Crear la sala/ }).click();

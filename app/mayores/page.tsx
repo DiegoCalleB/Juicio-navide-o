@@ -28,7 +28,13 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
     { href: '/crear', title: 'Crear una sala', text: 'Para que tu peque reciba mensajes de su personaje.' },
     { href: '/ideas-elfo', title: 'Ideas de trastadas del elfo', text: 'Las 24 noches, paso a paso.' },
     { href: '/ideas-elfo/sin-tiempo', title: 'Trastadas exprés', text: 'Para los días sin tiempo.' },
-    ...(billing.enabled ? [{ href: '/precios', title: 'Precios y Pase de Navidad', text: `Prueba gratis 3 días · Pase ${billing.price}` }] : []),
+    ...(billing.enabled
+      ? [{
+          href: '/precios',
+          title: billing.campaign ? `${billing.campaign.label} · Pase de Navidad ${billing.price}` : `Precios · Pase de Navidad ${billing.price}`,
+          text: billing.campaign ? `Hasta el ${billing.campaign.until}. Prueba gratis 3 días.` : 'Prueba gratis 3 días.',
+        }]
+      : []),
   ];
   return (
     <main data-scroll-root className="fixed inset-0 z-40 overflow-y-auto bg-[#120c22] text-[#f3ecff]">

@@ -3,17 +3,24 @@
 Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. El niño escribe, manda fotos o **audios**; los padres contestan con texto, fotos o **la voz del personaje**, y pueden **grabar su reacción** con el propio móvil.
 
 ## Pantallas
+Regla de oro (ver `AGENTS.md`): nada de lo que pueda ver un peque delata la magia. La web se divide en un
+**mundo mágico público** y una **zona de mayores** tras una puerta (cuenta de cabeza en 20 s, comprobada en el
+servidor; 3 fallos = 15 min bloqueada; la sesión caduca a los 30 min sin uso o al cerrar el navegador).
+
 | Ruta | Quién | Qué |
 |---|---|---|
-| `/` | Padres | Elegir personaje y crear la sala |
+| `/` | Todos | Portada mágica (sin precios ni instrucciones); «Para mamás y papás» lleva a la puerta |
+| `/diario-de-chispa` | Todos | Lo que el elfo Chispa cuenta que hizo cada noche |
 | `/r/[token]` | Niño | Chat con el personaje |
-| `/paje/[token]` | Padres | Panel secreto: ven lo que escribe el niño y contestan |
-| `/privacidad` | Todos | Qué se guarda y cuánto tiempo |
-| `/demo/mensajeria?p=papa_noel` | — | Demo sin servidor |
-| `/juicio` | — | El juego anterior (aparcado) |
+| `/mayores` | Puerta | La pregunta y, ya dentro, el menú de la zona de mayores (salas guardadas, ideas, precios, legal) |
+| `/crear`, `/precios`, `/ideas-elfo/*` | Mayores | Crear la sala, precios e ideas de trastadas |
+| `/paje/[token]`, `/familia/[token]`, `/pase/*` | Mayores | Panel para contestar, familia y Pase |
+| `/privacidad`, `/terminos`, `/demo/*` | Mayores | Textos legales y demo |
+
+Para proteger una ruta nueva: añádela a `ADULT_PATHS` (`lib/adultGate.ts`) y al `matcher` de `middleware.ts`.
 
 ## Variables de entorno
-Ver `.env.example`. Imprescindibles: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `FINGERPRINT_SALT`, `CRON_SECRET`. Opcionales: `NEXT_PUBLIC_SITE_URL`, `ELEVENLABS_API_KEY` (voz del personaje; `NEXT_PUBLIC_ENABLE_VOICE=0` la apaga), `NEXT_PUBLIC_ENABLE_CHILD_AUDIO=0` (apaga los audios del niño).
+Ver `.env.example`. Imprescindibles: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `FINGERPRINT_SALT`, `CRON_SECRET`. Opcionales: `NEXT_PUBLIC_SITE_URL`, `ADULT_GATE_SECRET` (firma la puerta de mayores; si falta usa `FINGERPRINT_SALT`), `ELEVENLABS_API_KEY` (voz del personaje; `NEXT_PUBLIC_ENABLE_VOICE=0` la apaga), `NEXT_PUBLIC_ENABLE_CHILD_AUDIO=0` (apaga los audios del niño).
 
 ## Ayudante de mensajes (Gemini)
 Con `GEMINI_API_KEY`, el panel muestra «✨ Ayúdame a escribirlo»: los padres escriben la idea y Gemini (`GEMINI_MODEL`, por defecto `gemini-3.8-flash`, pensamiento bajo, ~2–4 s) propone 3 mensajes con la voz del personaje, en castellano de España. **No se envía el nombre del niño**: el modelo escribe «[nombre]» y el panel lo sustituye. Topes: 12 peticiones cada 10 min por sala y `GEMINI_DAILY_LIMIT` al día en total. Pruebas: `GEMINI_FAKE=1` (solo almacén en memoria).

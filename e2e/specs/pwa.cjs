@@ -16,7 +16,7 @@ const get = async (path) => fetch(BASE + path);
   const m = await mres.json();
   check('manifiesto general: nombre, id, inicio y alcance', m.name === 'Línea Mágica' && m.id === '/' && m.scope === '/' && /^\/\?utm_source=pwa/.test(m.start_url), `${m.name} ${m.start_url}`);
   check('manifiesto general: se abre como app (standalone) y sin bloquear la orientación', m.display === 'standalone' && !m.orientation);
-  check('manifiesto general: atajos a "Crear sala" y "Trastadas"', (m.shortcuts ?? []).length === 2 && m.shortcuts.some((s) => s.url === '/ideas-elfo'));
+  check('manifiesto general: atajos al Diario de Chispa y a la zona de mayores', (m.shortcuts ?? []).length === 2 && m.shortcuts.some((s) => s.url === '/diario-de-chispa') && m.shortcuts.some((s) => s.url === '/mayores'));
   const sizes = {};
   for (const ic of m.icons) { const r = await get(ic.src); sizes[`${ic.sizes}/${ic.purpose}`] = r.status === 200 && /image\/png/.test(r.headers.get('content-type') ?? '') ? pngWidth(Buffer.from(await r.arrayBuffer())) : 0; }
   check('iconos 192, 512 y maskable existen y tienen el tamaño declarado', sizes['192x192/any'] === 192 && sizes['512x512/any'] === 512 && sizes['512x512/maskable'] === 512, JSON.stringify(sizes));

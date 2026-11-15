@@ -20,6 +20,9 @@ function adultCookie() {
   return { name: 'lm_mayores', value: `${ts}.${sig}`, url: BASE };
 }
 
+/** fetch con sesión de mayores (para pedir sin navegador rutas de la zona de mayores). */
+const adultFetch = (url, opts = {}) => { const c = adultCookie(); return fetch(url, { ...opts, headers: { ...(opts.headers || {}), Cookie: `${c.name}=${c.value}` } }); };
+
 /**
  * Chromium: usa CHROMIUM_PATH si existe (p. ej. entornos sin descarga de navegadores).
  * Por defecto cada contexto nace con la puerta de mayores pasada; `{ adult: false }` para navegar como un peque.
@@ -112,4 +115,4 @@ async function ensureChar(page) {
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).first().click();
 }
 
-module.exports = { BASE, OUT, FIX, launch, adultCookie, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };
+module.exports = { BASE, OUT, FIX, launch, adultCookie, adultFetch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };

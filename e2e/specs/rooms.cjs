@@ -6,8 +6,8 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-  await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('portada sin salas guardadas: no aparece "Tus salas"', (await page.getByText('Tus salas en este móvil').count()) === 0);
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle', timeout: 120000 });
+  check('zona de mayores sin salas guardadas: no aparece "Tus salas"', (await page.getByText('Tus salas en este móvil').count()) === 0);
 
   // Sin personaje elegido no se crea la sala: pide elegir
   await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
@@ -48,15 +48,15 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();
   check('"Preparar otra sala" vuelve al formulario vacío', (await page.inputValue('#child')) === '');
   await create('Mateo', 'Baltasar');
-  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   check('tras recargar, la lista de salas está oculta tras un botón', (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 0 && await page.getByRole('button', { name: /Ya tengo salas en este móvil \(2\)/ }).isVisible());
   await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
-  check('al pulsarlo, la portada lista las 2 salas de este móvil', await page.getByText('Tus salas en este móvil').isVisible() && (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 2);
+  check('al pulsarlo, la zona de mayores lista las 2 salas de este móvil', await page.getByText('Tus salas en este móvil').isVisible() && (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 2);
   check('cada sala muestra su niño y su personaje', await page.locator('section[aria-labelledby=my-rooms]').getByText('con Papá Noel').isVisible() && await page.locator('section[aria-labelledby=my-rooms]').getByText('con Rey Baltasar').isVisible());
   await page.screenshot({ path: S + '/ro2-myrooms.png' });
   await page.getByRole('link', { name: 'Abrir panel de los padres' }).first().click();
   check('"Abrir panel" lleva al panel correcto', await page.getByText(/Contestas como Rey Baltasar a Mateo/).waitFor({ timeout: 20000 }).then(() => true, () => false));
-  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
   await page.getByRole('button', { name: 'Quitar la sala de Mateo de la lista' }).click();
   check('"Quitar" la saca de la lista', (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 1);

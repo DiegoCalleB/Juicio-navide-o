@@ -16,9 +16,9 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('portada: anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
-  check('portada: mensaje para primeros lectores', await page.getByText('Para primeros lectores').isVisible());
+  check('portada (la puede ver un peque): sin precios ni pagos', (await page.getByText(/€|prueba gratis|Pase de Navidad/i).count()) === 0);
   await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  check('crear: anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
 
   const create = async (name, reading) => {
     await page.fill('#child', name);
@@ -134,8 +134,8 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const ctxD = await b.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (comprador directo) E2E' });
   const buyer = await ctxD.newPage();
   buyer.on('pageerror', (e) => errs.push(e.message));
-  await buyer.goto(BASE + '/', { waitUntil: 'networkidle' });
-  check('portada: enlace a los precios junto al botón principal', await buyer.getByRole('link', { name: /Pase de Navidad 3,99/ }).isVisible());
+  await buyer.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
+  check('zona de mayores: enlace a los precios con el del Pase', await buyer.getByRole('link', { name: /Pase de Navidad 3,99/ }).isVisible());
   await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });
   check('portada: sección "Elige cómo empezar" con las dos opciones', await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).isVisible() && await buyer.getByRole('heading', { name: 'Prueba gratis' }).isVisible() && await buyer.getByRole('heading', { name: 'Pase de Navidad' }).isVisible());
   check('portada: explica las ventajas del Pase', await buyer.getByText('Incluye un pase para regalar a otra familia').isVisible() && await buyer.getByText(/hasta el 20 de enero/).first().isVisible());

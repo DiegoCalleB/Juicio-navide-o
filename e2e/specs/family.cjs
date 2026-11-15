@@ -68,9 +68,9 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('el enlace del niño de Mateo abre sin error', (await kid.getByText(/Este enlace/).count()) === 0);
 
   // El móvil nuevo recupera "Tus salas" y la familia
-  await fresh.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await fresh.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   check('móvil nuevo: "Tus salas" recupera las dos', await fresh.getByText(/Ya tengo salas en este móvil \(2\)/).isVisible());
-  check('móvil nuevo: la portada muestra el acceso a "Tu familia"', await fresh.getByRole('link', { name: /Tu familia/ }).isVisible());
+  check('móvil nuevo: la zona de mayores muestra el acceso a "Tu familia"', await fresh.getByRole('link', { name: /Tu familia/ }).isVisible());
   await fresh.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   check('móvil nuevo: aparece el desplegable con los dos peques', (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Lucía') && (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Mateo'));
   await fresh.locator('#kid-pick').selectOption('Mateo');
@@ -83,7 +83,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('móvil nuevo: ya no pide apodo (la familia está guardada)', (await fresh.locator('#family-nick').count()) === 0);
 
   // El desplegable sobrevive a quitar las salas de la lista de este móvil
-  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
   for (const n of ['Lucía', 'Mateo']) await page.getByRole('button', { name: `Quitar la sala de ${n} de la lista` }).click();
   await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
@@ -92,7 +92,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
 
   // Un móvil que solo tiene el enlace de familia ve a los peques (los lee del servidor)
   const famOnly = await mk();
-  await famOnly.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await famOnly.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await famOnly.evaluate((t) => localStorage.setItem('magic-family', t), familyLink.slice(-43));
   await famOnly.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await famOnly.locator('#kid-pick').waitFor({ timeout: 15000 }).catch(() => {});

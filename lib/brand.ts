@@ -65,7 +65,7 @@ export function heroFor(now: Date = new Date()): Hero {
         phase,
         tagline: 'El elfo Chispa ya está aquí',
         title: '¡El elfo travieso ya está en casa!',
-        subtitle: 'Cada noche hace una trastada y cada mañana escribe un mensaje. ¿Dónde se habrá escondido hoy?',
+        subtitle: 'Cada noche hace una trastada y cada mañana escribe un mensaje al móvil de casa. ¿Dónde se habrá escondido hoy?',
         countdown: null,
         defaultCharacter: 'duende_chispa',
       };
