@@ -40,7 +40,7 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   await d.goto(BASE + '/', { waitUntil: 'networkidle' });
   const h1 = await d.locator('h1').boundingBox(), demo = await d.locator('#demo-title').boundingBox();
   check('portada de escritorio: el título a la izquierda y la demo a la derecha', h1 && demo && demo.x > h1.x + h1.width - 40, `h1 x=${Math.round(h1?.x)} demo x=${Math.round(demo?.x)}`);
-  const cta = await d.getByRole('link', { name: 'Crear la sala de mi peque' }).boundingBox();
+  const cta = await d.getByRole('link', { name: 'Para mamás y papás' }).boundingBox();
   check('la portada de escritorio enseña el botón principal sin hacer scroll', cta && cta.y + cta.height < 900);
   // En móvil sigue en una columna
   const m = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
