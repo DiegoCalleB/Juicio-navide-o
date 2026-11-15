@@ -52,9 +52,9 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
       greeting.current = (async () => {
         try {
           const r = await fetch(`/api/rooms/${token}/greeting`);
-          const j = (await r.json()) as { ok: boolean; data?: { speak: boolean; url: string | null; character: string } };
+          const j = (await r.json()) as { ok: boolean; data?: { speak: boolean; url: string | null; clip: string } };
           if (!j.ok || !j.data?.speak) return [];
-          const id = j.data.character;
+          const id = j.data.clip;
           return preloadClips([j.data.url ?? `/voces/saludo/${id}-hola.mp3`, `/voces/saludo/${id}.mp3`]);
         } catch {
           return [];

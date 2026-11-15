@@ -12,12 +12,12 @@ import { getElevenLabsKey } from '@/lib/env.server';
  * (El Abuelo Charlie y Lulu se descartaron por eso.)
  */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
-  papa_noel: '7qXldmK3yFlWBHejdkpP', // Julio Alonso – castellano, anciano, grave y con dicción perfecta (la más usada de las candidatas, 14-nov)
-  melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
+  papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, sabio y mágico, con ronquera suave (elegido el 15-nov)
+  melchor: 'QtPMrakdgePQIUwOX7Ut', // Arconte – castellano, grave y elegante (elegido el 15-nov)
   gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
   baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
   duende_chispa: 'HMCmDsbKeaSZp5LMOYKR', // Johnny The Rogue – castellano, pícaro y burlón de dibujos (la más usada de las candidatas, 14-nov)
-  raton_perez: '1eHrpOW5l98cxiSRjbzJ', // Raquel – castellana, joven, alegre y luminosa (la más usada de las candidatas, 14-nov)
+  raton_perez: 'gD1IexrzCvsXPHUuT0s3', // Sara Martín – castellana, joven (elegida el 15-nov)
 };
 
 const BITRATE = 64_000;
@@ -31,7 +31,11 @@ export class VoiceError extends Error {
   }
 }
 
-export function voiceIdFor(character: CharacterId): string {
+/** La elfa (cuando los padres eligen chica) tiene su propia voz. */
+const ELFA_VOICE_ID = 'anxpogu2yu4T91ajAsSp'; // Lía – castellana, joven, dulce y aguda (elegida el 15-nov)
+
+export function voiceIdFor(character: CharacterId, gender?: string | null): string {
+  if (character === 'duende_chispa' && gender === 'f') return process.env.ELEVENLABS_VOICE_DUENDE_CHISPA_F?.trim() || ELFA_VOICE_ID;
   const override = process.env[`ELEVENLABS_VOICE_${character.toUpperCase()}`]?.trim();
   return override || DEFAULT_VOICE_IDS[character];
 }
@@ -59,11 +63,11 @@ export function voiceModel(): string {
   return process.env.ELEVENLABS_MODEL?.trim() || 'eleven_v3';
 }
 
-async function requestOnce(character: CharacterId, text: string): Promise<Response> {
+async function requestOnce(voiceId: string, text: string): Promise<Response> {
   const model = voiceModel();
   // eleven_v3 solo admite estabilidad 0 / 0,5 / 1 y no usa style ni speaker_boost: se dejan sus valores por defecto.
   const settings = model.startsWith('eleven_v3') ? undefined : { stability: 0.5, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true };
-  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceIdFor(character)}?output_format=mp3_44100_64`, {
+  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_64`, {
     method: 'POST',
     headers: { 'xi-api-key': getElevenLabsKey(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, model_id: model, language_code: 'es', ...(settings ? { voice_settings: settings } : {}) }),
@@ -77,7 +81,7 @@ export async function synthesizeKingVoice(
   character: CharacterId,
   rawText: string,
   /** Texto propio con etiquetas de emoción ([risas], [susurra]…): no se limpia. Solo para frases internas, nunca texto de usuarios. */
-  opts?: { trusted?: boolean },
+  opts?: { trusted?: boolean; gender?: string | null },
 ): Promise<{ audio: Buffer; seconds: number; spokenChars: number }> {
   const text = opts?.trusted ? rawText.trim() : prepareSpeechText(rawText);
   if (!text) throw new VoiceError('unavailable', 'texto vacío tras limpiar');
@@ -85,7 +89,7 @@ export async function synthesizeKingVoice(
   let res: Response | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      res = await requestOnce(character, text);
+      res = await requestOnce(voiceIdFor(character, opts?.gender), text);
     } catch (err) {
       if (attempt === 1) throw new VoiceError('unavailable', err instanceof Error ? err.message : 'red');
       continue;

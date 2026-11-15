@@ -277,7 +277,7 @@ const previewCache = (): Map<string, { synth: Synth; exp: number }> => {
   return (g.__voicePreview ??= new Map());
 };
 const previewKey = (room: Room, text: string) =>
-  createHash('sha256').update(`${room.id}|${voiceIdFor(room.character)}|${voiceModel()}|${prepareSpeechText(text)}`).digest('base64url');
+  createHash('sha256').update(`${room.id}|${voiceIdFor(room.character, room.characterGender)}|${voiceModel()}|${prepareSpeechText(text)}`).digest('base64url');
 
 /** ¿Puede esta sala usar la voz ahora? Devuelve el motivo si no. */
 async function voiceAllowance(room: Room, text: string): Promise<'ok' | 'trial' | 'limit'> {
@@ -305,7 +305,7 @@ export async function previewVoice(room: Room, text: string): Promise<{ ok: true
   const hit = cache.get(key);
   if (hit && hit.exp > Date.now()) return { ok: true, audio: hit.synth.audio };
   try {
-    const synth = await synthesizeKingVoice(room.character, text);
+    const synth = await synthesizeKingVoice(room.character, text, { gender: room.characterGender });
     const now = Date.now();
     for (const [k, v] of cache) if (v.exp <= now) cache.delete(k);
     cache.set(key, { synth, exp: now + PREVIEW_TTL_MS });
@@ -350,7 +350,7 @@ export async function addKingReply(
     previewCache().delete(previewKey(room, text));
   } else {
     try {
-      synth = await synthesizeKingVoice(room.character, text);
+      synth = await synthesizeKingVoice(room.character, text, { gender: room.characterGender });
     } catch (err) {
       console.error('[voice]', err instanceof VoiceError ? err.message : err);
       return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
@@ -383,8 +383,6 @@ const greetingInFlight = (): Map<string, Promise<string | null>> => {
 
 export async function greetingAudioUrl(room: Room): Promise<string | null> {
   if (!KING_VOICE_ENABLED) return null;
-  // La elfa usa la voz del elfo (de chico): mejor sin saludo hablado que con una voz que no le pega.
-  if (room.character === 'duende_chispa' && room.characterGender === 'f') return null;
   const line = greetingNameLine(room.character, room.childName);
   if (!line) return null;
   const inflight = greetingInFlight();
@@ -395,7 +393,7 @@ export async function greetingAudioUrl(room: Room): Promise<string | null> {
     const path = greetingPath(room);
     try {
       if (!(await store.fileExists('voices', path))) {
-        const { audio } = await synthesizeKingVoice(room.character, line, { trusted: true });
+        const { audio } = await synthesizeKingVoice(room.character, line, { trusted: true, gender: room.characterGender });
         await store.uploadFile('voices', path, audio, 'audio/mpeg').catch((e) => {
           if (!/exist|duplicate/i.test(String(e))) throw e; // otra petición lo subió a la vez
         });

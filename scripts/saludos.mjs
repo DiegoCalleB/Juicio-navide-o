@@ -7,16 +7,18 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const VOICES = {
-  papa_noel: '7qXldmK3yFlWBHejdkpP',
+  papa_noel: 'EGuq18jUC3ilTnuBn2wj',
   duende_chispa: 'HMCmDsbKeaSZp5LMOYKR',
-  raton_perez: '1eHrpOW5l98cxiSRjbzJ',
-  melchor: 'GojDwihhnL1f7RrBuXsJ',
+  'duende_chispa-f': 'anxpogu2yu4T91ajAsSp',
+  raton_perez: 'gD1IexrzCvsXPHUuT0s3',
+  melchor: 'QtPMrakdgePQIUwOX7Ut',
   gaspar: 'ewZshglVwjWcMIuBYCCS',
   baltasar: 'orF2qy9215xjwqqxqsWW',
 };
 const HOLA = {
   papa_noel: '[risas] ¡Jo, jo, jo! ¡Hola!',
   duende_chispa: '[susurra] ¡Psss! ¡Hola!',
+  'duende_chispa-f': '[susurra] ¡Psss! ¡Hola!',
   raton_perez: '¡Hola!',
   melchor: '¡Hola!',
   gaspar: '¡Hola!',
@@ -24,6 +26,7 @@ const HOLA = {
 };
 const BODY = {
   papa_noel: '[cálido] ¡Qué alegría que hayas abierto mi mensaje! Aquí en el Polo Norte no para de nevar, y los renos y yo estábamos deseando hablar contigo. Escríbeme cuando quieras: te leo siempre.',
+  'duende_chispa-f': '[risita] ¡Por fin te encuentro! He llegado esta noche desde el Polo Norte, y vengo con muchísimas ganas de travesuras. Cada mañana me esconderé en un sitio nuevo… ¿serás capaz de encontrarme?',
   duende_chispa: '[risita] ¡Por fin te encuentro! He llegado esta noche desde el Polo Norte, y vengo con muchísimas ganas de travesuras. Cada mañana me esconderé en un sitio nuevo… ¿serás capaz de encontrarme?',
   raton_perez: 'Soy el Ratoncito Pérez. [emocionado] ¡Qué ilusión que me escribas! Desde mi castillo cuido con muchísimo cariño los dientes de todos los niños. Si se te mueve alguno, cuéntamelo: aquí estaré.',
   melchor: 'Soy el Rey Melchor. Venimos desde Oriente con nuestros camellos, siguiendo la estrella, y he leído tu carta con muchísima atención. Escríbeme cuando quieras: los pajes me traen tus mensajes al momento.',

@@ -12,9 +12,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     const found = await findRoomByToken(token);
     if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Sala no encontrada', 404);
     const room = found.room;
-    // La elfa usa la voz del elfo (de chico): sin saludo hablado antes que con una voz que no le pega.
-    const speak = KING_VOICE_ENABLED && !(room.character === 'duende_chispa' && room.characterGender === 'f');
+    const speak = KING_VOICE_ENABLED;
     const url = speak ? await greetingAudioUrl(room) : null;
-    return json({ ok: true, data: { speak, url, character: room.character } });
+    // Audios fijos del saludo: la elfa tiene los suyos (voz de chica).
+    const clip = room.character === 'duende_chispa' && room.characterGender === 'f' ? 'duende_chispa-f' : room.character;
+    return json({ ok: true, data: { speak, url, character: room.character, clip } });
   });
 }
