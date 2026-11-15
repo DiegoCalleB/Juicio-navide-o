@@ -11,9 +11,11 @@ export const dynamic = 'force-dynamic';
 
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string; pase?: string }> }) {
   // Enlaces antiguos /?personaje=duende_chispa (campañas, trastadas): van directos a crear la sala con ese personaje.
-  const { personaje } = await searchParams;
+  const { personaje, pase } = await searchParams;
+  // Enlaces de pase (/?pase=…): el pase se activa en la zona de mayores, nunca en la portada pública.
+  if (pase && /^[A-Za-z0-9_-]{20,80}$/.test(pase)) redirect(`/crear?pase=${pase}`);
   if (personaje && isCharacterId(personaje)) redirect(`/crear?personaje=${personaje}`);
   return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} />;
 }

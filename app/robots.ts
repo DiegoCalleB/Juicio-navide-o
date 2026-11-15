@@ -1,10 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { getSiteUrl } from '@/lib/site';
 
-/** Las salas (/r, /paje, /familia) usan enlaces secretos: nunca deben indexarse. */
+/**
+ * Solo se indexa el mundo mágico. La zona de mayores no hace falta listarla aquí: sin la puerta redirige a
+ * /mayores y responde con X-Robots-Tag: noindex. Las salas de los niños (/r) usan enlaces secretos.
+ */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: ['/', '/ideas-elfo', '/privacidad', '/terminos'], disallow: ['/r/', '/paje/', '/familia/', '/api/', '/demo/'] }],
+    rules: [{ userAgent: '*', allow: ['/', '/diario-de-chispa'], disallow: ['/r/', '/api/', '/mayores'] }],
     sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }

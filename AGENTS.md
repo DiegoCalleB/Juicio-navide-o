@@ -28,10 +28,23 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 - **Antes de dar algo por terminado** (texto, imagen, vídeo, error, correo, vista previa): pregúntate
   «¿podría un niño de 6 años leerlo o verlo y sospechar algo?». Si la respuesta no es un «no» rotundo, se cambia.
 
+### Cómo está hecho
+
+- **Mundo mágico (público):** `/` (portada) y `/diario-de-chispa` (lo que Chispa cuenta que hizo, noche a noche,
+  sin instrucciones). Metadatos, vista previa (OG), manifiesto, sitemap y robots: neutros.
+- **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 20 s (comprobada en el servidor con un token
+  firmado; 3 fallos = 15 min bloqueada). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
+  cerrar el navegador. Código: `lib/adultGate.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.
+- **Zona de mayores (detrás de la puerta):** `/crear`, `/precios`, `/ideas-elfo/*`, `/familia/*`, `/paje/*`,
+  `/pase/*`, `/privacidad`, `/terminos`, `/demo/*`. Para añadir una ruta, ponla en `ADULT_PATHS` y en el
+  `matcher` del middleware. Las instrucciones nunca se comparten en redes desde la web (sin botones de compartir).
+
 ### Cómo comprobarlo
 
+- `npm run test:e2e -- magia`: navega como un niño y falla si cualquier página pública, metadato, manifiesto,
+  sitemap, robots o la sala del niño contiene una frase de la lista `DELATAN`, o si alguna ruta de mayores se abre
+  sin la puerta. Si aparece una frase nueva peligrosa, añádela a esa lista.
 - Revisar los textos nuevos con la lista de frases prohibidas de arriba.
-- Las pruebas E2E deben incluir una comprobación de «frases que delatan» en las páginas públicas.
 - Cualquier cambio en `lib/characters.ts`, mensajes del niño o páginas públicas requiere esta revisión.
 
 ## Otras reglas del proyecto

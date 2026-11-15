@@ -39,7 +39,7 @@ export default function SinTiempoPage() {
             en <strong>menos de un minuto</strong>, sin comprar nada, y vienen con el mensaje del elfo que lo explica todo.
           </p>
           <div className="mt-4">
-            <ShareBar path="/ideas-elfo/sin-tiempo" text="Las 15 trastadas del elfo para cuando se te ha olvidado moverlo (todas en menos de un minuto):" title={TITLE} image={image} hashtags={ELF_HASHTAGS} />
+            
           </div>
         </header>
 

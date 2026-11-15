@@ -3,7 +3,7 @@ import { heroFor } from '@/lib/brand';
 import { siteNow } from '@/lib/clock';
 import { getSiteUrl } from '@/lib/site';
 
-export const alt = 'Que antes de abrir los regalos, hable con Papá Noel';
+export const alt = 'Línea Mágica · Mensajes de Papá Noel, los Reyes Magos, el elfo Chispa y el Ratoncito Pérez';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -32,7 +32,7 @@ export default function OgImage() {
           {hero.title}
         </div>
         <div style={{ display: 'flex', fontSize: 34, marginTop: 30, color: '#d9cfe8', maxWidth: 980 }}>
-          Tú contestas en secreto desde tu móvil. A tu peque le llega como si fuera el personaje, en directo.
+          {hero.subtitle}
         </div>
         <div style={{ display: 'flex', fontSize: 30, marginTop: 'auto', paddingTop: 24, color: '#f6d77a' }}>{host}</div>
       </div>

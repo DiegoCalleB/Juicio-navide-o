@@ -85,7 +85,7 @@ export default function IdeasElfoPage() {
           </div>
           <div className="mt-3">
             <p className="mb-1.5 text-[12.5px] font-semibold text-[#fff6dc]/60">Compártelo con otras familias</p>
-            <ShareBar path="/ideas-elfo" text={shareText} title={TITLE} hashtags={ELF_HASHTAGS} />
+            
           </div>
         </header>
 
@@ -139,7 +139,7 @@ export default function IdeasElfoPage() {
                     <blockquote className="mt-1 rounded-xl bg-[#fbf5e6] px-3 py-2 text-[14.5px] leading-snug text-[#3a2208]">{message}</blockquote>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <CopyMessage text={message} />
-                      <ShareBar path={`/ideas-elfo/${d.day}`} text={`Trastada ${d.day} del elfo travieso: ${d.title}. ${d.why}`} title={`Trastada ${d.day} del elfo travieso`} image={`/ideas-elfo/${d.day}/imagen`} hashtags={ELF_HASHTAGS} compact />
+                      
                     </div>
                   </article>
                   {(i + 1) % 8 === 0 && i + 1 < days.length && (

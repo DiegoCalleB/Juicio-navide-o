@@ -53,9 +53,9 @@ export function heroFor(now: Date = new Date()): Hero {
       const days = dayNumber(elfArrival(t.y)) - dayNumber(t);
       return {
         phase,
-        tagline: 'Prepara la llegada del elfo travieso',
+        tagline: 'El elfo Chispa está de camino',
         title: 'Un elfo travieso va a colarse en tu casa',
-        subtitle: 'Cada noche una trastada y, cada mañana, un mensaje suyo para tu peque. Prepáralo antes de que llegue.',
+        subtitle: 'Llega el 1 de diciembre desde el Polo Norte. Cada noche, una trastada; cada mañana, un mensaje suyo al móvil de casa.',
         countdown: days <= 1 ? '¡Llega mañana!' : `Llega el 1 de diciembre · faltan ${days} días`,
         defaultCharacter: 'duende_chispa',
       };
@@ -63,36 +63,36 @@ export function heroFor(now: Date = new Date()): Hero {
     case 'elf':
       return {
         phase,
-        tagline: 'El elfo travieso ya está en casa',
+        tagline: 'El elfo Chispa ya está aquí',
         title: '¡El elfo travieso ya está en casa!',
-        subtitle: 'Cada noche una trastada. Cada mañana, un mensaje suyo para tu peque, escrito por ti en secreto.',
+        subtitle: 'Cada noche hace una trastada y cada mañana escribe un mensaje. ¿Dónde se habrá escondido hoy?',
         countdown: null,
         defaultCharacter: 'duende_chispa',
       };
     case 'noel':
       return {
         phase,
-        tagline: 'Papá Noel te contesta en directo',
+        tagline: 'Línea directa con el Polo Norte',
         title: 'Que antes de abrir los regalos, hable con Papá Noel',
-        subtitle: 'Tu peque le escribe y tú contestas en secreto desde tu móvil. A él le llega como si fuera el personaje.',
+        subtitle: 'Papá Noel tiene una línea mágica para escribirse con los peques. Sus mensajes llegan en directo al móvil de casa.',
         countdown: null,
         defaultCharacter: 'papa_noel',
       };
     case 'reyes':
       return {
         phase,
-        tagline: 'Los Reyes Magos te contestan en directo',
+        tagline: 'Línea directa con Oriente',
         title: 'Que los Reyes Magos le contesten en directo',
-        subtitle: 'Tu peque les escribe y tú contestas en secreto desde tu móvil. A él le llega como si fueran los Reyes.',
+        subtitle: 'Melchor, Gaspar y Baltasar leen cada mensaje desde Oriente y contestan en directo al móvil de casa.',
         countdown: null,
         defaultCharacter: 'melchor',
       };
     default:
       return {
         phase,
-        tagline: 'El Ratoncito Pérez te escribe en directo',
+        tagline: 'El Ratoncito Pérez escribe desde su castillo',
         title: 'Que el Ratoncito Pérez le escriba cuando se le caiga un diente',
-        subtitle: 'Tu peque le escribe y tú contestas en secreto desde tu móvil. A él le llega como si fuera el Ratoncito.',
+        subtitle: 'Cuando se cae un diente, el Ratoncito Pérez escribe desde su castillo, en directo, al móvil de casa.',
         countdown: null,
         defaultCharacter: 'raton_perez',
       };

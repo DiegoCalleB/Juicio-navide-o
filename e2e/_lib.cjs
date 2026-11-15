@@ -8,12 +8,38 @@ const OUT = process.env.E2E_OUT || path.join(__dirname, 'out');
 const FIX = path.join(__dirname, '.fixtures');
 fs.mkdirSync(OUT, { recursive: true });
 
-/** Chromium: usa CHROMIUM_PATH si existe (p. ej. entornos sin descarga de navegadores). */
-const launch = (args = []) =>
-  chromium.launch({
+/**
+ * Sesión de «adulto» ya pasada por la puerta (misma firma que lib/adultGate.ts). La puerta está SIEMPRE
+ * activa en las pruebas; así las que trabajan en la zona de mayores no tienen que contestar la cuenta.
+ */
+function adultCookie() {
+  const crypto = require('crypto');
+  const secret = process.env.ADULT_GATE_SECRET || process.env.FINGERPRINT_SALT || 'lm-dev-only-secret-change-me';
+  const ts = String(Date.now());
+  const sig = crypto.createHmac('sha256', `adult-gate:${secret}`).update(`session|${ts}`).digest('base64url');
+  return { name: 'lm_mayores', value: `${ts}.${sig}`, url: BASE };
+}
+
+/**
+ * Chromium: usa CHROMIUM_PATH si existe (p. ej. entornos sin descarga de navegadores).
+ * Por defecto cada contexto nace con la puerta de mayores pasada; `{ adult: false }` para navegar como un peque.
+ */
+const launch = async (args = [], { adult = true } = {}) => {
+  const browser = await chromium.launch({
     ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
     args: ['--no-sandbox', ...args.filter((a) => a !== '--no-sandbox')],
   });
+  if (adult) {
+    const newContext = browser.newContext.bind(browser);
+    browser.newContext = async (opts) => {
+      const ctx = await newContext(opts);
+      await ctx.addCookies([adultCookie()]);
+      return ctx;
+    };
+    browser.newPage = async (opts) => (await browser.newContext(opts)).newPage();
+  }
+  return browser;
+};
 
 /** Genera las fotos de prueba la primera vez (dibujadas en un canvas; sin dependencias). */
 async function ensureFixtures() {
@@ -86,4 +112,4 @@ async function ensureChar(page) {
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).first().click();
 }
 
-module.exports = { BASE, OUT, FIX, launch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };
+module.exports = { BASE, OUT, FIX, launch, adultCookie, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };

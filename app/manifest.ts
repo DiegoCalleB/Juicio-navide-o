@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'Línea Mágica',
     short_name: 'Línea Mágica',
-    description: 'Tu peque habla en directo con Papá Noel, los Reyes, el Ratoncito Pérez o un elfo travieso. Tú contestas en secreto desde tu móvil.',
+    description: 'Mensajes en directo de Papá Noel, los Reyes Magos, el elfo Chispa y el Ratoncito Pérez.',
     lang: 'es',
     start_url: '/?utm_source=pwa',
     scope: '/',
@@ -20,8 +20,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'Crear una sala', short_name: 'Crear sala', url: '/#crear', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
-      { name: 'Ideas de trastadas del elfo', short_name: 'Trastadas', url: '/ideas-elfo', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+      { name: 'Diario de Chispa', short_name: 'Diario', url: '/diario-de-chispa', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+      { name: 'Zona de mayores', short_name: 'Mayores', url: '/mayores', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
     ],
   };
 }

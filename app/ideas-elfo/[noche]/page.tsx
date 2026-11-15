@@ -89,7 +89,7 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
               <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/70">Con la imagen lista para Pinterest, Instagram o TikTok.</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image} alt={`Ficha de la trastada ${night.day}: ${night.title}`} width={1000} height={1500} loading="lazy" className="mt-3 w-full rounded-xl border border-white/10" />
-              <div className="mt-3"><ShareBar path={`/ideas-elfo/${night.day}`} text={shareText} title={`Trastada ${night.day} del elfo travieso`} image={image} hashtags={ELF_HASHTAGS} /></div>
+              <div className="mt-3"></div>
               <p className="mt-3 text-[12px] leading-snug text-[#fff6dc]/55">¿Has montado la tuya? Súbela con <strong>#TrastadasDelElfo</strong>. Mejor sin la cara de tu peque.</p>
             </section>
           </aside>
