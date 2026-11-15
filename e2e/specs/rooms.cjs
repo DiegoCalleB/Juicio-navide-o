@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch, ensureChar } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, ensureChar , nextStep } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
 (async () => {
@@ -10,17 +10,18 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   check('portada sin salas guardadas: no aparece "Tus salas"', (await page.getByText('Tus salas en este móvil').count()) === 0);
 
   // Sin personaje elegido no se crea la sala: pide elegir
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check();
+  await nextStep(page);
   check('al empezar, ningún personaje viene marcado', (await page.locator('input[name=character]:checked').count()) === 0);
   await page.getByRole('button', { name: /Crear la sala/ }).click();
   check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige quién le va a contestar a tu peque.').isVisible() && (await page.getByText('La sala está lista').count()) === 0);
-  await page.fill('#child', ''); await page.locator('form').getByRole('checkbox').uncheck();
 
   // Al elegir un personaje, el selector se pliega y se ve lo siguiente ("¿ya lee?")
   check('selector de personajes abierto al principio', await page.getByText('Melchor').first().isVisible());
   await page.getByText('Baltasar', { exact: false }).first().click();
   check('al elegir uno, el resto desaparece y queda el elegido con "Cambiar"', (await page.getByText('Melchor').count()) === 0 && await page.getByRole('button', { name: 'Cambiar de personaje' }).isVisible());
-  check('tras elegir, se ve la pregunta "¿ya lee?" sin bajar', await page.getByText(/ya lee\?/).isVisible() && (await page.getByText(/ya lee\?/).boundingBox()).y < 700);
+  check('tras elegir, se ve «Crear la sala» sin bajar', await page.getByRole('button', { name: /Crear la sala/ }).isVisible() && (await page.getByRole('button', { name: /Crear la sala/ }).boundingBox()).y < 800);
   await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
   check('"Cambiar" vuelve a mostrar todos los personajes', await page.getByText('Melchor').first().isVisible());
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).click();
@@ -28,9 +29,15 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.getByRole('button', { name: 'Cambiar de personaje' }).click();
 
   const create = async (name, character) => {
+    if (!(await page.locator('#child').isVisible())) await page.getByRole('button', { name: /Volver/ }).click();
     await page.fill('#child', name);
-    if (character) await page.getByText(character, { exact: false }).first().click();
     await page.getByRole('checkbox').check();
+    await nextStep(page);
+    if (character) {
+      const change = page.getByRole('button', { name: 'Cambiar de personaje' });
+      if (await change.isVisible()) await change.click();
+      await page.getByText(character, { exact: false }).first().click();
+    }
     await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
     await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
   };
@@ -41,7 +48,7 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await page.getByRole('button', { name: /Preparar otra sala/ }).click();
   check('"Preparar otra sala" vuelve al formulario vacío', (await page.inputValue('#child')) === '');
   await create('Mateo', 'Baltasar');
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   check('tras recargar, la lista de salas está oculta tras un botón', (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 0 && await page.getByRole('button', { name: /Ya tengo salas en este móvil \(2\)/ }).isVisible());
   await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
   check('al pulsarlo, la portada lista las 2 salas de este móvil', await page.getByText('Tus salas en este móvil').isVisible() && (await page.getByRole('link', { name: 'Abrir panel de los padres' }).count()) === 2);

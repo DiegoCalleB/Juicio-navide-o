@@ -1,6 +1,6 @@
 // Bloqueo de padres con PIN: nada del panel sin el PIN (ni por pantalla ni por API), intentos limitados,
 // bloqueo automático, rescate, herencia en la familia y portada que no enseña nada.
-const { BASE, launch, ensureChar, childLinkOf, familyLinkOf } = require('../_lib.cjs');
+const { BASE, launch, ensureChar, childLinkOf, familyLinkOf , nextStep } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
@@ -158,6 +158,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await A.p.goto(BASE + '/', { waitUntil: 'networkidle' });
   await A.p.getByRole('link', { name: /Zona de los padres/ }).waitFor({ timeout: 15000 });
   check('portada de un móvil con PIN: solo "Zona de los padres" (sin salas, nombres ni enlaces)', (await A.p.locator('section[aria-labelledby=my-rooms]').count()) === 0 && (await A.p.getByText(/Tus salas en este móvil|Abrir panel de|Copiar enlace del peque/).count()) === 0 && !/Valentina/.test(await A.p.locator('body').innerText()));
+  await A.p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await A.p.fill('#child', 'Mateo'); await A.p.locator('form').getByRole('checkbox').check();
   await ensureChar(A.p); await A.p.getByRole('button', { name: /Crear la sala/ }).click();
   await A.p.waitForSelector('text=La sala está lista', { timeout: 30000 });

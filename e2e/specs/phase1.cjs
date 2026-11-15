@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
@@ -18,13 +18,14 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   }
 
   // ── 1. Selección de personajes y creación de la sala
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.screenshot({ path: S + '/p1-landing.png' });
-  check('selector: Papá Noel y los 3 Reyes visibles', await parent.getByText('Papá Noel').first().isVisible() && await parent.getByText('Baltasar').first().isVisible());
   await parent.fill('#child', 'Lucía');
+  await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('selector: Papá Noel y los 3 Reyes visibles', await parent.getByText('Papá Noel').first().isVisible() && await parent.getByText('Baltasar').first().isVisible());
   // Ningún personaje viene marcado: hay que elegir (y se ven todas las opciones)
   check('ningún personaje viene marcado', !(await parent.getByRole('radio', { name: /Papá Noel/ }).isChecked()));
-  await parent.getByRole('checkbox').check();
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');

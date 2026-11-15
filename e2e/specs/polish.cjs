@@ -43,6 +43,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('foco visible con teclado', /solid 3px/.test(outline), outline);
 
   // ── Reconexión: cortar la red al niño y ver el aviso; al volver, desaparece
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
   await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
   await page.waitForSelector('text=La sala está lista');

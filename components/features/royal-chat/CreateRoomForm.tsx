@@ -302,6 +302,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Sin registrarte. Tarda un minuto.' : `Elige el personaje que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
     </div>
     <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
+      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
       {step === 1 && (<>
       <div className="space-y-1.5">
         {savedKids.length > 0 && (
@@ -501,7 +502,6 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       {billing.enabled && !hasPass && (
         <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>
       )}
-      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
       <button type="button" onClick={() => goStep(1)} className="mx-auto block text-[13px] text-[#fff6dc]/60 underline underline-offset-2">
         ← Volver
       </button>

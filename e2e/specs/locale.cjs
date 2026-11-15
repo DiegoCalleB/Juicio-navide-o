@@ -36,6 +36,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await pMx.getByText(/desde tu celular/).waitFor({ timeout: 15000 });
 
   // Sala creada en Latinoamérica: el panel, abierto desde un móvil de España, sigue en su variante
+  await pMx.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await pMx.fill('#child', 'Valentina');
   await pMx.getByRole('checkbox').first().check();
   await ensureChar(pMx); await pMx.getByRole('button', { name: /Crear la sala/ }).click();
@@ -52,6 +53,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('panel: no aparece "móvil" suelto en la sala latinoamericana', !/\bmóvil/i.test(t.replace(/Zona secreta[^.]*/i, '')));
 
   // Sala de España abierta desde un navegador mexicano: sigue en español de España
+  await pEs.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await pEs.fill('#child', 'Lucía');
   await pEs.getByRole('checkbox').first().check();
   await ensureChar(pEs); await pEs.getByRole('button', { name: /Crear la sala/ }).click();

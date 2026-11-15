@@ -23,10 +23,18 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.waitForTimeout(600);
   const afterReply = await scrollContainer.evaluate(el => el.scrollTop);
   check('al llegar la respuesta, la portada no salta (el chat se desplaza por dentro)', Math.abs(afterReply - afterSend) < 4, afterSend + ' → ' + afterReply);
-  await scrollContainer.evaluate(el => el.scrollTo(0, 620));
-  await page.waitForTimeout(300);
+  // Portada corta: el botón «Empezar» se ve sin bajar y lleva a crear la sala paso a paso
+  const vh = await page.evaluate(() => innerHeight);
+  const total = await scrollContainer.evaluate(el => el.scrollHeight);
+  check('portada corta (como mucho dos pantallas de móvil)', total <= vh * 2, total + ' px vs ' + vh);
+  await scrollContainer.evaluate(el => el.scrollTo(0, 0));
+  const cta = page.getByRole('link', { name: /Empezar/ });
+  const ctaBox = await cta.boundingBox();
+  check('«Empezar» se ve sin bajar', ctaBox && ctaBox.y + ctaBox.height <= vh, ctaBox && Math.round(ctaBox.y) + 'px');
+  await Promise.all([page.waitForURL(/\/crear$/), cta.click()]);
+  await page.locator('#child').waitFor({ timeout: 15000 });
+  check('«Empezar» abre el paso 1 (el nombre del peque)', await page.getByText('Paso 1 de 2').isVisible());
   await page.screenshot({ path: S + '/l2-landing-form.png' });
-  check('el formulario de la sala sigue funcionando', await page.locator('#child').isVisible());
 
   // Panel: momentos + wake lock
   await page.evaluate(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });

@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, openChild, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -8,10 +8,11 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
-  check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
   await parent.fill('#child', 'Lucía');
-  await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
+  await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.screenshot({ path: S + '/rp1-selector.png' });
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });

@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, ensureFixtures, ensureChar } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, ensureFixtures, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const pad = (n) => String(n).padStart(2, '0');
@@ -10,14 +10,15 @@ const pad = (n) => String(n).padStart(2, '0');
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
-  check('el selector ofrece al elfo travieso', (await parent.getByRole('radio', { name: /Elfo Chispa/ }).count()) === 1);
   await parent.fill('#child', 'Lucía');
+  await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('el selector ofrece al elfo travieso', (await parent.getByRole('radio', { name: /Elfo Chispa/ }).count()) === 1);
   check('sin elegir al elfo, no se piden nombre ni género', (await parent.locator('#elf-alias').count()) === 0);
   await parent.locator('label', { hasText: 'Elfo Chispa' }).click();
   check('al elegirlo, cada familia puede ponerle nombre y elegir chico o chica', await parent.locator('#elf-alias').isVisible() && await parent.getByRole('radio', { name: 'Es una elfa' }).isVisible());
   await parent.fill('#elf-alias', 'Chispita');
   await parent.getByRole('radio', { name: 'Es una elfa' }).click();
-  await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/du1-selector.png' });
   await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
   await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });

@@ -1,5 +1,5 @@
 // Página pública "24 trastadas del elfo": contenido, SEO, compartir, páginas por noche y enlace directo al formulario.
-const { BASE, launch } = require('../_lib.cjs');
+const { BASE, launch , nextStep } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
@@ -82,14 +82,21 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // Enlace directo al formulario con el elfo ya elegido
   await page.goto(BASE + '/ideas-elfo/3', { waitUntil: 'networkidle' });
   await page.getByRole('link', { name: 'Probar gratis' }).click();
+  await page.waitForURL(/\/crear\?personaje=duende_chispa/, { timeout: 15000 });
+  const toStep2 = async () => { await page.locator('#child').waitFor({ timeout: 15000 }); await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check(); await nextStep(page); };
+  await toStep2();
   await page.getByRole('button', { name: 'Cambiar de personaje' }).waitFor({ timeout: 15000 });
   check('"Probar gratis" lleva al formulario con el elfo ya elegido', await page.getByText('Vuestro elfo travieso').isVisible() && await page.locator('input[name=character]:checked').count() === 0 && await page.getByText('Elfo travieso', { exact: true }).first().isVisible());
   await page.goto(BASE + '/?personaje=papa_noel', { waitUntil: 'networkidle' });
+  check('los enlaces antiguos /?personaje=… llevan a /crear', /\/crear\?personaje=papa_noel/.test(page.url()), page.url());
+  await toStep2();
   check('/?personaje=papa_noel deja elegido a Papá Noel', await page.getByRole('button', { name: 'Cambiar de personaje' }).isVisible());
-  await page.goto(BASE + '/?personaje=inventado', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/crear?personaje=inventado', { waitUntil: 'networkidle' });
+  await toStep2();
   check('un personaje inventado se ignora (no hay nada elegido)', (await page.getByRole('button', { name: 'Cambiar de personaje' }).count()) === 0);
 
   // Portada y mapa del sitio
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   check('la portada enlaza a las trastadas', await page.getByRole('link', { name: 'Trastadas del elfo' }).isVisible());
   const sm = await (await fetch(BASE + '/sitemap.xml')).text();
   check('mapa del sitio: página principal y las 24 noches', /\/ideas-elfo</.test(sm) && (sm.match(/\/ideas-elfo\/\d+</g) ?? []).length === 24);

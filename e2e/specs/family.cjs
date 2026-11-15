@@ -1,5 +1,5 @@
 // Familias: varios peques de golpe, enlace de familia que reconstruye los paneles, apodo y desplegable de peques.
-const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar , nextStep } = require('../_lib.cjs');
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
@@ -12,18 +12,18 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const page = await mk();
   page.on('pageerror', (e) => errs.push(e.message));
 
-  await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('portada: sin peques guardados no hay desplegable "Tus peques"', (await page.locator('#kid-pick').count()) === 0);
-  check('portada: ofrece apodo de la familia (opcional)', await page.locator('#family-nick').isVisible());
-  await page.fill('#family-nick', 'Los Estrella');
-
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
+  check('crear: sin peques guardados no hay desplegable "Tus peques"', (await page.locator('#kid-pick').count()) === 0);
   // Dos peques de golpe
   await page.fill('#child', 'Lucía');
+  await page.getByRole('checkbox').first().check();
+  await nextStep(page);
+  check('crear (paso 2): ofrece apodo de la familia (opcional)', await page.locator('#family-nick').isVisible());
+  await page.fill('#family-nick', 'Los Estrella');
   await page.getByRole('button', { name: /Añadir otro peque/ }).click();
   await page.fill('#extra-name-0', 'Mateo');
   await page.locator('fieldset', { hasText: 'Otro peque (2)' }).locator('select').first().selectOption('raton_perez');
   await page.locator('fieldset', { hasText: 'Otro peque (2)' }).locator('select').last().selectOption('learning');
-  await page.getByRole('checkbox').first().check();
   check('el botón anuncia las dos salas', await page.getByRole('button', { name: 'Crear las 2 salas' }).isVisible());
   await ensureChar(page); await page.getByRole('button', { name: 'Crear las 2 salas' }).click();
   await page.waitForSelector('text=¡Las salas están listas!', { timeout: 30000 });
@@ -70,20 +70,23 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // El móvil nuevo recupera "Tus salas" y la familia
   await fresh.goto(BASE + '/', { waitUntil: 'networkidle' });
   check('móvil nuevo: "Tus salas" recupera las dos', await fresh.getByText(/Ya tengo salas en este móvil \(2\)/).isVisible());
-  check('móvil nuevo: ya no pide apodo (la familia está guardada)', (await fresh.locator('#family-nick').count()) === 0);
   check('móvil nuevo: la portada muestra el acceso a "Tu familia"', await fresh.getByRole('link', { name: /Tu familia/ }).isVisible());
+  await fresh.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   check('móvil nuevo: aparece el desplegable con los dos peques', (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Lucía') && (await fresh.locator('#kid-pick option').allInnerTexts()).join('|').includes('Mateo'));
   await fresh.locator('#kid-pick').selectOption('Mateo');
   check('elegir en el desplegable rellena el nombre', (await fresh.inputValue('#child')) === 'Mateo');
 
   // Elegir a Mateo recuerda también que está empezando a leer
   check('el desplegable también pone su nivel de lectura', (await fresh.getByRole('radio', { name: 'Está empezando' }).getAttribute('aria-checked')) === 'true');
+  await fresh.getByRole('checkbox').first().check();
+  await nextStep(fresh);
+  check('móvil nuevo: ya no pide apodo (la familia está guardada)', (await fresh.locator('#family-nick').count()) === 0);
 
   // El desplegable sobrevive a quitar las salas de la lista de este móvil
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Ya tengo salas en este móvil/ }).click();
   for (const n of ['Lucía', 'Mateo']) await page.getByRole('button', { name: `Quitar la sala de ${n} de la lista` }).click();
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   const optsAfter = (await page.locator('#kid-pick option').allInnerTexts()).join('|');
   check('quitar las salas de la lista no borra a los peques del desplegable', optsAfter.includes('Lucía') && optsAfter.includes('Mateo'), optsAfter);
 
@@ -91,19 +94,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const famOnly = await mk();
   await famOnly.goto(BASE + '/', { waitUntil: 'networkidle' });
   await famOnly.evaluate((t) => localStorage.setItem('magic-family', t), familyLink.slice(-43));
-  await famOnly.reload({ waitUntil: 'networkidle' });
+  await famOnly.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await famOnly.locator('#kid-pick').waitFor({ timeout: 15000 }).catch(() => {});
   const optsServer = (await famOnly.locator('#kid-pick option').allInnerTexts()).join('|');
   check('con solo el enlace de familia, el desplegable trae a Lucía y a Mateo', optsServer.includes('Lucía') && optsServer.includes('Mateo'), optsServer);
   await famOnly.locator('#kid-pick').selectOption('Mateo');
   check('y recuerda su nivel de lectura', (await famOnly.getByRole('radio', { name: 'Está empezando' }).getAttribute('aria-checked')) === 'true');
 
-  // Los otros peques también se eligen de la lista
+  // Los otros peques también se eligen de la lista (paso 2)
+  await famOnly.getByRole('checkbox').first().check();
+  await nextStep(famOnly);
   await famOnly.getByRole('button', { name: /Añadir otro peque/ }).click();
   await famOnly.getByLabel('Elegir el peque 2 de tu lista').selectOption('Lucía');
   check('en "añadir otro peque" se elige de la lista', (await famOnly.locator('#extra-name-0').inputValue()) === 'Lucía');
 
   // Una sala nueva desde ese móvil entra en la misma familia
+  await fresh.getByRole('button', { name: /Volver/ }).click();
   await fresh.fill('#child', 'Pablo');
   await fresh.getByRole('checkbox').first().check();
   await ensureChar(fresh); await fresh.getByRole('button', { name: /Crear la sala/ }).click();
@@ -132,10 +138,11 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const sneaky = await mk();
   await sneaky.goto(BASE + '/', { waitUntil: 'networkidle' });
   await sneaky.evaluate((t) => localStorage.setItem('magic-family', t), 'C'.repeat(43));
-  await sneaky.reload({ waitUntil: 'networkidle' });
+  await sneaky.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await sneaky.fill('#child', 'Intruso');
   await sneaky.getByRole('checkbox').first().check();
-  await ensureChar(sneaky); await sneaky.getByRole('button', { name: /Crear la sala/ }).click();
+  await ensureChar(sneaky);
+  await sneaky.getByRole('button', { name: /Crear la sala/ }).click();
   await sneaky.waitForSelector('text=La sala está lista', { timeout: 30000 });
   const sneakyLink = (await familyLinkOf(sneaky));
   check('un enlace de familia inexistente no se adopta: se crea una familia nueva', !sneakyLink.endsWith('C'.repeat(43)));
