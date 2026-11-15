@@ -6,6 +6,7 @@ import { billingInfo } from '@/lib/billing';
 import { GateForm } from '@/components/features/gate/GateForm';
 import { CloseZone } from '@/components/features/gate/CloseZone';
 import { MyRooms } from '@/components/features/royal-chat/MyRooms';
+import { InstallApp } from '@/components/features/InstallApp';
 
 export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#120c22' };
@@ -57,6 +58,10 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
             </Link>
           ))}
         </nav>
+
+        <div className="mt-6">
+          <InstallApp />
+        </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-[13px] text-[#f3ecff]/55">
           <span className="space-x-4">

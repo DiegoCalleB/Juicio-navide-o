@@ -34,14 +34,14 @@ const get = async (path) => fetch(BASE + path);
   check('iconos de pestaña y de pantalla de inicio de iPhone', (await page.locator('link[rel=icon]').count()) >= 1 && (await page.locator('link[rel=apple-touch-icon]').count()) >= 1);
   check('aplicación web de iPhone con el nombre de la app', (await page.locator('meta[name=apple-mobile-web-app-title], meta[name="apple-mobile-web-app-title"]').first().getAttribute('content')) === 'Línea Mágica');
 
-  // ── Botón de instalar
+  // ── Botón de instalar (en la zona de mayores; la portada es solo magia)
   const android = await mk();
   await android.addInitScript(() => {
     window.__prompted = 0;
     const fire = () => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => { window.__prompted++; }; e.userChoice = Promise.resolve({ outcome: 'accepted' }); window.dispatchEvent(e); };
     let n = 0; const t = setInterval(() => { fire(); if (++n > 20) clearInterval(t); }, 400);
   });
-  await android.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await android.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await android.getByRole('button', { name: 'Instalar', exact: true }).waitFor({ timeout: 15000 });
   check('Android/ordenador: aparece "Instalar" cuando el navegador lo permite', await android.getByText('Instala Línea Mágica en tu móvil').isVisible());
   await android.getByRole('button', { name: 'Instalar', exact: true }).click();
@@ -51,7 +51,7 @@ const get = async (path) => fetch(BASE + path);
 
   const dism = await mk();
   await dism.addInitScript(() => { let n = 0; const t = setInterval(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => {}; e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); if (++n > 40) clearInterval(t); }, 400); });
-  await dism.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await dism.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await dism.getByRole('button', { name: 'No volver a mostrar' }).click();
   await dism.reload({ waitUntil: 'networkidle' }); await dism.waitForTimeout(1500);
   check('al descartarlo, no vuelve a molestar al recargar', (await dism.getByText('Instala Línea Mágica en tu móvil').count()) === 0);
@@ -62,11 +62,11 @@ const get = async (path) => fetch(BASE + path);
     window.matchMedia = (q) => (/display-mode:\s*standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false } : orig(q));
     let n = 0; const t = setInterval(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => {}; e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); if (++n > 10) clearInterval(t); }, 400);
   });
-  await inst.goto(BASE + '/', { waitUntil: 'networkidle' }); await inst.waitForTimeout(1500);
+  await inst.goto(BASE + '/mayores', { waitUntil: 'networkidle' }); await inst.waitForTimeout(1500);
   check('si ya está instalada (modo app), no se ofrece instalarla', (await inst.getByText('Instala Línea Mágica en tu móvil').count()) === 0);
 
   const ios = await mk({ userAgent: devices['iPhone 13'].userAgent, hasTouch: true, isMobile: true });
-  await ios.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await ios.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await ios.getByRole('button', { name: 'Cómo instalarla' }).waitFor({ timeout: 15000 });
   await ios.getByRole('button', { name: 'Cómo instalarla' }).click();
   check('iPhone/iPad: explica los dos pasos ("Añadir a pantalla de inicio")', await ios.getByText('«Añadir a pantalla de inicio»').first().isVisible() && await ios.getByText('Compartir', { exact: false }).first().isVisible());
