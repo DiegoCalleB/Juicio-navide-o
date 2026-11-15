@@ -58,14 +58,13 @@ function systemPrompt(i: SuggestInput): string {
         : 'El niño ya lee: frases claras y cortas.';
   return [
     `Escribes mensajes de chat para un niño o una niña pequeños como si fueras ${who}`,
-    'Escribe en castellano de España (tú, vosotros, expresiones de España; nunca de Latinoamérica). Papá Noel ríe «¡Jo, jo, jo!», nunca «Ho, ho, ho»; su reno es Rodolfo (no Rudolph).',
+    'Escribe en castellano de España (tú, vosotros, expresiones de España; nunca de Latinoamérica). Papá Noel ríe «¡Jo, jo, jo!», nunca «Ho, ho, ho»; su reno es Rodolfo (no Rudolph). Evita palabras de Latinoamérica: nada de «lindo/linda», «ahorita», «platicar», «chévere», «acá».',
     'No sabes si es niño o niña: evita palabras con género sobre él o ella (nada de «campeón», «guapo», «listo»…); usa frases neutras.',
     `Cuando hables al niño usa exactamente la marca ${NAME_MARK} en lugar de su nombre (como mucho una vez por mensaje). No inventes nombres.`,
     `Cada mensaje: máximo ${MAX_LEN - 60} caracteres, cálido, mágico y divertido, en primera persona del personaje. Puede llevar un emoji como mucho.`,
     reading,
     'Normas: nada que dé miedo, culpa o vergüenza; no prometas regalos concretos; no pidas datos personales, fotos ni direcciones; sin enlaces; no menciones que eres una IA.',
     'Si la idea de los padres es inapropiada para un niño, escribe mensajes amables y neutros sobre la magia de estas fechas.',
-    'Devuelve 3 propuestas distintas entre sí (una más tierna, una más divertida y una más breve).',
   ].join('\n');
 }
 
@@ -77,11 +76,7 @@ function clean(s: string): string {
     .slice(0, MAX_LEN);
 }
 
-export async function suggestMessages(input: SuggestInput): Promise<string[]> {
-  const idea = input.idea.trim().slice(0, 300);
-  if (isAssistantFake()) {
-    return [`¡Hola, ${NAME_MARK}! Me han contado algo precioso: ${idea}. ¡Estoy muy orgulloso!`, `¡Qué notición, ${NAME_MARK}! ${idea} ✨`, `${idea}. ¡Bravo, ${NAME_MARK}!`].map(clean);
-  }
+async function callGemini(system: string, user: string): Promise<string[]> {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new AssistantError('sin clave');
   const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
@@ -89,8 +84,8 @@ export async function suggestMessages(input: SuggestInput): Promise<string[]> {
     method: 'POST',
     headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt(input) }] },
-      contents: [{ role: 'user', parts: [{ text: `Idea de los padres para el mensaje de hoy: «${idea}»` }] }],
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: user }] }],
       generationConfig: {
         temperature: 0.9,
         maxOutputTokens: 1500,
@@ -114,5 +109,30 @@ export async function suggestMessages(input: SuggestInput): Promise<string[]> {
   }
   const out = (Array.isArray(list) ? list : []).filter((x): x is string => typeof x === 'string').map(clean).filter((x) => x.length >= 8);
   if (out.length === 0) throw new AssistantError('sin propuestas');
-  return out.slice(0, 3);
+  return out;
+}
+
+export async function suggestMessages(input: SuggestInput): Promise<string[]> {
+  const idea = input.idea.trim().slice(0, 300);
+  if (isAssistantFake()) {
+    return [`¡Hola, ${NAME_MARK}! Me han contado algo precioso: ${idea}. ¡Estoy muy orgulloso!`, `¡Qué notición, ${NAME_MARK}! ${idea} ✨`, `${idea}. ¡Bravo, ${NAME_MARK}!`].map(clean);
+  }
+  const list = await callGemini(systemPrompt(input) + '\nDevuelve 3 propuestas distintas entre sí (una más tierna, una más divertida y una más breve).', `Idea de los padres para el mensaje de hoy: «${idea}»`);
+  return list.slice(0, 3);
+}
+
+/**
+ * «Mejorar con magia»: reescribe el mensaje que han escrito los padres con la voz del personaje,
+ * sin faltas y manteniendo lo que querían decir. Devuelve una sola versión.
+ */
+export async function rewriteMessage(input: SuggestInput): Promise<string> {
+  const text = input.idea.trim().slice(0, 300);
+  if (isAssistantFake()) return clean(`✨ ${text.charAt(0).toUpperCase()}${text.slice(1)}${/[.!?]$/.test(text) ? '' : '.'} ¡Un abrazo mágico, ${NAME_MARK}!`);
+  const list = await callGemini(
+    systemPrompt(input) +
+      '\nAhora tu tarea es REESCRIBIR el mensaje que han escrito los padres: corrige todas las faltas de ortografía y puntuación, y haz que suene como lo diría el personaje, con magia y cariño. ' +
+      'Mantén exactamente lo que quieren decir (no añadas promesas ni datos nuevos) y una longitud parecida. Si el texto ya incluye ' + NAME_MARK + ', consérvalo. Devuelve 1 sola versión.',
+    `Mensaje escrito por los padres: «${text}»`,
+  );
+  return list[0] ?? text;
 }

@@ -30,6 +30,18 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('al tocar una, pasa al cuadro del mensaje para revisarla', val === texts[1], val);
   check('el ayudante se cierra tras elegir', (await parent.getByRole('list', { name: 'Propuestas' }).count()) === 0);
 
+  // «✨ Mejorar con magia»: reescribe lo escrito, sin enviar el nombre del niño, y se puede deshacer
+  await parent.fill('#reply', 'oy lucía as rrecojido los juguetes muy bien');
+  const polishBtn = parent.getByRole('button', { name: /Mejorar con magia/ });
+  check('con texto escrito aparece «✨ Mejorar con magia»', await polishBtn.isVisible());
+  const [preq] = await Promise.all([parent.waitForRequest((r) => r.url().includes('/suggest')), polishBtn.click()]);
+  check('mejorar: a la IA no le llega el nombre (va como [nombre])', /\[nombre\]/.test(preq.postData() || '') && !/lucía/i.test(preq.postData() || ''), preq.postData());
+  await parent.getByRole('button', { name: 'Deshacer' }).waitFor({ timeout: 10000 });
+  const improved = await parent.inputValue('#reply');
+  check('mejorar: el texto cambia y conserva el nombre', improved !== 'oy lucía as rrecojido los juguetes muy bien' && /Lucía/.test(improved), improved);
+  await parent.getByRole('button', { name: 'Deshacer' }).click();
+  check('«Deshacer» recupera lo que habían escrito', (await parent.inputValue('#reply')) === 'oy lucía as rrecojido los juguetes muy bien');
+
   // Validación: idea demasiado corta
   const short = await parent.evaluate(async () => { const t = location.pathname.split('/paje/')[1]; const r = await fetch('/api/rooms/' + t + '/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idea: 'a' }) }); return r.status; });
   check('una idea vacía o muy corta se rechaza', short === 400, String(short));

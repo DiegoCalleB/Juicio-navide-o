@@ -235,6 +235,30 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
   };
 
+  // «✨ Mejorar con magia»: reescribe el texto de los padres con la voz del personaje y sin faltas.
+  const [polishing, setPolishing] = useState(false);
+  const [beforePolish, setBeforePolish] = useState<string | null>(null);
+  const polish = async () => {
+    const original = text.trim();
+    if (original.length < 5 || polishing) return;
+    setPolishing(true);
+    setNotice(null);
+    // El nombre del niño no sale del navegador: se cambia por [nombre] y se vuelve a poner al recibirlo.
+    const esc = childName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const masked = esc ? original.replace(new RegExp(`(^|[^\\p{L}])${esc}(?![\\p{L}])`, 'giu'), '$1[nombre]') : original;
+    try {
+      const res = await fetch(`/api/rooms/${token}/suggest`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idea: masked, mode: 'rewrite' }) });
+      const j = (await res.json().catch(() => null)) as ApiResult<{ suggestions: string[] }> | null;
+      const out = j?.ok ? j.data?.suggestions[0] : undefined;
+      if (!out) throw new Error(j?.error?.message ?? 'No he podido mejorarlo ahora.');
+      setBeforePolish(text);
+      setText(out.split('[nombre]').join(childName).slice(0, MAX_CHARS));
+    } catch (err) {
+      setNotice({ tone: 'warn', msg: err instanceof Error ? err.message : 'No he podido mejorarlo ahora.' });
+    } finally {
+      setPolishing(false);
+    }
+  };
   const [previewing, setPreviewing] = useState(false);
   const previewAudio = useRef<HTMLAudioElement | null>(null);
   /** Escuchar antes de enviar: lo que suena aquí es exactamente lo que recibirá el niño. */
@@ -296,6 +320,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       if (!json) throw new Error(res.status === 413 ? 'La foto es demasiado grande.' : `No se pudo enviar (error ${res.status}). Inténtalo de nuevo.`);
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
+      setBeforePolish(null);
       setPhoto(null);
       // Tras programar, el siguiente mensaje vuelve a enviarse al momento (así no se programa otro sin querer).
       setWhenCustom(false);
@@ -889,6 +914,22 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#e8f1ff]/40">{text.length}/{MAX_CHARS}</span>
           </div>
+
+          {assistant && !access.locked && (text.trim().length >= 5 || beforePolish !== null) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {text.trim().length >= 5 && (
+                <button type="button" onClick={polish} disabled={polishing} className="rounded-full border border-[#f6d77a]/60 px-3 py-1 text-[12.5px] font-bold text-[#f6d77a] disabled:opacity-50 active:bg-white/5">
+                  {polishing ? 'Poniendo magia…' : '✨ Mejorar con magia'}
+                </button>
+              )}
+              {beforePolish !== null && (
+                <button type="button" onClick={() => { setText(beforePolish); setBeforePolish(null); }} className="text-[12px] text-[#e8f1ff]/60 underline underline-offset-2">
+                  Deshacer
+                </button>
+              )}
+              <span className="text-[11px] text-[#e8f1ff]/40">Corrige faltas y lo dice como {short}</span>
+            </div>
+          )}
 
           {KING_VOICE_ENABLED && !photo && !access.locked && (
             <div className="space-y-1.5">

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { AssistantError, assistantDailyLimit, assistantEnabled, suggestMessages } from '@/lib/assistant';
+import { AssistantError, assistantDailyLimit, assistantEnabled, rewriteMessage, suggestMessages } from '@/lib/assistant';
 import { fail, guarded, json } from '@/lib/http';
 import { sanitizeText } from '@/lib/sanitize';
 import { findRoomByToken } from '@/services/rooms';
@@ -17,14 +17,15 @@ const daily = (): { day: string; n: number } => {
   return g.__assistantDaily;
 };
 
-/** «Ayúdame a escribirlo»: 3 propuestas de mensaje con la voz del personaje. Solo padres. */
+/** «Ayúdame a escribirlo» (3 propuestas) y «Mejorar con magia» (mode: 'rewrite', 1 versión). Solo padres. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   return guarded('suggest', { key: 'suggest', max: 12, windowMs: 10 * 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
     if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
     if (!assistantEnabled()) return fail('UNAVAILABLE', 'El ayudante no está disponible ahora mismo.', 503);
-    const body = (await req.json().catch(() => null)) as { idea?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as { idea?: unknown; mode?: unknown } | null;
+    const rewrite = body?.mode === 'rewrite';
     const idea = ideaSchema.safeParse(body?.idea ?? '');
     if (!idea.success) return fail('VALIDATION', idea.error.issues[0]?.message ?? 'Idea no válida.', 400);
     const counter = daily();
@@ -32,13 +33,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     counter.n++;
     const room = found.room;
     try {
-      const suggestions = await suggestMessages({
-        character: room.character,
-        elfName: room.characterAlias,
-        elfFemale: room.characterGender === 'f',
-        readingLevel: room.readingLevel,
-        idea: idea.data,
-      });
+      const input = { character: room.character, elfName: room.characterAlias, elfFemale: room.characterGender === 'f', readingLevel: room.readingLevel, idea: idea.data };
+      const suggestions = rewrite ? [await rewriteMessage(input)] : await suggestMessages(input);
       return json({ ok: true, data: { suggestions } });
     } catch (err) {
       console.error('[assistant]', err instanceof AssistantError ? err.message : err);
