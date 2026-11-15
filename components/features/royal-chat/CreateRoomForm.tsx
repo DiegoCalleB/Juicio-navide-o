@@ -167,7 +167,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           <p className="mt-1 text-[13.5px] text-[#fff6dc]/70">
             {multi ? `${created.map((x) => x.name).join(', ')} ya pueden escribir.` : `${first?.name} ya puede escribir a ${firstChar?.shortName}.`}
             {plan === 'trial' && ' Prueba gratis de 3 días.'}
-            {plan === 'pass' && ' ✨ Con tu Pase de Navidad.'}
+            {plan === 'pass' && ' Con tu Pase de Navidad.'}
           </p>
         </div>
         {error && <p role="alert" className="text-center text-sm text-[#ff8a8c]">{error}</p>}
@@ -302,7 +302,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Sin registrarte. Tarda un minuto.' : `Elige el personaje que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
     </div>
     <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
-      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
+      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
       {step === 1 && (<>
       <div className="space-y-1.5">
         {savedKids.length > 0 && (

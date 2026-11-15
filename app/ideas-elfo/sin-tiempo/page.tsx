@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
 import { ELF_HASHTAGS, elfQuick } from '@/lib/elfIdeas';
-import { AI_ART_NOTE, quickArt } from '@/lib/elfArt';
+import { quickArt } from '@/lib/elfArt';
 
 const TITLE = '15 trastadas del elfo para cuando no hay tiempo (o se te ha olvidado)';
 const DESCRIPTION =
@@ -28,7 +28,7 @@ export default function SinTiempoPage() {
       <article className="relative mx-auto w-full max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8 sm:px-6">
         <nav aria-label="Navegación" className="mb-6 flex items-center justify-between text-[13px]">
           <Link href="/ideas-elfo" className="font-semibold text-[#f6d77a]">← Las 24 trastadas</Link>
-          <Link href="/" className="font-serif text-[16px] text-[#f6d77a]">✨ Línea Mágica</Link>
+          <Link href="/" className="font-serif text-[16px] text-[#f6d77a]">Línea Mágica</Link>
         </nav>
 
         <header>
@@ -52,7 +52,6 @@ export default function SinTiempoPage() {
                   <figure className="-mx-4 -mt-4 mb-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={art.src} width={art.width} height={art.height} alt={`El elfo: ${q.title.toLowerCase()}`} loading={i < 2 ? 'eager' : 'lazy'} className="aspect-[4/3] w-full rounded-t-2xl object-cover" />
-                    <figcaption className="sr-only">{AI_ART_NOTE}</figcaption>
                   </figure>
                 ) : null;
               })()}

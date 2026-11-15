@@ -1,4 +1,4 @@
-// Ayudante «✨ Ayúdame a escribirlo» (Gemini simulado con GEMINI_FAKE=1)
+// Ayudante «Ayúdame a escribirlo» (Gemini simulado con GEMINI_FAKE=1)
 const { OUT: S, BASE, launch, pinSetup, ensureChar } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -14,7 +14,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await pinSetup(parent);
 
   const open = parent.getByRole('button', { name: /Ayúdame a escribirlo/ });
-  check('el panel ofrece «✨ Ayúdame a escribirlo»', await open.isVisible());
+  check('el panel ofrece «Ayúdame a escribirlo»', await open.isVisible());
   await open.click();
   await parent.fill('#assistant-idea', 'ha recogido sus juguetes');
   const [req] = await Promise.all([parent.waitForRequest((r) => r.url().includes('/suggest')), parent.getByRole('button', { name: 'Proponer' }).click()]);
@@ -30,10 +30,10 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('al tocar una, pasa al cuadro del mensaje para revisarla', val === texts[1], val);
   check('el ayudante se cierra tras elegir', (await parent.getByRole('list', { name: 'Propuestas' }).count()) === 0);
 
-  // «✨ Mejorar con magia»: reescribe lo escrito, sin enviar el nombre del niño, y se puede deshacer
+  // «Mejorar con magia»: reescribe lo escrito, sin enviar el nombre del niño, y se puede deshacer
   await parent.fill('#reply', 'oy lucía as rrecojido los juguetes muy bien');
   const polishBtn = parent.getByRole('button', { name: /Mejorar con magia/ });
-  check('con texto escrito aparece «✨ Mejorar con magia»', await polishBtn.isVisible());
+  check('con texto escrito aparece «Mejorar con magia»', await polishBtn.isVisible());
   const [preq] = await Promise.all([parent.waitForRequest((r) => r.url().includes('/suggest')), polishBtn.click()]);
   check('mejorar: a la IA no le llega el nombre (va como [nombre])', /\[nombre\]/.test(preq.postData() || '') && !/lucía/i.test(preq.postData() || ''), preq.postData());
   await parent.getByRole('button', { name: 'Deshacer' }).waitFor({ timeout: 10000 });

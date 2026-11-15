@@ -36,7 +36,7 @@ export function AssistantBox({ token, childName, characterShort, onPick }: { tok
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className="self-start rounded-full border border-[#f6d77a]/60 px-3 py-1 text-[12.5px] font-bold text-[#f6d77a] active:bg-white/5">
-        ✨ Ayúdame a escribirlo
+        Ayúdame a escribirlo
       </button>
     );
   }
@@ -44,7 +44,7 @@ export function AssistantBox({ token, childName, characterShort, onPick }: { tok
   return (
     <section aria-label="Ayudante para escribir" className="space-y-2 rounded-2xl border border-[#f6d77a]/35 bg-[#f6d77a]/[.06] p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[12.5px] font-bold text-[#f6d77a]">✨ Cuéntame la idea y te propongo el mensaje de {characterShort}</p>
+        <p className="text-[12.5px] font-bold text-[#f6d77a]">Cuéntame la idea y te propongo el mensaje de {characterShort}</p>
         <button type="button" onClick={() => setOpen(false)} className="shrink-0 text-[12px] text-[#e8f1ff]/60 underline underline-offset-2">Cerrar</button>
       </div>
       <form onSubmit={ask} className="flex gap-2">
@@ -80,7 +80,7 @@ export function AssistantBox({ token, childName, characterShort, onPick }: { tok
               </button>
             </li>
           ))}
-          <li className="text-[11.5px] text-[#e8f1ff]/50">Toca una para ponerla en el mensaje y revísala antes de enviar. Propuestas creadas con IA.</li>
+          <li className="text-[11.5px] text-[#e8f1ff]/50">Toca una para ponerla en el mensaje y revísala antes de enviar.</li>
         </ul>
       )}
     </section>

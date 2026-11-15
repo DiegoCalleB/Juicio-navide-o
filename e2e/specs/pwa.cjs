@@ -25,7 +25,7 @@ const get = async (path) => fetch(BASE + path);
   const sw = await get('/sw.js'); const swText = await sw.text();
   check('service worker: se sirve y solo gestiona navegaciones (no guarda salas)', sw.status === 200 && /javascript/.test(sw.headers.get('content-type') ?? '') && /mode !== 'navigate'/.test(swText) && !/\/paje|\/familia|\/api/.test(swText.replace(/NO guarda[^]*?caché\)/, '')));
   const off = await get('/offline.html'); const offText = await off.text();
-  check('página sin conexión disponible', off.status === 200 && /Se ha cortado la línea mágica/.test(offText) && /Reintentar/.test(offText));
+  check('página sin conexión disponible', off.status === 200 && /no hay conexión/i.test(offText) && /Volver a intentarlo/.test(offText) && !/✨/.test(offText));
 
   // ── Cabeceras de la portada
   const page = await mk();

@@ -112,7 +112,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   if (arts.length) {
     const d = arts[0].replace('.jpg', '');
     await page.goto(BASE + '/ideas-elfo/' + d, { waitUntil: 'networkidle' });
-    check('la noche con ilustración la enseña con el aviso "creada con IA"', await page.locator('figure img').isVisible() && await page.getByText('Ilustración creada con IA').isVisible());
+    check('la noche con ilustración la enseña (sin avisos de IA a la vista)', await page.locator('figure img').isVisible() && (await page.getByText(/con IA/).count()) === 0);
   }
 
   // Trastadas exprés (sin tiempo / se me olvidó)

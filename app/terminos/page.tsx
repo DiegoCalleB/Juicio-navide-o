@@ -35,7 +35,7 @@ export default async function TerminosPage() {
       </LegalSection>
 
       <LegalSection title="Disponibilidad">
-        <p>Hacemos todo lo posible para que funcione, sobre todo en Nochebuena, Navidad y Reyes, pero se ofrece “tal cual”, sin garantía de disponibilidad continua. Las voces de los personajes se crean con inteligencia artificial. Pueden tener límites diarios; si se alcanzan o la voz no está disponible, el mensaje se entrega por escrito y no se pierde.</p>
+        <p>Hacemos todo lo posible para que funcione, sobre todo en Nochebuena, Navidad y Reyes, pero se ofrece “tal cual”, sin garantía de disponibilidad continua. Las voces de los personajes son voces sintetizadas. Pueden tener límites diarios; si se alcanzan o la voz no está disponible, el mensaje se entrega por escrito y no se pierde.</p>
       </LegalSection>
 
       <LegalSection title="Tus contenidos">

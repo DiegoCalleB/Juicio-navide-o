@@ -207,7 +207,7 @@ export function RoyalChat({
 
         {reconnecting && (
           <p role="status" className="relative z-10 mx-3 mb-1 flex items-center justify-center gap-2 rounded-xl bg-[#f6d77a]/15 px-3 py-1.5 text-center text-[12.5px] text-[#f6d77a]">
-            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… ¡enseguida vuelve! ✨
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… ¡enseguida vuelve!
           </p>
         )}
         {banner && (

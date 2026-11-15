@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
-import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
+import { elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
 const TITLE = 'Las 24 mejores trastadas del elfo travieso (los clásicos de internet)';
@@ -66,7 +66,7 @@ export default function IdeasElfoPage() {
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
       <article className="relative mx-auto w-full max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8 sm:px-6">
         <nav aria-label="Navegación" className="mb-6 flex items-center justify-between text-[13px]">
-          <Link href="/" className="font-serif text-[18px] text-[#f6d77a]">✨ Línea Mágica</Link>
+          <Link href="/" className="font-serif text-[18px] text-[#f6d77a]">Línea Mágica</Link>
           <Link href={CTA_HREF} className="rounded-full border border-[#f6d77a]/50 px-3 py-1 font-semibold text-[#f6d77a]">Que el elfo le escriba</Link>
         </nav>
 
@@ -126,7 +126,7 @@ export default function IdeasElfoPage() {
                       return art ? (
                         <Link href={`/ideas-elfo/${d.day}`} className="-mx-4 -mt-4 mb-3 block">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${d.title}`} title={AI_ART_NOTE} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                          <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${d.title}`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
                         </Link>
                       ) : null;
                     })()}

@@ -22,7 +22,7 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-5 lg:max-w-2xl lg:pt-10">
         <nav className="mb-5 flex items-center justify-between">
           <Link href="/" className="min-h-10 rounded-full border border-white/15 px-3 py-2 text-[13px] font-semibold text-[#fff6dc]/80 active:scale-95">← Inicio</Link>
-          <p className="font-serif text-[17px] text-[#f6d77a]">✨ {BRAND}</p>
+          <p className="font-serif text-[17px] text-[#f6d77a]">{BRAND}</p>
           <Link href="/precios" className="min-h-10 rounded-full px-2 py-2 text-[13px] font-semibold text-[#f6d77a]/85 underline underline-offset-2">Precios</Link>
         </nav>
         <PassWelcome />

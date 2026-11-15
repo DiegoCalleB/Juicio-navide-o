@@ -598,7 +598,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               {presence.openedAt
                 ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en la sala'}</>
                 : presence.online
-                  ? <>{childName} está en la sala, esperando a {short} ✨</>
+                  ? <>{childName} está en la sala, esperando a {short}</>
                   : <>{childName} aún no ha abierto el enlace</>}
             </p>
             {presence.openedAt && messages.length === 0 && (
@@ -919,7 +919,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <div className="flex flex-wrap items-center gap-2">
               {text.trim().length >= 5 && (
                 <button type="button" onClick={polish} disabled={polishing} className="rounded-full border border-[#f6d77a]/60 px-3 py-1 text-[12.5px] font-bold text-[#f6d77a] disabled:opacity-50 active:bg-white/5">
-                  {polishing ? 'Poniendo magia…' : '✨ Mejorar con magia'}
+                  {polishing ? 'Poniendo magia…' : 'Mejorar con magia'}
                 </button>
               )}
               {beforePolish !== null && (
@@ -1088,7 +1088,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           <div role="alertdialog" aria-modal="true" aria-label="Cuenta atrás" className="absolute inset-0 z-40 grid place-items-center bg-black/95 p-6 text-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-[#5eead4]">Empieza a grabar</p>
-              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '✨'}</p>
+              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '¡Ya!'}</p>
               <p className="text-[15px] text-[#e8f1ff]/70"><R>Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</R></p>
               <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#e8f1ff]/80">
                 Cancelar

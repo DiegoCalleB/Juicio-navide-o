@@ -29,7 +29,7 @@ export function RoyalLanding({ billing, locale, now }: { billing: BillingInfo; l
         )}
         <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:py-8">
         <header className="mb-6 text-center lg:mb-0 lg:text-left">
-          <p className="font-serif text-[20px] leading-none text-[#f6d77a]">✨ {BRAND}</p>
+          <p className="font-serif text-[20px] leading-none text-[#f6d77a]">{BRAND}</p>
           <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/75">{hero.tagline}</p>
           <h1 className="mt-4 font-serif text-[30px] leading-[1.12] text-[#fff6dc] lg:mt-8 lg:text-[56px] lg:leading-[1.06]">{hero.title}</h1>
           {hero.countdown && (
@@ -85,7 +85,7 @@ export function RoyalLanding({ billing, locale, now }: { billing: BillingInfo; l
             <Link href="/ideas-elfo" className="underline-offset-2 hover:underline">Trastadas del elfo</Link>
             <Link href="/terminos" className="underline-offset-2 hover:underline">Términos de uso</Link>
           </nav>
-          <p>No somos Papá Noel ni los Reyes Magos, pero hacemos lo que podemos ✨</p>
+          <p>No somos Papá Noel ni los Reyes Magos, pero hacemos lo que podemos.</p>
         </footer>
       </div>
     </div>

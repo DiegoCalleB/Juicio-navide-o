@@ -16,7 +16,7 @@ export default function PreciosPage() {
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-5 lg:max-w-5xl lg:pt-10">
         <nav className="mb-6 flex items-center justify-between">
           <Link href="/" className="min-h-10 rounded-full border border-white/15 px-3 py-2 text-[13px] font-semibold text-[#fff6dc]/80 active:scale-95">← Inicio</Link>
-          <p className="font-serif text-[17px] text-[#f6d77a]">✨ {BRAND}</p>
+          <p className="font-serif text-[17px] text-[#f6d77a]">{BRAND}</p>
           <span className="w-16" />
         </nav>
         {billing.enabled ? (

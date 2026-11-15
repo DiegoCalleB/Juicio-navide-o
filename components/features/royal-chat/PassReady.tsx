@@ -33,7 +33,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
   return (
     <main className="fixed inset-0 z-40 overflow-y-auto bg-[#0a1220] text-[#e8f1ff]">
       <div className="mx-auto max-w-md space-y-4 px-4 pb-10 pt-10">
-        <p className="text-center text-4xl" aria-hidden>✨</p>
+        <p className="text-center text-4xl" aria-hidden>🎁</p>
         <h1 className="text-center text-2xl font-bold">¡Ya tienes tu Pase de Navidad!</h1>
         <p className="text-center text-[14px] opacity-75">
           <R>{back ? 'Tu sala ya no tiene límite. ' : ''}Las salas que crees desde este móvil tampoco tendrán límite hasta el 20 de enero.</R>

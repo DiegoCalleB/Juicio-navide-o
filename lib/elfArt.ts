@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
- * Ilustraciones (creadas con IA) de cada trastada: public/elfo/trastadas/N.jpg (1024x768).
+ * Ilustraciones de cada trastada: public/elfo/trastadas/N.jpg (1024x768).
  * Son opcionales: si una noche aún no tiene ilustración, las páginas funcionan igual sin ella.
  */
 const dir = () => path.join(process.cwd(), 'public', 'elfo', 'trastadas');
@@ -31,4 +31,3 @@ export function quickArt(id: string): ElfArt | null {
   return existsSync(file) ? { src: `/elfo/sin-tiempo/${id}.jpg`, width: 1024, height: 768 } : null;
 }
 
-export const AI_ART_NOTE = 'Ilustración creada con IA';

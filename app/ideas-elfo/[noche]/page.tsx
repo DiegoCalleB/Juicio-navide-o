@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CopyMessage } from '@/components/features/CopyMessage';
 import { ShareBar } from '@/components/features/ShareBar';
-import { AI_ART_NOTE, elfArt } from '@/lib/elfArt';
+import { elfArt } from '@/lib/elfArt';
 import { ELF_HASHTAGS, elfNights, MESS_LABEL, nightDate } from '@/lib/elfIdeas';
 
 const CTA_HREF = '/crear?personaje=duende_chispa';
@@ -47,7 +47,7 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
       <article className="relative mx-auto w-full max-w-xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8 lg:max-w-5xl lg:px-8">
         <nav aria-label="Navegación" className="mb-6 flex items-center justify-between text-[13px]">
           <Link href="/ideas-elfo" className="font-semibold text-[#f6d77a]">← Las 24 trastadas</Link>
-          <Link href="/" className="font-serif text-[16px] text-[#f6d77a]">✨ Línea Mágica</Link>
+          <Link href="/" className="font-serif text-[16px] text-[#f6d77a]">Línea Mágica</Link>
         </nav>
 
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
@@ -58,7 +58,6 @@ export default async function NightPage({ params }: { params: Promise<{ noche: s
               <figure className="mt-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={art.src} width={art.width} height={art.height} alt={`Ilustración: ${night.title}`} className="w-full rounded-2xl border border-white/10 shadow-xl" />
-                <figcaption className="mt-1 text-right text-[11px] text-[#fff6dc]/40">{AI_ART_NOTE}</figcaption>
               </figure>
             )}
             <p className="mt-3 text-[16.5px] leading-relaxed text-[#fff6dc]/85">{night.idea}</p>

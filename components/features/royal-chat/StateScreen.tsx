@@ -7,7 +7,8 @@ export function StateScreen({ title, children, action }: { title: string; childr
     <div className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-[#120822] px-6 text-center">
       <div aria-hidden className="royal-sky pointer-events-none absolute inset-0" />
       <div className="relative max-w-sm">
-        <div aria-hidden className="mx-auto mb-5 grid size-16 place-items-center rounded-full border border-[#f6d77a]/40 bg-[#f6d77a]/10 text-3xl">✨</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img aria-hidden src="/icons/icon-192.png" alt="" width={72} height={72} className="mx-auto mb-5 size-[72px] rounded-[18px] shadow-lg" />
         <h1 className="font-serif text-[28px] leading-tight text-[#fff6dc]">{title}</h1>
         {children && <div className="mt-3 text-[15px] leading-relaxed text-[#fff6dc]/70">{children}</div>}
         {action && (

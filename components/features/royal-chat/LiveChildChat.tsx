@@ -227,7 +227,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
     void fetch(`/api/rooms/${token}/typing`, { method: 'POST' }).catch(() => undefined);
   }, [token]);
 
-  const oops = '¡Uy! Se ha perdido tu mensaje por el camino. Inténtalo otra vez ✨';
+  const oops = '¡Uy! Se ha perdido tu mensaje por el camino. Inténtalo otra vez.';
 
   /** Envío optimista: se muestra al instante y se sustituye por el del servidor. */
   const send = async (optimistic: ChatMessage, request: () => Promise<Response>) => {
@@ -317,7 +317,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
       reconnecting={offline}
       caps={caps}
       onToggleCaps={toggleCaps}
-      closedNote={locked ? `${character.shortName} se ha ido a preparar la magia. ¡Muy pronto volverá a escribirte! ✨` : null}
+      closedNote={locked ? `${character.shortName} se ha ido a preparar la magia. ¡Muy pronto volverá a escribirte!` : null}
     />
     {introOpen && <NorthPoleIntro token={token} character={character} childName={childName} onOpen={() => setIntroOpen(false)} />}
     {surprise && !introOpen && <SurpriseReveal character={character} childName={childName} text={surprise} onClose={() => setSurprise(null)} />}

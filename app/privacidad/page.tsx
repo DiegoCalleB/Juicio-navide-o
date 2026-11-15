@@ -28,7 +28,7 @@ export default async function PrivacidadPage() {
       </LegalSection>
 
       <LegalSection title="Servicios que intervienen">
-        <p>Alojamos los datos en Supabase y el servicio en Railway. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Para la voz del personaje usamos ElevenLabs, que convierte texto en audio con inteligencia artificial: le enviamos el texto de los mensajes que los padres eligen mandar con voz y, para el saludo inicial, solo el nombre de pila del niño. No le enviamos ningún otro dato. Los audios se guardan con el resto de la sala y se borran con ella. Si los padres usan «Ayúdame a escribirlo», la idea que escriben se envía a Google (Gemini) para proponer mensajes; nunca le enviamos el nombre del niño ni otros datos de la sala.</p>
+        <p>Alojamos los datos en Supabase y el servicio en Railway. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Para la voz del personaje usamos ElevenLabs, un servicio que convierte texto en audio: le enviamos el texto de los mensajes que los padres eligen mandar con voz y, para el saludo inicial, solo el nombre de pila del niño. No le enviamos ningún otro dato. Los audios se guardan con el resto de la sala y se borran con ella. Si los padres usan «Ayúdame a escribirlo», la idea que escriben se envía a Google (servicio Gemini) para proponer mensajes; nunca le enviamos el nombre del niño ni otros datos de la sala.</p>
       </LegalSection>
 
       <LegalSection title="Quién puede verlo">

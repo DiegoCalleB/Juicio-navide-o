@@ -22,7 +22,7 @@ function timeLeft(iso: string): string {
 }
 
 function accessLabel(a: FamilyView['rooms'][number]['access']): { text: string; tone: string } {
-  if (a.plan === 'pass') return { text: '✨ Con Pase de Navidad', tone: 'text-[#f6d77a]' };
+  if (a.plan === 'pass') return { text: 'Con Pase de Navidad', tone: 'text-[#f6d77a]' };
   if (a.plan === 'trial' && a.trialEndsAt) {
     return a.locked
       ? { text: 'Prueba terminada', tone: 'text-[#ff8a8c]' }
@@ -135,7 +135,7 @@ export function FamilyPanel({ familyToken, family, origin, billing, hasPin = fal
           <div className="lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-md"><PassOffer billing={billing} roomToken={trialRoom.parentToken} title="Pase de Navidad para toda la familia" tone="panel" /></div>
         ) : (
           <button type="button" onClick={() => setOfferOpen(true)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl lg:col-span-2 border border-[#5eead4]/40 bg-[#5eead4]/[.06] px-4 text-[14px] font-semibold text-[#5eead4] active:scale-[0.99]">
-            ✨ Pase de Navidad para toda la familia · {billing.price}
+            Pase de Navidad para toda la familia · {billing.price}
           </button>
         ))}
 
