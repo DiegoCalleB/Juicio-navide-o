@@ -31,6 +31,10 @@ const EXPECT = {
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
 
   check('portada (la puede ver un peque): sin precios ni ofertas', (await page.getByText(/€|Black Friday|Pase de Navidad/).count()) === 0);
+  // La pestaña y la vista previa siguen a la portada de temporada (mismo gancho que el titular)
+  const tagline = ((await page.locator('header > p').nth(1).textContent()) || '').trim();
+  const og = await page.locator('meta[property="og:title"]').getAttribute('content');
+  check(`pestaña (${phase}): el título sigue a la portada («${tagline}»)`, tagline.length > 5 && (await page.title()) === `Línea Mágica · ${tagline}` && og === `Línea Mágica · ${tagline}`, `${await page.title()} | ${og}`);
   // Portada de temporada
   check(`portada de temporada (${phase}): titular`, await page.getByRole('heading', { level: 1 }).filter({ hasText: EXPECT.h1 }).isVisible());
   check(`portada de temporada (${phase}): el chat de ejemplo es del personaje de la época`, await page.getByText(EXPECT.demo).first().isVisible());

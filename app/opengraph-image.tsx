@@ -3,7 +3,7 @@ import { heroFor } from '@/lib/brand';
 import { siteNow } from '@/lib/clock';
 import { getSiteUrl } from '@/lib/site';
 
-export const alt = 'Línea Mágica · Mensajes de Papá Noel, los Reyes Magos, el elfo Chispa y el Ratoncito Pérez';
+export const alt = 'Línea Mágica · Mensajes mágicos de Navidad';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 

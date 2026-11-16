@@ -8,7 +8,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: 'Línea Mágica · Mensajes de Papá Noel, los Reyes y el elfo Chispa', template: '%s · Línea Mágica' },
+  title: { default: 'Línea Mágica · Mensajes mágicos de Navidad', template: '%s · Línea Mágica' },
   description: 'Papá Noel, los Reyes Magos, el elfo Chispa y el Ratoncito Pérez escriben en directo a los peques desde el Polo Norte, Oriente y su castillo.',
   openGraph: { type: 'website', siteName: 'Línea Mágica', locale: 'es_ES' },
   twitter: { card: 'summary_large_image' },
