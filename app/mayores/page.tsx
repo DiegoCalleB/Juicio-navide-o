@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { GATE_COOKIE, gateEnabled, newChallenge, safeNext, sessionValid } from '@/lib/adultGate';
+import { AGE_COOKIE, GATE_COOKIE, ageStatus, gateEnabled, newChallenge, safeNext, sessionValid } from '@/lib/adultGate';
 import { billingInfo } from '@/lib/billing';
+import { EdadChispa } from '@/components/features/gate/EdadChispa';
 import { GateForm } from '@/components/features/gate/GateForm';
 import { CloseZone } from '@/components/features/gate/CloseZone';
 import { MyRooms } from '@/components/features/royal-chat/MyRooms';
@@ -17,9 +18,11 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
   const open = !gateEnabled() || (await sessionValid((await cookies()).get(GATE_COOKIE)?.value));
 
   if (!open) {
+    // Primero Chispa pregunta la edad; quien dice ser menor se queda ahí. Después, la cuenta de cabeza.
+    const age = await ageStatus((await cookies()).get(AGE_COOKIE)?.value);
     return (
       <main className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-[#120c22] px-6 py-10">
-        <GateForm initial={await newChallenge()} next={safeNext(next)} />
+        {age === 'ok' ? <GateForm initial={await newChallenge()} next={safeNext(next)} /> : <EdadChispa initialMinor={age === 'menor'} />}
       </main>
     );
   }

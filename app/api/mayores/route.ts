@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { checkAnswer, newChallenge, newSession, safeNext, sessionCookie } from '@/lib/adultGate';
+import { AGE_COOKIE, ageStatus, checkAnswer, newChallenge, newSession, safeNext, sessionCookie } from '@/lib/adultGate';
 import { DEVICE, NETWORK, clearFails, humanWait, lockedFor, recordFail } from '@/lib/gateLock';
 import { getClientFingerprint, getClientNetwork } from '@/lib/security';
 
@@ -15,6 +15,10 @@ const locked = (ms: number) =>
  * Los fallos se cuentan por dispositivo (3 seguidos) y por red (9), y cada bloqueo es más largo (15 min, 1 h, 24 h).
  */
 export async function POST(req: NextRequest) {
+  // Sin haber contestado a Chispa (o habiendo dicho que es menor) no se llega a la cuenta.
+  if ((await ageStatus(req.cookies.get(AGE_COOKIE)?.value)) !== 'ok') {
+    return res(403, { ok: false, error: { code: 'AGE', message: 'No se puede continuar.' } });
+  }
   const device = `d:${await getClientFingerprint()}`;
   const network = `n:${await getClientNetwork()}`;
   const wait = Math.max(lockedFor(device), lockedFor(network));

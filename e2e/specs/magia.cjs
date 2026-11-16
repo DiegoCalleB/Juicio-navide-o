@@ -14,6 +14,8 @@ const DELATAN = [
 const r255 = () => 1 + Math.floor(Math.random() * 250);
 const IP = `10.${r255()}.${r255()}.${r255()}`;
 const HDR = { 'x-forwarded-for': IP };
+// Espera a que React haya «enganchado» el campo (si se escribe antes, el texto se pierde y el botón sigue desactivado).
+const hydrated = (page, sel) => page.waitForFunction((q) => { const el = document.querySelector(q); return !!el && Object.keys(el).some((k) => k.startsWith('__reactProps')); }, sel, { timeout: 30000 });
 const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
 
 (async () => {
@@ -83,30 +85,70 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   let allGated = true; const leaks = [];
   for (const p of adultPaths) {
     await kid.goto(BASE + p, { waitUntil: 'domcontentloaded' });
-    const ok = /\/mayores\?next=/.test(kid.url()) && (await kid.getByRole('heading', { name: 'Acceso a la cuenta' }).isVisible());
+    const ok = /\/mayores\?next=/.test(kid.url()) && (await kid.getByRole('heading', { name: /Cuántos años tienes/ }).isVisible());
     if (!ok) { allGated = false; leaks.push(p); }
   }
   check('toda la zona de mayores (crear, precios, ideas, legal, paneles) lleva a la puerta', allGated, leaks.join(', '));
   const ogIdeas = await fetch(BASE + '/ideas-elfo/10/imagen', { redirect: 'manual' });
   check('las imágenes de instrucciones tampoco se sirven sin puerta', ogIdeas.status >= 300 && ogIdeas.status < 400, String(ogIdeas.status));
 
-  // ── La puerta
+  // ── Chispa pregunta la edad: un peque honesto se queda ahí
   await kid.goto(BASE + '/crear', { waitUntil: 'networkidle' });
-  await kid.screenshot({ path: S + '/mg2-puerta.png' });
-  const q = await kid.getByTestId('gate-question').innerText();
-  check('la puerta pide una cuenta de cabeza', /^\d+ [×−+] \d+ = \?$/.test(q.trim()), q);
-  for (let i = 0; i < 3; i++) {
-    await kid.fill('#gate-answer', '1');
-    await Promise.all([kid.waitForResponse((r) => r.url().endsWith('/api/mayores')), kid.getByRole('button', { name: 'Entrar' }).click()]);
-    await kid.waitForTimeout(300);
+  await kid.screenshot({ path: S + '/mg2-edad.png' });
+  check('antes de la cuenta, Chispa pregunta «¿Cuántos años tienes?»', await kid.getByRole('heading', { name: /Cuántos años tienes/ }).isVisible() && (await kid.getByTestId('gate-question').count()) === 0);
+  check('la pregunta de Chispa no delata nada (sin «mayores», «padres»…)', delata(await kid.locator('body').innerText()).length === 0);
+  await hydrated(kid, '#edad');
+  await kid.fill('#edad', '7');
+  await kid.getByRole('button', { name: 'Seguir' }).click();
+  await kid.getByTestId('chispa-despedida').waitFor({ timeout: 10000 });
+  const adios = await kid.locator('body').innerText();
+  check('un peque de 7 años recibe una despedida cariñosa de Chispa (y nada que delate)', /chiste/i.test(adios) && delata(adios).length === 0, adios.replace(/\s+/g, ' ').slice(0, 120));
+  await kid.screenshot({ path: S + '/mg2-despedida.png' });
+  await kid.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  check('queda bloqueado en ese dispositivo: al volver, sigue la despedida y no hay cuenta', (await kid.getByTestId('chispa-despedida').count()) === 1 && (await kid.getByTestId('gate-question').count()) === 0);
+  const kidApi = kid.context().request;
+  const qk = (await (await kidApi.get(BASE + '/api/mayores/pregunta')).json());
+  check('sin contestar como mayor, ni se piden preguntas por la API (403)', qk.ok === false && qk.error?.code === 'AGE');
+  const retry = await (await kidApi.post(BASE + '/api/mayores/edad', { data: { age: '40' } })).json();
+  await kid.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  check('no puede volver a contestar con otra edad', retry.data?.adult === false && (await kid.getByTestId('chispa-despedida').count()) === 1);
+  const inv = await (await (await b.newContext({ extraHTTPHeaders: HDR })).request.post(BASE + '/api/mayores/edad', { data: { age: 'abc' } })).status();
+  check('una edad que no es un número no se admite (400)', inv === 400, String(inv));
+
+  // Un peque que miente a Chispa sigue teniendo delante la cuenta de cabeza
+  const bl = await launch([], { adult: false });
+  const liar = await (await bl.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (mentiroso) E2E', extraHTTPHeaders: HDR })).newPage();
+  const passAge = async (page, age = '40') => {
+    await hydrated(page, '#edad');
+    await page.fill('#edad', age);
+    await page.getByRole('button', { name: 'Seguir' }).click();
+    await page.locator('#gate-answer').waitFor({ timeout: 10000 });
+    await hydrated(page, '#gate-answer');
+  };
+  await liar.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  await passAge(liar);
+  await liar.screenshot({ path: S + '/mg2-puerta.png' });
+  const q = await liar.getByTestId('gate-question').innerText();
+  check('si dice ser mayor, la puerta pide una cuenta de cabeza', /^\d+ [×−+] \d+ = \?$/.test(q.trim()), q);
+  // Con solo 4 s, la pregunta puede refrescarse justo al escribir y vaciar el campo: se reintenta hasta contar
+  // exactamente 3 envíos reales (los reintentos no deben sumar fallos de más y bloquear la conexión entera).
+  let posts = 0;
+  liar.on('request', (r) => { if (r.url().endsWith('/api/mayores') && r.method() === 'POST') posts++; });
+  for (let t = 0; t < 14 && posts < 3; t++) {
+    if ((await liar.locator('#gate-answer').count()) === 0) break;
+    await liar.fill('#gate-answer', '1').catch(() => {});
+    await liar.getByRole('button', { name: 'Entrar' }).click({ timeout: 2000 }).catch(() => {});
+    await liar.waitForTimeout(500);
   }
-  check('3 fallos bloquean la puerta', await kid.getByText(/Demasiados intentos/).isVisible());
-  check('bloqueada, no se puede volver a intentar', (await kid.locator('#gate-answer').count()) === 0);
+  check('3 fallos bloquean la puerta', await liar.getByText(/Demasiados intentos/).isVisible());
+  check('bloqueada, no se puede volver a intentar', (await liar.locator('#gate-answer').count()) === 0);
+  await bl.close();
 
   // Un adulto de verdad (otro navegador): contesta y entra
   const b2 = await launch([], { adult: false });
   const p2 = await (await b2.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p2.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  await passAge(p2);
   const solve = async (page) => {
     const [x, op, y] = (await page.getByTestId('gate-question').innerText()).replace('= ?', '').trim().split(' ');
     return String(op === '×' ? Number(x) * Number(y) : op === '−' ? Number(x) - Number(y) : Number(x) + Number(y));
@@ -127,6 +169,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   // No redirige a otra web
   const p3 = await (await b2.newContext({ userAgent: 'Mozilla/5.0 (otro adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p3.goto(BASE + '/mayores?next=//evil.example.com', { waitUntil: 'networkidle' });
+  await passAge(p3);
   await p3.fill('#gate-answer', await solve(p3));
   await p3.getByRole('button', { name: 'Entrar' }).click();
   await p3.waitForURL(/localhost/, { timeout: 15000 }).catch(() => {});
@@ -139,7 +182,11 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
     const [x, op, y] = q.question.split(' ');
     return { token: q.token, right: String(op === '×' ? +x * +y : op === '−' ? +x - +y : +x + +y) };
   };
-  const apiOf = async (ua) => (await b2.newContext({ userAgent: ua, extraHTTPHeaders: HDR })).request;
+  const apiOf = async (ua, headers = HDR) => {
+    const api = (await b2.newContext({ userAgent: ua, extraHTTPHeaders: headers })).request;
+    await api.post(BASE + '/api/mayores/edad', { data: { age: '40' } });
+    return api;
+  };
   let last = null;
   for (let i = 0; i < 12; i++) { const n1 = await apiOf(`Mozilla/5.0 (cambio ${i}) E2E`); const { token } = await solveApi(n1); last = await n1.post(BASE + '/api/mayores', { data: { token, answer: '1' } }); if (last.status() === 429) break; }
   check('los fallos de una misma conexión acaban bloqueándola (también al cambiar de navegador)', last.status() === 429);
@@ -149,11 +196,11 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   const bj = await blocked.json();
   check('con la red bloqueada, ni la respuesta correcta abre la puerta (y avisa del tiempo)', blocked.status() === 429 && /15 minutos/.test(bj.error?.message ?? ''), bj.error?.message);
   // Otra conexión distinta no se ve afectada
-  const other = (await b2.newContext({ userAgent: 'Mozilla/5.0 (otra casa) E2E', extraHTTPHeaders: { 'x-forwarded-for': `10.${r255()}.${r255()}.${r255()}` } })).request;
+  const other = await apiOf('Mozilla/5.0 (otra casa) E2E', { 'x-forwarded-for': `10.${r255()}.${r255()}.${r255()}` });
   const o = await solveApi(other);
   check('otra conexión distinta entra con normalidad', (await other.post(BASE + '/api/mayores', { data: { token: o.token, answer: o.right } })).status() === 200);
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`RESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
   await b.close(); await b2.close(); process.exit(results.every(Boolean) ? 0 : 1);
-})().catch((e) => { console.error('CRASH', e.message); process.exit(2); });
+})().catch((e) => { console.error('CRASH', e.message, (e.stack || '').split('\n').slice(0, 8).join(' / ')); process.exit(2); });

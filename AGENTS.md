@@ -32,6 +32,11 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 
 - **Mundo mágico (público):** `/` (portada) y `/diario-de-chispa` (lo que Chispa cuenta que hizo, noche a noche,
   sin instrucciones). Metadatos, vista previa (OG), manifiesto, sitemap y robots: neutros.
+- **Chispa pregunta la edad (antes de la cuenta):** en `/mayores`, quien llega sin sesión ve a Chispa con su cara
+  preguntando «¿Cuántos años tienes?» (un peque no le miente al elfo). Menos de 18: Chispa lo despide con un chiste
+  y lo lleva al Polo Norte; queda cerrado en ese dispositivo 30 días y la API de la cuenta responde 403 sin
+  haber dicho ser mayor. 18 o más: sigue a la cuenta. Solo se guarda una cookie firmada («mayor»/«menor»), nunca la
+  edad. Código: `app/api/mayores/edad`, `components/features/gate/EdadChispa.tsx`. Nunca «mayores» ni «padres» ahí.
 - **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 4 s (comprobada en el servidor con un token
   firmado; 3 fallos seguidos bloquean el dispositivo y 9 la conexión, con bloqueos cada vez más largos: 15 min, 1 h, 24 h). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
   cerrar el navegador. Código: `lib/adultGate.ts`, `lib/gateLock.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.

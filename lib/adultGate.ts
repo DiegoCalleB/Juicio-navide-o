@@ -24,6 +24,12 @@ export function isAdultPath(pathname: string): boolean {
   return ADULT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 4. */
+export function answerSeconds(): number {
+  const t = Number(process.env.ADULT_GATE_SECONDS);
+  return process.env.ROOMS_STORE === 'memory' && t >= 1 && t <= 120 ? t : GATE_ANSWER_SECONDS;
+}
+
 /** Solo las pruebas automáticas (almacén en memoria) pueden apagar la puerta. En producción, siempre activa. */
 export function gateEnabled(): boolean {
   return !(process.env.ADULT_GATE === '0' && process.env.ROOMS_STORE === 'memory');
@@ -121,10 +127,11 @@ export async function newChallenge(now = Date.now()): Promise<Challenge> {
     question = `${a} + ${b}`;
     answer = a + b;
   }
-  const exp = now + GATE_ANSWER_SECONDS * 1000 + ANSWER_GRACE_MS;
+  const seconds = answerSeconds();
+  const exp = now + seconds * 1000 + ANSWER_GRACE_MS;
   const nonce = b64url(crypto.getRandomValues(new Uint8Array(9)).buffer);
   const token = `${nonce}.${exp}.${await sign(`challenge|${nonce}|${exp}|${answer}`)}`;
-  return { question, token, seconds: GATE_ANSWER_SECONDS };
+  return { question, token, seconds };
 }
 
 export async function checkAnswer(token: string, answer: string, now = Date.now()): Promise<'ok' | 'wrong' | 'expired'> {
@@ -141,3 +148,36 @@ export function safeNext(next: string | null | undefined): string {
   if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) return '/mayores';
   return next;
 }
+
+// ── Edad (la pregunta la hace Chispa) ─────────────────────────────────────
+
+/** Mayoría de edad: desde aquí se sigue a la cuenta de cabeza; por debajo, la puerta queda cerrada en ese dispositivo. */
+export const ADULT_AGE = 18;
+export const AGE_COOKIE = 'lm_edad';
+const AGE_MS = 30 * 24 * 60 * 60_000;
+export type AgeKind = 'ok' | 'menor';
+
+export async function newAgeToken(kind: AgeKind, now = Date.now()): Promise<string> {
+  const ts = String(now);
+  return `${kind}.${ts}.${await sign(`age|${kind}|${ts}`)}`;
+}
+
+/** 'ok' (dijo ser mayor), 'menor' (dijo ser menor) o null (no contestó, caducó o está manipulada). */
+export async function ageStatus(value: string | undefined, now = Date.now()): Promise<AgeKind | null> {
+  if (!value) return null;
+  const [kind, ts, sig] = value.split('.');
+  if ((kind !== 'ok' && kind !== 'menor') || !ts || !sig || !/^\d{10,16}$/.test(ts)) return null;
+  const t = Number(ts);
+  if (t > now + 60_000 || now - t > AGE_MS) return null;
+  return same(sig, await sign(`age|${kind}|${ts}`)) ? kind : null;
+}
+
+export const ageCookie = (value: string) => ({
+  name: AGE_COOKIE,
+  value,
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+  maxAge: AGE_MS / 1000,
+});
