@@ -1,5 +1,5 @@
 // Prueba gratis (acortada a 45 s), Pase de Navidad con Stripe simulado, pase de regalo y nivel de lectura.
-const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar, nextStep } = require('../_lib.cjs');
 // Se lanza aparte: npm run test:e2e -- --billing
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
@@ -18,7 +18,9 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
   check('portada (la puede ver un peque): sin precios ni pagos', (await page.getByText(/€|prueba gratis|Pase de Navidad/i).count()) === 0);
   await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
-  check('crear: anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
+  await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check(); await nextStep(page);
+  check('crear (paso 2): anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
 
   const create = async (name, reading) => {
     await page.fill('#child', name);

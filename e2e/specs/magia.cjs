@@ -73,8 +73,8 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('la puerta pide una cuenta de cabeza', /^\d+ [×−+] \d+ = \?$/.test(q.trim()), q);
   for (let i = 0; i < 3; i++) {
     await kid.fill('#gate-answer', '1');
-    await kid.getByRole('button', { name: 'Entrar' }).click();
-    await kid.waitForTimeout(400);
+    await Promise.all([kid.waitForResponse((r) => r.url().endsWith('/api/mayores')), kid.getByRole('button', { name: 'Entrar' }).click()]);
+    await kid.waitForTimeout(300);
   }
   check('3 fallos bloquean la puerta', await kid.getByText(/Demasiados intentos/).isVisible());
   check('bloqueada, no se puede volver a intentar', (await kid.locator('#gate-answer').count()) === 0);
