@@ -27,6 +27,15 @@ const adultFetch = (url, opts = {}) => { const c = adultCookie(); return fetch(u
  * Chromium: usa CHROMIUM_PATH si existe (p. ej. entornos sin descarga de navegadores).
  * Por defecto cada contexto nace con la puerta de mayores pasada; `{ adult: false }` para navegar como un peque.
  */
+/** Cookie de edad firmada «mayor» (Chispa ya le ha preguntado): la portada enseña los enlaces discretos. */
+function ageCookie() {
+  const crypto = require('crypto');
+  const secret = process.env.ADULT_GATE_SECRET || process.env.FINGERPRINT_SALT || 'lm-dev-only-secret-change-me';
+  const ts = String(Date.now());
+  const sig = crypto.createHmac('sha256', `adult-gate:${secret}`).update(`age|ok|${ts}`).digest('base64url');
+  return { name: 'lm_edad', value: `ok.${ts}.${sig}`, url: BASE };
+}
+
 const launch = async (args = [], { adult = true } = {}) => {
   const browser = await chromium.launch({
     ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
@@ -36,7 +45,7 @@ const launch = async (args = [], { adult = true } = {}) => {
     const newContext = browser.newContext.bind(browser);
     browser.newContext = async (opts) => {
       const ctx = await newContext(opts);
-      await ctx.addCookies([adultCookie()]);
+      await ctx.addCookies([adultCookie(), ageCookie()]);
       return ctx;
     };
     browser.newPage = async (opts) => (await browser.newContext(opts)).newPage();
@@ -115,4 +124,4 @@ async function ensureChar(page) {
   await page.locator('label', { hasText: 'Desde el Polo Norte, con sus renos' }).first().click();
 }
 
-module.exports = { BASE, OUT, FIX, launch, adultCookie, adultFetch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };
+module.exports = { BASE, OUT, FIX, launch, adultCookie, ageCookie, adultFetch, ensureFixtures, openChild, pinSetup, childLinkOf, familyLinkOf, ensureChar, nextStep };

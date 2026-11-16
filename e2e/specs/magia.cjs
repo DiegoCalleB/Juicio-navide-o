@@ -46,11 +46,39 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   await kid.goto(BASE + '/', { waitUntil: 'networkidle' });
   await kid.screenshot({ path: S + '/mg1-portada.png' });
   check('portada: lo más vistoso es el diario de Chispa', await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).isVisible());
-  const parentLinks = kid.getByRole('link', { name: /^(Mi cuenta|Condiciones de uso)$/ });
+  check('portada (sin haber contestado a Chispa): no hay ningún enlace a la cuenta ni a las condiciones', (await kid.locator('a[href="/mayores"], a[href="/terminos"], a[href="/precios"], a[href="/crear"]').count()) === 0 && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos|cuenta/i }).count()) === 0);
+  check('portada: Chispa pregunta «¿Cuántos años tienes?»', await kid.getByLabel(/Cuántos años tienes/).isVisible());
+  check('portada: lo más grande y dorado es el diario de Chispa', (await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).evaluate((el) => el.getBoundingClientRect().height)) > 44);
+
+  // Chispa pregunta en la portada: un peque honesto no ve nunca los enlaces; un mayor los ve (y no se le lleva a ninguna parte)
+  const bk = await launch([], { adult: false });
+  const k0 = await (await bk.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (peque honesto) E2E', extraHTTPHeaders: HDR })).newPage();
+  await k0.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await hydrated(k0, '#edad-portada');
+  await k0.fill('#edad-portada', '8');
+  await k0.getByRole('button', { name: 'Contarle' }).click();
+  await k0.getByTestId('chispa-tarjeta-despedida').waitFor({ timeout: 10000 });
+  check('portada: un peque de 8 años recibe un chiste de Chispa (y nada que delate)', delata(await k0.locator('body').innerText()).length === 0);
+  await k0.reload({ waitUntil: 'networkidle' });
+  check('portada: al volver, ya no hay pregunta ni enlaces para mayores', (await k0.getByLabel(/Cuántos años tienes/).count()) === 0 && (await k0.locator('a[href="/mayores"], a[href="/terminos"]').count()) === 0);
+  await k0.goto(BASE + '/diario-de-chispa', { waitUntil: 'networkidle' });
+  check('el diario tampoco enseña el acceso a un peque', (await k0.locator('a[href="/mayores"]').count()) === 0);
+
+  const k1 = await (await bk.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (mayor) E2E', extraHTTPHeaders: HDR })).newPage();
+  await k1.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await hydrated(k1, '#edad-portada');
+  await k1.fill('#edad-portada', '41');
+  await k1.getByRole('button', { name: 'Contarle' }).click();
+  const parentLinks = k1.getByRole('link', { name: /^(Mi cuenta|Condiciones de uso)$/ });
+  await parentLinks.first().waitFor({ timeout: 10000 });
   const sizeOf = async (l) => await l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
   const sizes = await Promise.all([0, 1].map((i) => sizeOf(parentLinks.nth(i))));
-  check('portada: el acceso de los mayores son dos enlaces normales y aburridos («Mi cuenta» y «Condiciones de uso»)', (await parentLinks.count()) === 2 && sizes.every((x) => x >= 13 && x <= 15) && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0, sizes.join('/'));
-  check('portada: lo más grande y dorado es el diario, no el acceso de los mayores', (await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).evaluate((el) => el.getBoundingClientRect().height)) > 44 && sizes.every((x) => x < 16));
+  check('portada: al decir que es mayor aparecen «Mi cuenta» y «Condiciones de uso», normales y aburridos', (await parentLinks.count()) === 2 && sizes.every((x) => x >= 13 && x <= 15) && (await k1.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0, sizes.join('/'));
+  check('portada: no se le lleva a ninguna parte (sigue en la portada) y la pregunta desaparece', new URL(k1.url()).pathname === '/' && (await k1.getByLabel(/Cuántos años tienes/).count()) === 0);
+  await Promise.all([k1.waitForURL(/\/mayores/), k1.getByRole('link', { name: 'Mi cuenta' }).click()]);
+  check('«Mi cuenta» lleva directo a la cuenta de cabeza (ya no vuelve a preguntar la edad)', await k1.getByTestId('gate-question').waitFor({ timeout: 15000 }).then(() => true, () => false) && (await k1.getByRole('heading', { name: /Cuántos años tienes/ }).count()) === 0);
+  await bk.close();
+
   check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo salas|Tus salas/).count()) === 0);
 
   // El rincón del Polo Norte: contenido para curiosos, sin formularios ni enlaces de mayores

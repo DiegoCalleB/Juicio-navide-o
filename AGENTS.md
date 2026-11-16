@@ -32,17 +32,21 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 
 - **Mundo mágico (público):** `/` (portada) y `/diario-de-chispa` (lo que Chispa cuenta que hizo, noche a noche,
   sin instrucciones). Metadatos, vista previa (OG), manifiesto, sitemap y robots: neutros.
-- **Chispa pregunta la edad (antes de la cuenta):** en `/mayores`, quien llega sin sesión ve a Chispa con su cara
-  preguntando «¿Cuántos años tienes?» (un peque no le miente al elfo). Menos de 18: Chispa lo despide con un chiste
-  y lo lleva al Polo Norte; queda cerrado en ese dispositivo 30 días y la API de la cuenta responde 403 sin
-  haber dicho ser mayor. 18 o más: sigue a la cuenta. Solo se guarda una cookie firmada («mayor»/«menor»), nunca la
-  edad. Código: `app/api/mayores/edad`, `components/features/gate/EdadChispa.tsx`. Nunca «mayores» ni «padres» ahí.
+- **Chispa pregunta la edad (en la portada):** a quien llega sin haber contestado, la portada le enseña a Chispa con su
+  cara: «¡Hola! Soy Chispa. ¿Cuántos años tienes?» (un peque no le miente al elfo). Menos de 18: Chispa le ofrece un
+  chiste, y los enlaces para los mayores no aparecen nunca en ese dispositivo (30 días); la API de la cuenta responde 403
+  y no puede volver a contestar con otra edad. 18 o más: no se le lleva a ningún sitio; la portada se vuelve a pintar con
+  los dos enlaces discretos («Mi cuenta» y «Condiciones de uso») y «Mi cuenta» va directo a la cuenta de cabeza.
+  Quien entra directo a `/mayores` sin contestar ve la misma pregunta de Chispa ahí. Solo se guarda una cookie firmada
+  («mayor»/«menor»), nunca la edad. Código: `app/api/mayores/edad`, `lib/ageServer.ts`, `ChispaEdadTarjeta.tsx` (portada),
+  `components/features/gate/EdadChispa.tsx` (`/mayores`). Nunca «mayores» ni «padres» en esos textos.
 - **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 4 s (comprobada en el servidor con un token
   firmado; 3 fallos seguidos bloquean el dispositivo y 9 la conexión, con bloqueos cada vez más largos: 15 min, 1 h, 24 h). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
   cerrar el navegador. Código: `lib/adultGate.ts`, `lib/gateLock.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.
 - **Disuadir a los peques:** lo más vistoso de la portada es mágico (el diario de Chispa, el chat de ejemplo, los
-  rincones del Polo Norte) y el acceso de los mayores son dos enlaces normales pero aburridos, donde un adulto los
-  espera: «Mi cuenta» arriba a la derecha y «Condiciones de uso» abajo (13-15 px, nunca dorados ni grandes). Antes de la puerta nunca aparecen
+  rincones del Polo Norte) y el acceso de los mayores son dos enlaces normales pero aburridos («Mi cuenta» arriba a la
+  derecha y «Condiciones de uso» abajo, 13-15 px, nunca dorados ni grandes) que solo se pintan si Chispa ya ha
+  preguntado la edad y la respuesta es de mayor. Antes de la puerta nunca aparecen
   «mayores», «adultos», «mamás y papás», «zona secreta» ni nada que despierte curiosidad (tampoco en el manifiesto,
   los atajos de la app o el título de la pestaña): la puerta se llama «Acceso a la cuenta». La prueba `magia` lo vigila.
 - **Zona de mayores (detrás de la puerta):** `/crear`, `/precios`, `/ideas-elfo/*`, `/familia/*`, `/paje/*`,

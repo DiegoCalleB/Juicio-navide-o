@@ -4,6 +4,7 @@ import { RoyalLanding } from '@/components/features/royal-chat/RoyalLanding';
 import { isCharacterId } from '@/lib/characters';
 import { billingInfo } from '@/lib/billing';
 import { siteNow } from '@/lib/clock';
+import { currentAge } from '@/lib/ageServer';
 import { getRequestLocale } from '@/lib/i18n.server';
 
 /** Dinámica: el precio de lanzamiento cambia por fecha y los pagos se activan por variable de entorno. */
@@ -17,5 +18,5 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   // Enlaces de pase (/?pase=…): el pase se activa en la zona de mayores, nunca en la portada pública.
   if (pase && /^[A-Za-z0-9_-]{20,80}$/.test(pase)) redirect(`/crear?pase=${pase}`);
   if (personaje && isCharacterId(personaje)) redirect(`/crear?personaje=${personaje}`);
-  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} />;
+  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} age={await currentAge()} />;
 }

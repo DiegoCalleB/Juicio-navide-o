@@ -4,6 +4,7 @@ import { BRAND } from '@/lib/brand';
 import { siteNow } from '@/lib/clock';
 import { diaryFor } from '@/lib/elfDiary';
 import { elfArt } from '@/lib/elfArt';
+import { currentAge } from '@/lib/ageServer';
 import { ShareBar } from '@/components/features/ShareBar';
 
 export const dynamic = 'force-dynamic';
@@ -15,8 +16,9 @@ export const metadata: Metadata = {
 };
 
 /** Página pública: la magia, nunca el truco (AGENTS.md). */
-export default function DiarioPage() {
+export default async function DiarioPage() {
   const { mode, entries } = diaryFor(siteNow());
+  const age = await currentAge();
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#0d2b3a] text-[#fff6dc]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
@@ -60,7 +62,7 @@ export default function DiarioPage() {
         <footer className="mt-10 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <nav className="flex justify-center gap-5">
             <Link href="/" className="underline-offset-2 hover:underline">Inicio</Link>
-            <Link href="/mayores" className="underline-offset-2 hover:underline">Mi cuenta</Link>
+            {age === 'ok' && <Link href="/mayores" className="underline-offset-2 hover:underline">Mi cuenta</Link>}
           </nav>
         </footer>
       </article>
