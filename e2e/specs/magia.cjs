@@ -44,9 +44,11 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   await kid.goto(BASE + '/', { waitUntil: 'networkidle' });
   await kid.screenshot({ path: S + '/mg1-portada.png' });
   check('portada: lo más vistoso es el diario de Chispa', await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).isVisible());
-  const parentLink = kid.getByRole('link', { name: 'Cuenta y condiciones' });
+  const parentLinks = kid.getByRole('link', { name: /^(Mi cuenta|Condiciones de uso)$/ });
   const sizeOf = async (l) => await l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-  check('portada: el acceso de los mayores es un enlace pequeño y discreto (nada llamativo)', (await parentLink.count()) === 1 && (await sizeOf(parentLink)) <= 12 && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0);
+  const sizes = await Promise.all([0, 1].map((i) => sizeOf(parentLinks.nth(i))));
+  check('portada: el acceso de los mayores son dos enlaces normales y aburridos («Mi cuenta» y «Condiciones de uso»)', (await parentLinks.count()) === 2 && sizes.every((x) => x >= 13 && x <= 15) && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0, sizes.join('/'));
+  check('portada: lo más grande y dorado es el diario, no el acceso de los mayores', (await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).evaluate((el) => el.getBoundingClientRect().height)) > 44 && sizes.every((x) => x < 16));
   check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo salas|Tus salas/).count()) === 0);
 
   // El rincón del Polo Norte: contenido para curiosos, sin formularios ni enlaces de mayores

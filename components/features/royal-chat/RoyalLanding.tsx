@@ -10,7 +10,7 @@ import { demoFor } from './demoData';
 export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: Locale; now: Date }) {
   // REGLA DE ORO (AGENTS.md): la portada es pública y la puede ver un peque. Solo magia: ni cómo funciona,
   // ni precios, ni quién escribe. Todo eso vive tras la puerta (/mayores). El botón vistoso lleva al diario de Chispa
-  // y el acceso de los mayores es un enlace pequeño y aburrido a propósito: así un peque curioso no lo busca.
+  // y el acceso de los mayores son dos enlaces normales pero aburridos («Mi cuenta» arriba y «Condiciones de uso» abajo): un adulto los encuentra donde espera y a un peque no le dicen nada.
   const r = (t: string) => regionalize(t, locale);
   const hero = heroFor(now);
   const demoCharacter = hero.phase === 'elf' || hero.phase === 'elf-pre' ? 'duende_chispa' : hero.phase === 'reyes' ? 'melchor' : hero.phase === 'raton' ? 'raton_perez' : 'papa_noel';
@@ -19,7 +19,10 @@ export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: L
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
-      <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-8 lg:max-w-6xl lg:px-10 lg:pt-10">
+      <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4 lg:max-w-6xl lg:px-10 lg:pt-6">
+        <div className="mb-3 flex justify-end lg:mb-0">
+          <Link href="/mayores" className="inline-flex min-h-10 items-center px-1 text-[13.5px] text-[#fff6dc]/65 underline-offset-2 hover:underline">Mi cuenta</Link>
+        </div>
         <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:py-8">
         <header className="mb-6 text-center lg:mb-0 lg:text-left">
           <p className="font-serif text-[20px] leading-none text-[#f6d77a]">{BRAND}</p>
@@ -56,7 +59,7 @@ export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: L
         <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <LocaleSwitch />
           <nav aria-label="Más" className="flex justify-center">
-            <Link href="/mayores" className="text-[11px] text-[#fff6dc]/35 underline-offset-2 hover:underline">Cuenta y condiciones</Link>
+            <Link href="/terminos" className="inline-flex min-h-10 items-center text-[13px] text-[#fff6dc]/60 underline-offset-2 hover:underline">Condiciones de uso</Link>
           </nav>
           <p>Con cariño, desde el Polo Norte.</p>
         </footer>
