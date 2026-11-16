@@ -26,14 +26,14 @@ export function GateForm({ initial, next }: { initial: Challenge; next: string }
 
   useEffect(() => {
     if (locked) return;
-    if (left <= 0) {
+    if (left <= 0.05) {
       fetch('/api/mayores/pregunta', { cache: 'no-store' })
         .then((r) => r.json() as Promise<{ data: Challenge }>)
         .then((j) => load(j.data, 'Se ha acabado el tiempo. Aquí tienes otra.'))
         .catch(() => setMsg('No se ha podido cargar otra. Recarga la página.'));
       return;
     }
-    const t = setTimeout(() => setLeft((s) => s - 1), 1000);
+    const t = setTimeout(() => setLeft((s) => s - 0.1), 100);
     return () => clearTimeout(t);
   }, [left, locked, load]);
 

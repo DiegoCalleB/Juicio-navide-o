@@ -4,7 +4,7 @@ Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y d
 
 ## Pantallas
 Regla de oro (ver `AGENTS.md`): nada de lo que pueda ver un peque delata la magia. La web se divide en un
-**mundo mágico público** y una **zona de mayores** tras una puerta (cuenta de cabeza en 20 s, comprobada en el
+**mundo mágico público** y una **zona de mayores** tras una puerta (cuenta de cabeza en 4 s, comprobada en el
 servidor; 3 fallos = 15 min bloqueada; la sesión caduca a los 30 min sin uso o al cerrar el navegador).
 
 | Ruta | Quién | Qué |

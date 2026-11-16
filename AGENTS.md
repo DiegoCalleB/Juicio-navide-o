@@ -32,7 +32,7 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 
 - **Mundo mágico (público):** `/` (portada) y `/diario-de-chispa` (lo que Chispa cuenta que hizo, noche a noche,
   sin instrucciones). Metadatos, vista previa (OG), manifiesto, sitemap y robots: neutros.
-- **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 20 s (comprobada en el servidor con un token
+- **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 4 s (comprobada en el servidor con un token
   firmado; 3 fallos = 15 min bloqueada). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
   cerrar el navegador. Código: `lib/adultGate.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.
 - **Zona de mayores (detrás de la puerta):** `/crear`, `/precios`, `/ideas-elfo/*`, `/familia/*`, `/paje/*`,

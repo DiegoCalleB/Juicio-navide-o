@@ -13,8 +13,8 @@ export const GATE_COOKIE = 'lm_mayores';
 /** Sin usar la zona de mayores durante este tiempo, la puerta se vuelve a cerrar. */
 export const GATE_IDLE_MS = 30 * 60_000;
 /** Tiempo para contestar la cuenta (el servidor da unos segundos de margen por la red). */
-export const GATE_ANSWER_SECONDS = 20;
-const ANSWER_GRACE_MS = 8_000;
+export const GATE_ANSWER_SECONDS = 4;
+const ANSWER_GRACE_MS = 3_000;
 
 /** Rutas que solo se ven tras la puerta. */
 export const ADULT_PATHS = ['/crear', '/precios', '/ideas-elfo', '/familia', '/paje', '/pase', '/privacidad', '/terminos', '/demo'];
@@ -109,15 +109,15 @@ export async function newChallenge(now = Date.now()): Promise<Challenge> {
   let answer: number;
   const kind = rand(0, 2);
   if (kind === 0) {
-    const a = rand(13, 29), b = rand(3, 8);
+    const a = rand(12, 19), b = rand(3, 6);
     question = `${a} × ${b}`;
     answer = a * b;
   } else if (kind === 1) {
-    const a = rand(52, 98), b = rand(17, 49);
+    const a = rand(41, 89), b = rand(12, 38);
     question = `${a} − ${b}`;
     answer = a - b;
   } else {
-    const a = rand(38, 79), b = rand(26, 58);
+    const a = rand(31, 69), b = rand(14, 39);
     question = `${a} + ${b}`;
     answer = a + b;
   }
