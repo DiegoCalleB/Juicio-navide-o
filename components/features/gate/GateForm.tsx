@@ -65,10 +65,10 @@ export function GateForm({ initial, next }: { initial: Challenge; next: string }
 
   const pct = Math.max(0, Math.min(100, (left / ch.seconds) * 100));
   return (
-    <form onSubmit={submit} className="w-full max-w-xs space-y-5 text-center" aria-label="Zona de mayores">
+    <form onSubmit={submit} className="w-full max-w-xs space-y-5 text-center" aria-label="Acceso a la cuenta">
       <div>
-        <h1 className="text-[26px] font-bold text-[#f3ecff]">Zona de mayores</h1>
-        <p className="mt-1.5 text-[14.5px] text-[#f3ecff]/65">Para entrar, resuelve esta cuenta.</p>
+        <h1 className="text-[26px] font-bold text-[#f3ecff]">Acceso a la cuenta</h1>
+        <p className="mt-1.5 text-[14.5px] text-[#f3ecff]/65">Para continuar, resuelve esta cuenta.</p>
       </div>
       {!locked && (
         <>

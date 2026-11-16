@@ -9,7 +9,8 @@ import { demoFor } from './demoData';
 
 export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: Locale; now: Date }) {
   // REGLA DE ORO (AGENTS.md): la portada es pública y la puede ver un peque. Solo magia: ni cómo funciona,
-  // ni precios, ni quién escribe. Todo eso vive en la zona de mayores (/mayores).
+  // ni precios, ni quién escribe. Todo eso vive tras la puerta (/mayores). El botón vistoso lleva al diario de Chispa
+  // y el acceso de los mayores es un enlace pequeño y aburrido a propósito: así un peque curioso no lo busca.
   const r = (t: string) => regionalize(t, locale);
   const hero = heroFor(now);
   const demoCharacter = hero.phase === 'elf' || hero.phase === 'elf-pre' ? 'duende_chispa' : hero.phase === 'reyes' ? 'melchor' : hero.phase === 'raton' ? 'raton_perez' : 'papa_noel';
@@ -32,11 +33,8 @@ export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: L
           <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#fff6dc]/75 lg:mx-0 lg:mt-5 lg:max-w-lg lg:text-[19px]">
             {r(hero.subtitle)}
           </p>
-          <Link href="/crear" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
-            Para mamás y papás
-          </Link>
-          <Link href="/diario-de-chispa" className="mt-3 block text-[13.5px] font-semibold text-[#7ee2a8] underline underline-offset-2 lg:mt-4">
-            Lee el diario de travesuras del elfo Chispa
+          <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
+            Lee el diario de Chispa
           </Link>
         </header>
 
@@ -50,9 +48,8 @@ export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: L
 
         <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <LocaleSwitch />
-          <nav aria-label="Más" className="flex justify-center gap-5">
-            <Link href="/diario-de-chispa" className="underline-offset-2 hover:underline">Diario de Chispa</Link>
-            <Link href="/mayores" className="underline-offset-2 hover:underline">Zona de mayores</Link>
+          <nav aria-label="Más" className="flex justify-center">
+            <Link href="/mayores" className="text-[11px] text-[#fff6dc]/35 underline-offset-2 hover:underline">Cuenta y condiciones</Link>
           </nav>
           <p>Con cariño, desde el Polo Norte.</p>
         </footer>

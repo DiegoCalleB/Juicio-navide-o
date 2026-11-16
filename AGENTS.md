@@ -35,6 +35,10 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 - **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 4 s (comprobada en el servidor con un token
   firmado; 3 fallos seguidos bloquean el dispositivo y 9 la conexión, con bloqueos cada vez más largos: 15 min, 1 h, 24 h). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
   cerrar el navegador. Código: `lib/adultGate.ts`, `lib/gateLock.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.
+- **Disuadir a los peques:** lo más vistoso de la portada es mágico (el diario de Chispa, el chat de ejemplo) y el
+  único acceso a la puerta es un enlace pequeño y gris, «Cuenta y condiciones». Antes de la puerta nunca aparecen
+  «mayores», «adultos», «mamás y papás», «zona secreta» ni nada que despierte curiosidad (tampoco en el manifiesto,
+  los atajos de la app o el título de la pestaña): la puerta se llama «Acceso a la cuenta». La prueba `magia` lo vigila.
 - **Zona de mayores (detrás de la puerta):** `/crear`, `/precios`, `/ideas-elfo/*`, `/familia/*`, `/paje/*`,
   `/pase/*`, `/privacidad`, `/terminos`, `/demo/*`. Para añadir una ruta, ponla en `ADULT_PATHS` y en el
   `matcher` del middleware. Las instrucciones nunca se comparten en redes desde la web (sin botones de compartir).

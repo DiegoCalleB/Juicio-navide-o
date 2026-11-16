@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: 'Diario de Chispa', short_name: 'Diario', url: '/diario-de-chispa', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
-      { name: 'Zona de mayores', short_name: 'Mayores', url: '/mayores', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+      { name: 'Cuenta y condiciones', short_name: 'Cuenta', url: '/mayores', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
     ],
   };
 }

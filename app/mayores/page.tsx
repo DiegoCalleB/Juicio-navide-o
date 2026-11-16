@@ -10,7 +10,7 @@ import { InstallApp } from '@/components/features/InstallApp';
 
 export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#120c22' };
-export const metadata: Metadata = { title: 'Zona de mayores', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'Acceso a la cuenta', robots: { index: false, follow: false } };
 
 export default async function MayoresPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;

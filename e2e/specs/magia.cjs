@@ -8,7 +8,7 @@ const DELATAN = [
   /contest\w* en secreto/i, /no somos pap/i, /como si fuer[ae]/i, /\bt[úu] (escribes|contestas|respondes)\b/i,
   /los padres (escriben|contestan|hacen|mueven)/i, /escrito por ti/i, /zona secreta/i, /panel de los padres/i,
   /\bpaje\b/i, /inteligencia artificial/i, /\bIA\b/, /voz sintetizada/i, /se te ha olvidado/i, /mover(lo|le) /i,
-  /prueba gratis/i, /pase de navidad/i, /\bprecio/i, /\bsin registrarte\b/i, /\bapp\b/i, /cómo se prepara/i,
+  /prueba gratis/i, /para mam[aá]s y pap[aá]s/i, /zona de mayores/i, /solo (para )?adultos/i, /pase de navidad/i, /\bprecio/i, /\bsin registrarte\b/i, /\bapp\b/i, /cómo se prepara/i,
 ];
 // Una IP inventada por ejecución: el bloqueo por red no se acumula entre ejecuciones ni afecta a otras pruebas.
 const r255 = () => 1 + Math.floor(Math.random() * 250);
@@ -43,7 +43,10 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   }
   await kid.goto(BASE + '/', { waitUntil: 'networkidle' });
   await kid.screenshot({ path: S + '/mg1-portada.png' });
-  check('portada: el botón para adultos dice «Para mamás y papás»', await kid.getByRole('link', { name: 'Para mamás y papás' }).isVisible());
+  check('portada: lo más vistoso es el diario de Chispa', await kid.getByRole('link', { name: 'Lee el diario de Chispa' }).isVisible());
+  const parentLink = kid.getByRole('link', { name: 'Cuenta y condiciones' });
+  const sizeOf = async (l) => await l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  check('portada: el acceso de los mayores es un enlace pequeño y discreto (nada llamativo)', (await parentLink.count()) === 1 && (await sizeOf(parentLink)) <= 12 && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0);
   check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo salas|Tus salas/).count()) === 0);
 
   // La sala del niño, su manifiesto, robots, sitemap y manifiesto general
@@ -63,7 +66,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   let allGated = true; const leaks = [];
   for (const p of adultPaths) {
     await kid.goto(BASE + p, { waitUntil: 'domcontentloaded' });
-    const ok = /\/mayores\?next=/.test(kid.url()) && (await kid.getByRole('heading', { name: 'Zona de mayores' }).isVisible());
+    const ok = /\/mayores\?next=/.test(kid.url()) && (await kid.getByRole('heading', { name: 'Acceso a la cuenta' }).isVisible());
     if (!ok) { allGated = false; leaks.push(p); }
   }
   check('toda la zona de mayores (crear, precios, ideas, legal, paneles) lleva a la puerta', allGated, leaks.join(', '));

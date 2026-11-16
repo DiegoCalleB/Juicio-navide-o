@@ -28,12 +28,14 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const total = await scrollContainer.evaluate(el => el.scrollHeight);
   check('portada corta (como mucho dos pantallas de móvil)', total <= vh * 2, total + ' px vs ' + vh);
   await scrollContainer.evaluate(el => el.scrollTo(0, 0));
-  const cta = page.getByRole('link', { name: 'Para mamás y papás' });
+  const cta = page.getByRole('link', { name: 'Lee el diario de Chispa' });
   const ctaBox = await cta.boundingBox();
-  check('«Para mamás y papás» se ve sin bajar', ctaBox && ctaBox.y + ctaBox.height <= vh, ctaBox && Math.round(ctaBox.y) + 'px');
-  await Promise.all([page.waitForURL(/\/crear$/), cta.click()]);
+  check('el botón del diario de Chispa se ve sin bajar', ctaBox && ctaBox.y + ctaBox.height <= vh, ctaBox && Math.round(ctaBox.y) + 'px');
+  await Promise.all([page.waitForURL(/diario-de-chispa$/), cta.click()]);
+  check('el botón lleva al diario de Chispa', await page.getByRole('heading', { name: /diario de travesuras/i }).waitFor({ timeout: 15000 }).then(() => true, () => false));
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await page.locator('#child').waitFor({ timeout: 15000 });
-  check('«Para mamás y papás» abre el paso 1 (el nombre del peque)', await page.getByText('Paso 1 de 2').isVisible());
+  check('crear: el paso 1 (el nombre del peque)', await page.getByText('Paso 1 de 2').isVisible());
   await page.screenshot({ path: S + '/l2-landing-form.png' });
 
   // Panel: momentos + wake lock

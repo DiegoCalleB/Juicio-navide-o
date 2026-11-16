@@ -38,7 +38,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   check('zona de mayores: enlaces a Privacidad y Términos', await page.getByRole('link', { name: 'Privacidad' }).isVisible() && await page.getByRole('link', { name: /Términos/ }).isVisible());
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-  check('portada: pie con la zona de mayores', await page.getByRole('link', { name: 'Zona de mayores' }).isVisible());
+  check('portada: pie con el enlace discreto «Cuenta y condiciones»', await page.getByRole('link', { name: 'Cuenta y condiciones' }).isVisible());
   // foco visible por teclado
   await page.keyboard.press('Tab');
   const outline = await page.evaluate(() => { const el = document.activeElement; const cs = getComputedStyle(el); return cs.outlineStyle + ' ' + cs.outlineWidth + ' ' + cs.outlineColor; });

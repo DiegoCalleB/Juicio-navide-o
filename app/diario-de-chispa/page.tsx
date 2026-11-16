@@ -60,7 +60,7 @@ export default function DiarioPage() {
         <footer className="mt-10 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <nav className="flex justify-center gap-5">
             <Link href="/" className="underline-offset-2 hover:underline">Inicio</Link>
-            <Link href="/mayores" className="underline-offset-2 hover:underline">Zona de mayores</Link>
+            <Link href="/mayores" className="underline-offset-2 hover:underline">Cuenta y condiciones</Link>
           </nav>
         </footer>
       </article>
