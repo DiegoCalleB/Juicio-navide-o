@@ -105,7 +105,7 @@ async function nextStep(page) {
   const next = page.getByRole('button', { name: /Siguiente/ });
   if (await next.isVisible().catch(() => false)) {
     await next.click();
-    await page.getByRole('heading', { name: /Quién le va a contestar/ }).waitFor({ timeout: 10000 });
+    await page.getByRole('heading', { name: /Con quién quiere hablar/ }).waitFor({ timeout: 10000 });
   }
 }
 

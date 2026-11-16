@@ -9,7 +9,7 @@ import { PassWelcome } from '@/components/features/royal-chat/PassWelcome';
 
 export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
-export const metadata: Metadata = { title: 'Crear la sala de tu peque', robots: { index: false, follow: true } };
+export const metadata: Metadata = { title: 'Abre el portal mágico de tu peque', robots: { index: false, follow: true } };
 
 /** Crear la sala, paso a paso (1: el peque · 2: el personaje). /crear?personaje=duende_chispa deja elegido al personaje. */
 export default async function CrearPage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {

@@ -15,7 +15,7 @@ const check = (name, ok, extra = '') => { results.push(!!ok); console.log((ok ? 
   await nextStep(page);
   check('al empezar, ningún personaje viene marcado', (await page.locator('input[name=character]:checked').count()) === 0);
   await page.getByRole('button', { name: /Crear la sala/ }).click();
-  check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige quién le va a contestar a tu peque.').isVisible() && (await page.getByText('La sala está lista').count()) === 0);
+  check('sin elegir personaje avisa y no crea la sala', await page.getByText('Elige con quién va a hablar tu peque.').isVisible() && (await page.getByText('La sala está lista').count()) === 0);
 
   // Al elegir un personaje, el selector se pliega y se ve lo siguiente ("¿ya lee?")
   check('selector de personajes abierto al principio', await page.getByText('Melchor').first().isVisible());

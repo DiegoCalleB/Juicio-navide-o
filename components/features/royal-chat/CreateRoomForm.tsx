@@ -100,7 +100,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
     const kids: { name: string; characterId: CharacterId; reading: Reading; alias: string; gender: 'm' | 'f'; payload: Record<string, unknown> }[] = [];
     if (!characterId) {
       setPickerOpen(true);
-      setError('Elige quién le va a contestar a tu peque.');
+      setError('Elige con quién va a hablar tu peque.');
       return;
     }
     const isElf = characterId === 'duende_chispa';
@@ -298,8 +298,8 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       <div aria-hidden className="mx-auto mt-2 flex max-w-[10rem] gap-1.5">
         {[1, 2].map((n) => <span key={n} className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#f6d77a]' : 'bg-white/15'}`} />)}
       </div>
-      <h2 className="mt-3 font-serif text-2xl text-[#fff6dc]">{step === 1 ? 'Cuéntanos de tu peque' : '¿Quién le va a contestar?'}</h2>
-      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Sin registrarte. Tarda un minuto.' : `Elige el personaje que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
+      <h2 className="mt-3 font-serif text-2xl text-[#fff6dc]">{step === 1 ? 'Abre el portal para tu peque' : '¿Con quién quiere hablar?'}</h2>
+      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Esta Navidad podrá hablar con sus seres mágicos. Sin registrarte, en un minuto.' : `Elige al ser mágico que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
     </div>
     <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
       {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
@@ -372,7 +372,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
 
       {step === 2 && (<>
       <fieldset className="space-y-3">
-        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Con quién quiere hablar?</legend>
         {!pickerOpen && picked && characterId && (
           <>
             <div className="flex items-center gap-3 rounded-2xl border border-[#f6d77a] bg-[#f6d77a]/10 p-3">

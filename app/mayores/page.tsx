@@ -26,7 +26,7 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
 
   const billing = billingInfo();
   const items: { href: string; title: string; text: string }[] = [
-    { href: '/crear', title: 'Crear una sala', text: 'Para que tu peque reciba mensajes de su personaje.' },
+    { href: '/crear', title: 'Crear una sala', text: 'Abre el portal para que tu peque hable con sus seres mágicos esta Navidad.' },
     { href: '/ideas-elfo', title: 'Ideas de trastadas del elfo', text: 'Las 24 noches, paso a paso.' },
     { href: '/ideas-elfo/sin-tiempo', title: 'Trastadas exprés', text: 'Para los días sin tiempo.' },
     ...(billing.enabled
