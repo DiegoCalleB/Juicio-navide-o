@@ -35,7 +35,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   const errs = []; kid.on('pageerror', (e) => errs.push(e.message));
   const meta = async () => kid.evaluate(() => [document.title, ...[...document.querySelectorAll('meta[name=description],meta[property^="og:"],meta[name^="twitter:"]')].map((m) => m.getAttribute('content') || '')].join(' | '));
 
-  for (const [name, path] of [['portada', '/'], ['diario de Chispa', '/diario-de-chispa'], ['puerta de mayores', '/mayores']]) {
+  for (const [name, path] of [['portada', '/'], ['diario de Chispa', '/diario-de-chispa'], ['Polo Norte de Chispa', '/polo-norte'], ['puerta de mayores', '/mayores']]) {
     await kid.goto(BASE + path, { waitUntil: 'networkidle', timeout: 120000 });
     const txt = (await kid.locator('body').innerText()) + ' | ' + (await meta());
     const bad = delata(txt);
@@ -48,6 +48,21 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   const sizeOf = async (l) => await l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
   check('portada: el acceso de los mayores es un enlace pequeño y discreto (nada llamativo)', (await parentLink.count()) === 1 && (await sizeOf(parentLink)) <= 12 && (await kid.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0);
   check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo salas|Tus salas/).count()) === 0);
+
+  // El rincón del Polo Norte: contenido para curiosos, sin formularios ni enlaces de mayores
+  await kid.goto(BASE + '/', { waitUntil: 'networkidle' });
+  check('portada: enlaces a chistes, adivinanzas, renos y mapa', (await kid.locator('a[href^="/polo-norte#"]').count()) === 4);
+  await Promise.all([kid.waitForURL(/\/polo-norte#chistes$/), kid.getByRole('link', { name: 'Chistes del elfo' }).click()]);
+  const q1 = await kid.getByTestId('chiste-pregunta').innerText();
+  await kid.getByRole('button', { name: '¿Y qué dice?' }).click();
+  check('chiste: se ve la respuesta al pulsar', (await kid.getByTestId('chiste-respuesta').innerText()).length > 3);
+  await kid.getByRole('button', { name: 'Otro chiste' }).click();
+  check('«Otro chiste» enseña un chiste distinto', (await kid.getByTestId('chiste-pregunta').innerText()) !== q1);
+  const det = kid.locator('#adivinanzas details').first();
+  await det.locator('summary').click();
+  check('adivinanzas: la respuesta aparece al pulsar', await det.locator('p').isVisible());
+  check('hay 8 renos y 6 sitios en el mapa', (await kid.locator('#renos li').count()) === 8 && (await kid.locator('#mapa details').count()) === 6);
+  check('el rincón no tiene formularios ni enlaces de mayores', (await kid.locator('form, input, textarea, a[href*="mayores"], a[href*="crear"]').count()) === 0);
 
   // La sala del niño, su manifiesto, robots, sitemap y manifiesto general
   await kid.goto(BASE + childLink, { waitUntil: 'networkidle' });

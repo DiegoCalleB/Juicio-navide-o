@@ -8,5 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${base}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${base}/diario-de-chispa`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${base}/polo-norte`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
   ];
 }

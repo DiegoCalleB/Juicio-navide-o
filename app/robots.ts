@@ -7,7 +7,7 @@ import { getSiteUrl } from '@/lib/site';
  */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: ['/', '/diario-de-chispa'], disallow: ['/r/', '/api/', '/mayores'] }],
+    rules: [{ userAgent: '*', allow: ['/', '/diario-de-chispa', '/polo-norte'], disallow: ['/r/', '/api/', '/mayores'] }],
     sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }

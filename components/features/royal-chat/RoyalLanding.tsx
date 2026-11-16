@@ -36,6 +36,13 @@ export function RoyalLanding({ locale, now }: { billing?: BillingInfo; locale: L
           <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
             Lee el diario de Chispa
           </Link>
+          <ul aria-label="Rincones del Polo Norte" className="mt-3 flex flex-wrap justify-center gap-2 lg:justify-start">
+            {([['chistes', 'Chistes del elfo'], ['adivinanzas', 'Adivinanzas'], ['renos', 'Los renos'], ['mapa', 'El mapa']] as const).map(([id, label]) => (
+              <li key={id}>
+                <Link href={`/polo-norte#${id}`} className="inline-flex min-h-9 items-center rounded-full border border-[#f6d77a]/35 px-3.5 text-[13px] font-semibold text-[#f6d77a]/90">{label}</Link>
+              </li>
+            ))}
+          </ul>
         </header>
 
         <section aria-labelledby="demo-title" className="mb-8 lg:mx-auto lg:mb-0 lg:w-full lg:max-w-[26rem]">
