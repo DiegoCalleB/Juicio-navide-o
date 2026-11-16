@@ -10,6 +10,10 @@ const DELATAN = [
   /\bpaje\b/i, /inteligencia artificial/i, /\bIA\b/, /voz sintetizada/i, /se te ha olvidado/i, /mover(lo|le) /i,
   /prueba gratis/i, /pase de navidad/i, /\bprecio/i, /\bsin registrarte\b/i, /\bapp\b/i, /cómo se prepara/i,
 ];
+// Una IP inventada por ejecución: el bloqueo por red no se acumula entre ejecuciones ni afecta a otras pruebas.
+const r255 = () => 1 + Math.floor(Math.random() * 250);
+const IP = `10.${r255()}.${r255()}.${r255()}`;
+const HDR = { 'x-forwarded-for': IP };
 const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
 
 (async () => {
@@ -27,7 +31,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
 
   // ── Como un niño: sin sesión de adulto
   const b = await launch([], { adult: false });
-  const kid = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  const kid = await (await b.newContext({ viewport: { width: 390, height: 844 }, extraHTTPHeaders: HDR })).newPage();
   const errs = []; kid.on('pageerror', (e) => errs.push(e.message));
   const meta = async () => kid.evaluate(() => [document.title, ...[...document.querySelectorAll('meta[name=description],meta[property^="og:"],meta[name^="twitter:"]')].map((m) => m.getAttribute('content') || '')].join(' | '));
 
@@ -81,7 +85,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
 
   // Un adulto de verdad (otro navegador): contesta y entra
   const b2 = await launch([], { adult: false });
-  const p2 = await (await b2.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (adulto) E2E' })).newPage();
+  const p2 = await (await b2.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p2.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   const solve = async (page) => {
     const [x, op, y] = (await page.getByTestId('gate-question').innerText()).replace('= ?', '').trim().split(' ');
@@ -101,13 +105,33 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('«Cerrar la zona de mayores» la cierra al momento', /\/mayores\?next=/.test(p2.url()));
 
   // No redirige a otra web
-  const p3 = await (await b2.newContext({ userAgent: 'Mozilla/5.0 (otro adulto) E2E' })).newPage();
+  const p3 = await (await b2.newContext({ userAgent: 'Mozilla/5.0 (otro adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p3.goto(BASE + '/mayores?next=//evil.example.com', { waitUntil: 'networkidle' });
   await p3.fill('#gate-answer', await solve(p3));
   await p3.getByRole('button', { name: 'Entrar' }).click();
   await p3.waitForURL(/localhost/, { timeout: 15000 }).catch(() => {});
   await p3.waitForTimeout(800);
   check('la puerta nunca manda a otra web', new URL(p3.url()).host === new URL(BASE).host, p3.url());
+
+  // Bloqueo por red: cambiar de navegador no sirve para seguir probando (9 fallos desde la misma conexión)
+  const solveApi = async (api) => {
+    const q = (await (await api.get(BASE + '/api/mayores/pregunta')).json()).data;
+    const [x, op, y] = q.question.split(' ');
+    return { token: q.token, right: String(op === '×' ? +x * +y : op === '−' ? +x - +y : +x + +y) };
+  };
+  const apiOf = async (ua) => (await b2.newContext({ userAgent: ua, extraHTTPHeaders: HDR })).request;
+  let last = null;
+  for (let i = 0; i < 12; i++) { const n1 = await apiOf(`Mozilla/5.0 (cambio ${i}) E2E`); const { token } = await solveApi(n1); last = await n1.post(BASE + '/api/mayores', { data: { token, answer: '1' } }); if (last.status() === 429) break; }
+  check('los fallos de una misma conexión acaban bloqueándola (también al cambiar de navegador)', last.status() === 429);
+  const n2 = await apiOf('Mozilla/5.0 (cambio 2) E2E');
+  const { token: t2, right } = await solveApi(n2);
+  const blocked = await n2.post(BASE + '/api/mayores', { data: { token: t2, answer: right } });
+  const bj = await blocked.json();
+  check('con la red bloqueada, ni la respuesta correcta abre la puerta (y avisa del tiempo)', blocked.status() === 429 && /15 minutos/.test(bj.error?.message ?? ''), bj.error?.message);
+  // Otra conexión distinta no se ve afectada
+  const other = (await b2.newContext({ userAgent: 'Mozilla/5.0 (otra casa) E2E', extraHTTPHeaders: { 'x-forwarded-for': `10.${r255()}.${r255()}.${r255()}` } })).request;
+  const o = await solveApi(other);
+  check('otra conexión distinta entra con normalidad', (await other.post(BASE + '/api/mayores', { data: { token: o.token, answer: o.right } })).status() === 200);
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`RESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);

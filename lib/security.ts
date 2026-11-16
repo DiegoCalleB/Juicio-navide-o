@@ -10,6 +10,13 @@ export async function getClientFingerprint(): Promise<string> {
   return createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|${ip}|${ua}`).digest('hex');
 }
 
+/** Solo la conexión (IP), sin el navegador: para límites que no se puedan esquivar cambiando de navegador. */
+export async function getClientNetwork(): Promise<string> {
+  const h = await headers();
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+  return createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|net|${ip}`).digest('hex');
+}
+
 /**
  * Rate limit en memoria (por instancia) con ventana fija: coste O(1) por petición y barrido
  * periódico de entradas caducadas. Primera barrera barata; la autoritativa son los triggers
