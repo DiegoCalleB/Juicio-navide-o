@@ -1,5 +1,5 @@
 // Calendario: portada de temporada (elfo, Papá Noel, Reyes, Ratoncito), campaña de Black Friday y precios. Se lanza con --now=ISO (reloj simulado FAKE_NOW).
-const { BASE, launch , nextStep } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, nextStep } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 
@@ -31,6 +31,11 @@ const EXPECT = {
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
 
   check('portada (la puede ver un peque): sin precios ni ofertas', (await page.getByText(/€|Black Friday|Pase de Navidad/).count()) === 0);
+  // La imagen de vista previa (WhatsApp, redes) se genera en cada temporada y lleva el retrato del personaje
+  const ogr = await fetch(BASE + '/opengraph-image');
+  const ogb = Buffer.from(await ogr.arrayBuffer());
+  require('fs').writeFileSync(S + `/og-${phase}.png`, ogb);
+  check(`vista previa (${phase}): imagen PNG de 1200×630 con el retrato de la temporada`, ogr.status === 200 && /image\/png/.test(ogr.headers.get('content-type') || '') && ogb.readUInt32BE(16) === 1200 && ogb.readUInt32BE(20) === 630 && ogb.length > 60000, `${ogr.status} ${ogb.length} bytes`);
   // La pestaña y la vista previa siguen a la portada de temporada (mismo gancho que el titular)
   const tagline = ((await page.locator('header > p').nth(1).textContent()) || '').trim();
   const og = await page.locator('meta[property="og:title"]').getAttribute('content');
