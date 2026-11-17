@@ -30,7 +30,7 @@ export async function checkPassById(id: string): Promise<boolean> {
 
 /**
  * Da por bueno un pago de Stripe: crea el pase y el de regalo (idempotente, por id de sesión) y
- * desbloquea la sala desde la que se pagó. Lo llaman el webhook y la página de pago completado.
+ * desbloqueal portal desde la que se pagó. Lo llaman el webhook y la página de pago completado.
  */
 export async function fulfillCheckout(session: CheckoutSession): Promise<{ passToken: string; giftToken: string } | null> {
   if (!session.paid) return null;
@@ -54,7 +54,7 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
   return { passToken: tokens.pass, giftToken: tokens.gift };
 }
 
-/** Desbloquea una sala con un pase que ya se tiene (propio o regalado). */
+/** Desbloquea un portal con un pase que ya se tiene (propio o regalado). */
 export async function usePassOnRoom(roomId: string, token: string): Promise<PassState> {
   const res = await checkPass(token);
   if (res.state !== 'ok' || !res.pass) return res.state;

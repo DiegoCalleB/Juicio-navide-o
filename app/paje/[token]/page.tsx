@@ -22,7 +22,7 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const found = await findRoomByToken(token, { allowLocked: true });
   if (!found || found.role !== 'parent') notFound();
-  // Con PIN: sin desbloquear no se envía NINGÚN dato de la sala (ni el nombre del peque).
+  // Con PIN: sin desbloquear no se envía NINGÚN dato del portal (ni el nombre del peque).
   if (found.locked) return <PinGate token={token} />;
   const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token, found.room.childLinkVersion)}`;
   const character = resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender, locale: found.room.locale });

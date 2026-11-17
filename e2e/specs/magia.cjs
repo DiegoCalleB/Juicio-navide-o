@@ -8,7 +8,7 @@ const DELATAN = [
   /contest\w* en secreto/i, /no somos pap/i, /como si fuer[ae]/i, /\bt[úu] (escribes|contestas|respondes)\b/i,
   /los padres (escriben|contestan|hacen|mueven)/i, /escrito por ti/i, /zona secreta/i, /panel de los padres/i,
   /\bpaje\b/i, /inteligencia artificial/i, /\bIA\b/, /voz sintetizada/i, /se te ha olvidado/i, /mover(lo|le) /i,
-  /prueba gratis/i, /para mam[aá]s y pap[aá]s/i, /zona de mayores/i, /solo (para )?adultos/i, /pase de navidad/i, /\bprecio/i, /\bsin registrarte\b/i, /\bapp\b/i, /cómo se prepara/i,
+  /prueba gratis/i, /para mam[aá]s y pap[aá]s/i, /zona de mayores/i, /crear (otra|otro|un|una)\b/i, /un adulto de tu familia/i, /solo (para )?adultos/i, /pase de navidad/i, /\bprecio/i, /\bsin registrarte\b/i, /\bapp\b/i, /cómo se prepara/i,
 ];
 // Una IP inventada por ejecución: el bloqueo por red no se acumula entre ejecuciones ni afecta a otras pruebas.
 const r255 = () => 1 + Math.floor(Math.random() * 250);
@@ -19,13 +19,13 @@ const hydrated = (page, sel) => page.waitForFunction((q) => { const el = documen
 const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
 
 (async () => {
-  // Una sala de verdad, creada por un adulto (para revisar luego lo que ve el niño)
+  // Un portal de verdad, creada por un adulto (para revisar luego lo que ve el niño)
   const adult = await launch();
   const a = await (await adult.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   await a.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await a.fill('#child', 'Lucía'); await a.locator('form').getByRole('checkbox').check();
-  await ensureChar(a); await a.getByRole('button', { name: /Crear la sala/ }).click();
-  await a.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(a); await a.getByRole('button', { name: /Abrir el portal/ }).click();
+  await a.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const childLink = (await childLinkOf(a)).replace(/^https?:\/\/[^/]+/, '');
   const panelLink = (await a.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
   const familyLink = await a.locator('[data-family-link]').first().getAttribute('data-family-link').catch(() => null);
@@ -79,7 +79,12 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('«Mi cuenta» lleva directo a la cuenta de cabeza (ya no vuelve a preguntar la edad)', await k1.getByTestId('gate-question').waitFor({ timeout: 15000 }).then(() => true, () => false) && (await k1.getByRole('heading', { name: /Cuántos años tienes/ }).count()) === 0);
   await bk.close();
 
-  check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo salas|Tus salas/).count()) === 0);
+  check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo portales|Tus portales/).count()) === 0);
+
+  // La pantalla de error del peque: con magia, sin hablar de enlaces, de adultos ni de crear nada
+  await kid.goto(BASE + '/r/' + 'A'.repeat(43), { waitUntil: 'networkidle' });
+  const perdido = await kid.locator('body').innerText();
+  check('enlace del peque que ya no sirve: «Se ha perdido el camino», sin nada que delate', /Se ha perdido el camino/.test(perdido) && !/enlace|adulto|crear|copiado|error/i.test(perdido) && delata(perdido).length === 0, perdido.replace(/\s+/g, ' ').slice(0, 140));
 
   // El rincón del Polo Norte: contenido para curiosos, sin formularios ni enlaces de mayores
   await kid.goto(BASE + '/', { waitUntil: 'networkidle' });
@@ -96,11 +101,11 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('hay 8 renos y 6 sitios en el mapa', (await kid.locator('#renos li').count()) === 8 && (await kid.locator('#mapa details').count()) === 6);
   check('el rincón no tiene formularios ni enlaces de mayores', (await kid.locator('form, input, textarea, a[href*="mayores"], a[href*="crear"]').count()) === 0);
 
-  // La sala del niño, su manifiesto, robots, sitemap y manifiesto general
+  // El portal del niño, su manifiesto, robots, sitemap y manifiesto general
   await kid.goto(BASE + childLink, { waitUntil: 'networkidle' });
   const room = (await kid.locator('body').innerText()) + ' | ' + (await meta());
   check('sala del niño: ninguna frase que delate la magia', delata(room).length === 0, delata(room).join(', '));
-  for (const [name, path] of [['manifiesto general', '/manifest.webmanifest'], ['manifiesto de la sala', childLink + '/manifest.webmanifest'], ['robots.txt', '/robots.txt'], ['sitemap', '/sitemap.xml']]) {
+  for (const [name, path] of [['manifiesto general', '/manifest.webmanifest'], ['manifiesto del portal', childLink + '/manifest.webmanifest'], ['robots.txt', '/robots.txt'], ['sitemap', '/sitemap.xml']]) {
     const t = await (await fetch(BASE + path)).text();
     const bad = delata(t.replace(/"categories":\[[^\]]*\]/, ''));
     check(`${name}: ninguna frase que delate la magia`, bad.length === 0, bad.join(', '));
@@ -188,7 +193,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   await Promise.all([p2.waitForURL(/\/crear$/, { timeout: 15000 }), p2.getByRole('button', { name: 'Entrar' }).click()]);
   check('con la respuesta correcta, entra donde iba (/crear)', await p2.locator('#child').isVisible());
   await p2.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
-  check('dentro, la zona de mayores muestra su menú', await p2.getByRole('link', { name: /Crear una sala/ }).isVisible() && await p2.getByRole('link', { name: 'Privacidad' }).isVisible());
+  check('dentro, la zona de mayores muestra su menú', await p2.getByRole('link', { name: /Abrir un portal/ }).isVisible() && await p2.getByRole('link', { name: 'Privacidad' }).isVisible());
   await p2.screenshot({ path: S + '/mg3-zona.png' });
   await Promise.all([p2.waitForURL(BASE + '/', { timeout: 15000 }), p2.getByRole('button', { name: 'Cerrar la zona de mayores' }).click()]);
   await p2.goto(BASE + '/precios', { waitUntil: 'domcontentloaded' });

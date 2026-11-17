@@ -99,15 +99,15 @@ export interface CharacterProfile {
   tagline: string;
   avatar: AvatarKind;
   theme: CharacterTheme;
-  /** Días mínimos que vive la sala antes de borrarse. */
+  /** Días mínimos que vive el portal antes de borrarse. */
   expiresDays: number;
-  /** "MM-DD": la sala vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). Sin él, solo cuenta `expiresDays`. */
+  /** "MM-DD": el portal vive, como poco, hasta pasadas las fiestas (si caen en los próximos ~4 meses). Sin él, solo cuenta `expiresDays`. */
   holidayEnd?: string;
   /** Acuse automático en primera persona cuando el niño escribe y los padres aún no han contestado ("{child}" = nombre). */
   busyAck: string;
   /** "el Polo Norte", "Oriente": para frases ("desde …", "hacia …"). */
   placeLabel: string;
-  /** Cómo se presenta en la sala vacía: "Soy Papá Noel". */
+  /** Cómo se presenta en el portal vacía: "Soy Papá Noel". */
   selfIntro: string;
   /** Emoji de la pantalla de conexión. */
   introEmoji: string;
@@ -582,8 +582,8 @@ export const CHARACTERS: Record<CharacterId, CharacterProfile> = {
 };
 
 /**
- * Cuándo se borra una sala: a los `expiresDays` días o, si es más tarde, pasadas las
- * fiestas (para que una sala creada en noviembre no desaparezca antes de Navidad).
+ * Cuándo se borra un portal: a los `expiresDays` días o, si es más tarde, pasadas las
+ * fiestas (para que un portal creada en noviembre no desaparezca antes de Navidad).
  */
 export function roomExpiresAt(character: CharacterProfile, now: Date = new Date()): Date {
   const min = new Date(now.getTime() + character.expiresDays * 86_400_000);

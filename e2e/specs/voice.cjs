@@ -9,8 +9,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) { p.on('pageerror', e => errs.push(n + ':' + e.message)); p.on('console', m => { if (m.type() === 'error' && !/favicon|404|409/.test(m.text())) errs.push(n + ':' + m.text().slice(0, 140)); }); }
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox', { name: /Soy su madre/ }).check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista');
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });

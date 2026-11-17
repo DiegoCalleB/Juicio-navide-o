@@ -18,7 +18,7 @@ export interface RoomRecord {
   readingLevel: string;
   /** Fin de la prueba gratuita (null = sin límite). */
   trialEndsAt: string | null;
-  /** Pase de Navidad que desbloquea la sala (null = sin pase). */
+  /** Pase de Navidad que desbloqueal portal (null = sin pase). */
   passId: string | null;
   /** Variante de idioma: 'es' o 'es-419'. */
   locale: string;
@@ -114,7 +114,7 @@ export interface RoomStore {
   insertMessage(message: NewMessage): Promise<MessageRecord>;
   listMessages(roomId: string, opts: { deliveredOnly: boolean }): Promise<MessageRecord[]>;
   /**
-   * Huella barata del estado de la sala. Cambia al llegar un mensaje o al vencer uno
+   * Huella barata del estado del portal. Cambia al llegar un mensaje o al vencer uno
    * diferido. Permite responder "sin cambios" sin listar ni firmar nada.
    */
   getRoomVersion(roomId: string, opts: { deliveredOnly: boolean }): Promise<string>;
@@ -124,13 +124,13 @@ export interface RoomStore {
   getMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
   /** Cambia el texto de un mensaje del personaje (texto o pie de foto). Devuelve la fila o null. */
   updateMessageBody(roomId: string, messageId: string, body: string | null, nowIso: string): Promise<MessageRecord | null>;
-  /** Cambia el nombre y/o el personaje de la sala. */
+  /** Cambia el nombre y/o el personaje del portal. */
   updateRoom(roomId: string, patch: { childName?: string; characterId?: string; characterAlias?: string | null; characterGender?: string | null }): Promise<boolean>;
-  /** Rutas de todos los archivos de la sala (también de mensajes no entregados). */
+  /** Rutas de todos los archivos del portal (también de mensajes no entregados). */
   listFilePaths(roomId: string): Promise<{ bucket: Bucket; path: string }[]>;
-  /** Borra la sala y sus mensajes (los archivos se borran antes con removeFile). */
+  /** Borral portal y sus mensajes (los archivos se borran antes con removeFile). */
   deleteRoom(roomId: string): Promise<void>;
-  /** Borra cualquier mensaje de la sala (error de los padres). Devuelve la fila borrada para limpiar sus archivos, o null. */
+  /** Borra cualquier mensaje del portal (error de los padres). Devuelve la fila borrada para limpiar sus archivos, o null. */
   deleteMessage(roomId: string, messageId: string): Promise<MessageRecord | null>;
   /** Borra un archivo del almacén (sin error si no existe). */
   removeFile(bucket: Bucket, path: string): Promise<void>;
@@ -148,7 +148,7 @@ export interface RoomStore {
   deleteExpired(nowIso: string): Promise<{ rooms: number; files: number }>;
 
   // ── Prueba gratuita y pases ──
-  /** Salas de prueba (sin pase) creadas desde ese dispositivo/conexión desde `sinceIso`. */
+  /** Portales de prueba (sin pase) creadas desde ese dispositivo/conexión desde `sinceIso`. */
   countTrialRoomsByCreatorSince(creatorHash: string, sinceIso: string): Promise<number>;
   /** Crea el pase; si ya existe uno con ese stripeSessionId, devuelve el existente (idempotente). */
   insertPass(pass: NewPass): Promise<PassRecord>;
@@ -158,14 +158,14 @@ export interface RoomStore {
   /** El pase regalado por otro pase (si existe). */
   findGiftOf(passId: string): Promise<PassRecord | null>;
   countRoomsByPass(passId: string): Promise<number>;
-  /** Asocia un pase a la sala (quita el límite de la prueba) y, si tiene familia, a las demás salas de la familia sin pase. */
+  /** Asocia un pase al portal (quita el límite de la prueba) y, si tiene familia, a las demás salas de la familia sin pase. */
   attachPass(roomId: string, passId: string): Promise<boolean>;
-  /** Salas vigentes de una familia, de la más antigua a la más reciente. */
+  /** Portales vigentes de una familia, de la más antigua a la más reciente. */
   listRoomsByFamilyHash(hash: string): Promise<RoomRecord[]>;
-  /** Pone, cambia o quita el PIN (y su código de rescate): en todas las salas de la familia, o solo en la sala si no tiene. */
+  /** Pone, cambia o quita el PIN (y su código de rescate): en todos los portales de la familia, o solo en el portal si no tiene. */
   setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void>;
-  /** Cambia el apodo de todas las salas de la familia. */
+  /** Cambia el apodo de todos los portales de la familia. */
   updateFamilyName(hash: string, name: string | null): Promise<void>;
-  /** Cambia el nivel de lectura de la sala. */
+  /** Cambia el nivel de lectura del portal. */
   updateReadingLevel(roomId: string, level: string): Promise<boolean>;
 }

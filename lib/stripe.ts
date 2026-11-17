@@ -84,7 +84,7 @@ export async function createCheckoutSession(opts: {
   f.set('line_items[0][price_data][product_data][name]', `Pase de Navidad · Línea Mágica${opts.blackFriday ? ' · Oferta Black Friday' : ''}`);
   f.set(
     'line_items[0][price_data][product_data][description]',
-    'Salas sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',
+    'Portales sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',
   );
   // Códigos promocionales creados en el panel de Stripe (p. ej. AMIGOS al 100 %).
   f.set('allow_promotion_codes', 'true');

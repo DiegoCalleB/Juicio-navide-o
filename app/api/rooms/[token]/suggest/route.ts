@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   return guarded('suggest', { key: 'suggest', max: 12, windowMs: 10 * 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     if (!assistantEnabled()) return fail('UNAVAILABLE', 'El ayudante no está disponible ahora mismo.', 503);
     const body = (await req.json().catch(() => null)) as { idea?: unknown; mode?: unknown } | null;
     const rewrite = body?.mode === 'rewrite';

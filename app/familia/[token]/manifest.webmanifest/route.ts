@@ -5,7 +5,7 @@ import { getFamily } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
 
-/** La familia instalable: un icono en el móvil que abre todas vuestras salas. */
+/** La familia instalable: un icono en el móvil que abre todos vuestros portales. */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const state = await familyLockState(token);
@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   return manifestResponse({
     name: `${label} · Línea Mágica`,
     shortName: label.slice(0, 24),
-    description: 'Todas las salas de vuestra familia',
+    description: 'Todos los portales de vuestra familia',
     path: `/familia/${token}`,
     icons: BRAND_ICONS,
     themeColor: '#0a1220',

@@ -75,8 +75,8 @@ const get = async (path) => fetch(BASE + path);
   const p = await mk();
   await p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await p.fill('#child', 'Lucía'); await p.locator('form').getByRole('checkbox').check();
-  await ensureChar(p); await p.getByRole('button', { name: /Crear la sala/ }).click();
-  await p.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(p); await p.getByRole('button', { name: /Abrir el portal/ }).click();
+  await p.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const childLink = await childLinkOf(p); const familyLink = await familyLinkOf(p);
   const panelLink = (await p.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
   const ctok = childLink.split('/r/')[1]; const ptok = panelLink.split('/paje/')[1]; const ftok = familyLink.split('/familia/')[1];
@@ -93,12 +93,12 @@ const get = async (path) => fetch(BASE + path);
   check('panel de los padres: la app abre ese panel (con nombre neutro, sin el del peque)', /Panel de los padres/.test(pm.name) && !/Lucía/.test(pm.name) && pm.start_url === `/paje/${ptok}`, pm.name);
   check('el enlace del niño no vale para el manifiesto del panel (404)', (await get(`/paje/${ctok}/manifest.webmanifest`)).status === 404);
   const fm = await (await get(`/familia/${ftok}/manifest.webmanifest`)).json();
-  check('familia: la app abre todas las salas', /Línea Mágica/.test(fm.name) && fm.start_url === `/familia/${ftok}`, fm.name);
+  check('familia: la app abre todos los portales', /Línea Mágica/.test(fm.name) && fm.start_url === `/familia/${ftok}`, fm.name);
   check('una familia inventada no tiene manifiesto (404)', (await get(`/familia/${'Y'.repeat(43)}/manifest.webmanifest`)).status === 404);
 
   // Las propias páginas enlazan su manifiesto
   const kid = await mk(); await kid.goto(BASE + childLink.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
-  check('la sala del niño enlaza SU manifiesto', (await kid.locator('link[rel=manifest]').first().getAttribute('href')) === `/r/${ctok}/manifest.webmanifest`);
+  check('el portal del niño enlaza SU manifiesto', (await kid.locator('link[rel=manifest]').first().getAttribute('href')) === `/r/${ctok}/manifest.webmanifest`);
   const par = await mk(); await par.goto(BASE + panelLink, { waitUntil: 'networkidle' });
   check('el panel enlaza su manifiesto', (await par.locator('link[rel=manifest]').first().getAttribute('href')) === `/paje/${ptok}/manifest.webmanifest`);
   const fam = await mk(); await fam.goto(BASE + `/familia/${ftok}`, { waitUntil: 'networkidle' });

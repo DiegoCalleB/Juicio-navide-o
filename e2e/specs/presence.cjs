@@ -14,8 +14,8 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía');
   await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const childToken = childLink.split('/r/')[1];
@@ -24,7 +24,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   check('padres: "Lucía aún no ha abierto el enlace"', await parent.getByText('Lucía aún no ha abierto el enlace').waitFor({ timeout: 10000 }).then(() => true, () => false));
 
   await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'domcontentloaded' });
-  check('padres: ven que Lucía está en la sala', await parent.getByText('Lucía está en la sala').waitFor({ timeout: 15000 }).then(() => true, () => false));
+  check('padres: ven que Lucía está en el portal', await parent.getByText('Lucía está en el portal').waitFor({ timeout: 15000 }).then(() => true, () => false));
   check('el aviso de apertura aún no aparece', (await parent.getByText('ha abierto el mensaje').count()) === 0);
 
   await child.getByRole('button', { name: /Abrir mensaje de/ }).click({ timeout: 20000 });
@@ -40,7 +40,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   check('el niño sí puede (200)', (await post(`${childToken}/opened`)) === 200);
 
   await child.close();
-  check('padres: al salir el niño, "ahora no está en la sala"', await parent.getByText('ahora no está en la sala').waitFor({ timeout: 15000 }).then(() => true, () => false));
+  check('padres: al salir el niño, "ahora no está en el portal"', await parent.getByText('ahora no está en el portal').waitFor({ timeout: 15000 }).then(() => true, () => false));
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   const failed = results.filter((r) => !r.ok);

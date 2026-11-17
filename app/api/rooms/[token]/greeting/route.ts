@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   return guarded('greeting', { key: 'greeting', max: 6, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     const room = found.room;
     const speak = KING_VOICE_ENABLED;
     const url = speak ? await greetingAudioUrl(room) : null;

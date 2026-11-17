@@ -88,7 +88,7 @@ export function PassOffer({
         <>
           <p className="opacity-80"><R>En este móvil ya tienes un Pase de Navidad.</R></p>
           <button type="button" onClick={useSaved} disabled={busy} className={`min-h-12 w-full rounded-2xl font-bold disabled:opacity-60 ${btn}`}>
-            {busy ? 'Activando…' : 'Usar mi pase en esta sala'}
+            {busy ? 'Activando…' : 'Usar mi pase en este portal'}
           </button>
         </>
       ) : (

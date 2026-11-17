@@ -17,7 +17,7 @@ const STARS = Array.from({ length: 16 }, (_, i) => ({
 }));
 
 /**
- * Fondo vivo de la sala: Laponia nevada con aurora y pinos, u Oriente estrellado.
+ * Fondo vivo del portal: Laponia nevada con aurora y pinos, u Oriente estrellado.
  * Solo capas con transform/opacity (GPU) y ocultas a lectores de pantalla.
  */
 export function MagicScene({ sky }: { sky: SkyKind }) {

@@ -20,9 +20,9 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.fill('#elf-alias', 'Chispita');
   await parent.getByRole('radio', { name: 'Es una elfa' }).click();
   await parent.screenshot({ path: S + '/du1-selector.png' });
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const parentToken = pajeHref.split('/paje/')[1], childToken = childLink.split('/r/')[1];
@@ -97,13 +97,13 @@ const pad = (n) => String(n).padStart(2, '0');
   const form = new FormData(); form.append('image', new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4])], { type: 'image/jpeg' }), 'x.jpg'); form.append('scheduledAt', new Date(Date.now() - 600_000).toISOString());
   check('foto con fecha pasada → 400', (await fetch(`${BASE}/api/rooms/${parentToken}/photo`, { method: 'POST', body: form })).status === 400);
 
-  // Cambiar el género y el nombre desde la sala
+  // Cambiar el género y el nombre desdel portal
   await parent.getByRole('button', { name: /Preparativos/ }).click().catch(() => {});
   if ((await parent.getByLabel('Nombre de vuestro elfo').count()) === 0) await parent.getByRole('button', { name: /Preparativos/ }).click();
   await parent.getByLabel('Nombre de vuestro elfo').fill('Trasto');
   await parent.getByRole('radio', { name: 'Es un elfo' }).click();
   await parent.getByRole('button', { name: 'Guardar cambios' }).click();
-  check('al editar la sala, cambia nombre y género', await parent.getByText('Contestas como Elfo Trasto a Lucía').waitFor({ timeout: 15000 }).then(() => true, () => false));
+  check('al editar el portal, cambia nombre y género', await parent.getByText('Contestas como Elfo Trasto a Lucía').waitFor({ timeout: 15000 }).then(() => true, () => false));
 
   // "Idea de travesura" automática con la fecha en campaña
   const p2 = await (await mk()).newPage();

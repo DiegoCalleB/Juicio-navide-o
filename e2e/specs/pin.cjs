@@ -24,21 +24,21 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const clickUntil = async (p, name, field) => { for (let i = 0; i < 6; i++) { await p.getByRole('button', Object.assign({ name }, typeof name === 'string' ? { exact: true } : {})).click(); if (await field.waitFor({ timeout: 1500 }).then(() => true, () => false)) return; } };
   const alertText = async (p) => { const a = p.locator('p[role=alert]'); await a.waitFor({ timeout: 10000 }); return a.innerText(); };
 
-  // Crea una sala (y su familia) en un contexto nuevo y devuelve los enlaces
+  // Crea un portal (y su familia) en un contexto nuevo y devuelve los enlaces
   const createRoom = async (name) => {
     const x = await mk();
     await x.p.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
     await x.p.fill('#child', name); await x.p.locator('form').getByRole('checkbox').check();
-    await ensureChar(x.p); await x.p.getByRole('button', { name: /Crear la sala/ }).click();
-    await x.p.waitForSelector('text=La sala está lista', { timeout: 30000 });
+    await ensureChar(x.p); await x.p.getByRole('button', { name: /Abrir el portal/ }).click();
+    await x.p.waitForSelector('text=El portal está abierto', { timeout: 30000 });
     const panel = (await x.p.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
     return { ...x, panel, child: await childLinkOf(x.p), family: await familyLinkOf(x.p) };
   };
 
-  // ── 1. Poner el PIN al crear la sala
+  // ── 1. Poner el PIN al crear el portal
   const A = await createRoom('Valentina');
   const ptok = A.panel.split('/paje/')[1], ctok = A.child.split('/r/')[1], ftok = A.family.split('/familia/')[1];
-  check('al crear la sala se recomienda proteger el panel con un PIN', await A.p.getByText('Protege el panel con un PIN').isVisible());
+  check('al crear el portal se recomienda proteger el panel con un PIN', await A.p.getByText('Protege el panel con un PIN').isVisible());
   await A.p.getByRole('button', { name: 'Poner un PIN' }).click();
   await A.p.getByLabel('PIN nuevo').fill('12');
   check('el botón no se activa con menos de 4 cifras', await A.p.getByRole('button', { name: 'Activar el bloqueo' }).isDisabled());
@@ -48,7 +48,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const recovery = await A.p.locator('[data-recovery]').getAttribute('data-recovery');
   check('se enseña el código de rescate (solo una vez, con formato claro)', /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(recovery), recovery);
   await A.p.getByRole('button', { name: 'Ya lo he guardado' }).click();
-  check('tras guardarlo, la pantalla de la sala creada se mantiene (no se pierden los enlaces)', await A.p.getByText('Panel protegido con tu PIN').isVisible() && await A.p.getByRole('link', { name: /Abrir mi panel/ }).isVisible());
+  check('tras guardarlo, la pantalla del portal creada se mantiene (no se pierden los enlaces)', await A.p.getByText('Panel protegido con tu PIN').isVisible() && await A.p.getByRole('link', { name: /Abrir mi panel/ }).isVisible());
 
   // Quien puso el PIN entra sin pedirlo (está desbloqueado 30 min en su navegador)
   await A.p.getByRole('link', { name: /Abrir mi panel/ }).click();
@@ -77,7 +77,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('el manifiesto de la familia bloqueada no enseña el apodo', /Mi familia/.test(famManifest.name));
   const kid = await mk();
   await kid.p.goto(BASE + local(A.child).replace(BASE, ''), { waitUntil: 'networkidle' });
-  check('el móvil del niño sigue funcionando con su enlace (el PIN no le afecta)', (await kid.p.getByText(/Este enlace/).count()) === 0);
+  check('el móvil del niño sigue funcionando con su enlace (el PIN no le afecta)', (await kid.p.getByText(/Se ha perdido el camino/).count()) === 0);
   check('el enlace del niño NO puede tocar el PIN ni desbloquear (404)', (await status(await post(`/api/rooms/${ctok}/pin`, { action: 'set', pin: '9999' }))) === 404 && (await status(await post('/api/unlock', { token: ctok, pin: '1234' }))) === 404);
 
   // ── 3. PIN incorrecto y correcto
@@ -157,15 +157,15 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   // La familia hereda el PIN: otro peque en la misma familia también queda protegido
   await A.p.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await A.p.getByRole('link', { name: /Zona de los padres/ }).waitFor({ timeout: 15000 });
-  check('zona de mayores de un móvil con PIN: solo "Zona de los padres" (sin salas, nombres ni enlaces)', (await A.p.locator('section[aria-labelledby=my-rooms]').count()) === 0 && (await A.p.getByText(/Tus salas en este móvil|Abrir panel de|Copiar enlace del peque/).count()) === 0 && !/Valentina/.test(await A.p.locator('body').innerText()));
+  check('zona de mayores de un móvil con PIN: solo "Zona de los padres" (sin salas, nombres ni enlaces)', (await A.p.locator('section[aria-labelledby=my-rooms]').count()) === 0 && (await A.p.getByText(/Tus portales en este móvil|Abrir panel de|Copiar enlace del peque/).count()) === 0 && !/Valentina/.test(await A.p.locator('body').innerText()));
   await A.p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await A.p.fill('#child', 'Mateo'); await A.p.locator('form').getByRole('checkbox').check();
-  await ensureChar(A.p); await A.p.getByRole('button', { name: /Crear la sala/ }).click();
-  await A.p.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(A.p); await A.p.getByRole('button', { name: /Abrir el portal/ }).click();
+  await A.p.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const mateoPanel = (await A.p.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
-  check('la sala nueva de la misma familia ya nace protegida con el mismo PIN', (await A.p.getByText('Protege el panel con un PIN').count()) === 1); // (la tarjeta se ofrece, pero el PIN ya existe en el servidor)
+  check('el portal nueva de la misma familia ya nace protegida con el mismo PIN', (await A.p.getByText('Protege el panel con un PIN').count()) === 1); // (la tarjeta se ofrece, pero el PIN ya existe en el servidor)
   const D = await mk(); await D.p.goto(BASE + mateoPanel, { waitUntil: 'networkidle' });
-  check('un navegador sin PIN ve el bloqueo en la sala nueva', await D.p.getByRole('heading', { name: 'Zona de los padres' }).isVisible());
+  check('un navegador sin PIN ve el bloqueo en el portal nueva', await D.p.getByRole('heading', { name: 'Zona de los padres' }).isVisible());
 
   await B.p.goto(BASE + A.panel, { waitUntil: 'networkidle' });
   await openSetup(B.p);

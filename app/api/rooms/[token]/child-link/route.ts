@@ -9,7 +9,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
   const { token } = await params;
   return guarded('child-link', { key: 'child-link', max: 10, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     const childToken = await rotateChildLink(found.room, token);
     return json({ ok: true, data: { childPath: `/r/${childToken}` } });
   });

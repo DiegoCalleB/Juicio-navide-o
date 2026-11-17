@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   return guarded('message', { key: 'message', max: 20, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
 
     const parsed = childTextSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {

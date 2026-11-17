@@ -10,7 +10,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { token, id } = await params;
   return guarded('pending', { key: 'pending', max: 40, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     if (!z.string().uuid().safeParse(id).success) return fail('VALIDATION', 'Mensaje no válido.', 400);
     const ok = await cancelPending(found.room, id);
     return ok ? json({ ok: true, data: null }) : fail('NOT_FOUND', 'Ese mensaje ya se ha entregado o no existe.', 404);

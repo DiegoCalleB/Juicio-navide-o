@@ -9,8 +9,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
 
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista');
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });

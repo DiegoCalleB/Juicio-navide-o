@@ -25,7 +25,7 @@ export default function PreciosPage() {
           <p className="text-center text-[15px] text-[#fff6dc]/80">Ahora mismo es gratis.</p>
         )}
         <p className="mt-6 text-center">
-          <Link href="/crear" className="inline-flex min-h-12 items-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] px-6 font-bold text-[#2a0f4a]">Crear la sala de mi peque</Link>
+          <Link href="/crear" className="inline-flex min-h-12 items-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] px-6 font-bold text-[#2a0f4a]">Abrir el portal de mi peque</Link>
         </p>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-/** Manifiesto general de la app (portada). Las salas y la familia tienen el suyo, para abrirse donde toca. */
+/** Manifiesto general de la app (portada). Los portales y la familia tienen el suyo, para abrirse donde toca. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',

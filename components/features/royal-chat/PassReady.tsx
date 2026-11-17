@@ -36,7 +36,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
         <p className="text-center text-4xl" aria-hidden>🎁</p>
         <h1 className="text-center text-2xl font-bold">¡Ya tienes tu Pase de Navidad!</h1>
         <p className="text-center text-[14px] opacity-75">
-          <R>{back ? 'Tu sala ya no tiene límite. ' : ''}Las salas que crees desde este móvil tampoco tendrán límite hasta el 20 de enero.</R>
+          <R>{back ? 'Tu portal ya no tiene límite. ' : ''}Los portales que crees desde este móvil tampoco tendrán límite hasta el 20 de enero.</R>
         </p>
 
         {back && (
@@ -46,7 +46,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
         )}
         {!back && (
           <Link href="/crear" className="flex min-h-12 items-center justify-center rounded-2xl bg-[#5eead4] font-bold text-[#04302b]">
-            Crear una sala
+            Abrir un portal
           </Link>
         )}
 

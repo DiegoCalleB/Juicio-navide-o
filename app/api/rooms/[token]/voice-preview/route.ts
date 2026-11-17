@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   return guarded('voice-preview', { key: 'voice-preview', max: 8, windowMs: 10 * 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
     const parsed = kingReplySchema.shape.text.safeParse(body?.text);
     if (!parsed.success) return fail('VALIDATION', 'Mensaje no válido.', 400);

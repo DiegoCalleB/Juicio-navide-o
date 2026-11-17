@@ -21,7 +21,7 @@ const reply = (out: PinOutcome) => {
 };
 
 /**
- * Bloqueo parental de la sala (y de su familia): poner o cambiar el PIN, quitarlo, bloquear ya, o recuperar con el código de rescate.
+ * Bloqueo parental del portal (y de su familia): poner o cambiar el PIN, quitarlo, bloquear ya, o recuperar con el código de rescate.
  * Solo con el enlace de padres (el del niño da 404). Poner o cambiar el PIN exige tener el panel desbloqueado.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -33,18 +33,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     if (body.action === 'recover') {
       // Vale el enlace de padres o el de familia; el del niño no.
-      if (!(await resolveByToken(token))) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+      if (!(await resolveByToken(token))) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
       return reply(await recoverPin(token, body.code));
     }
     if (body.action === 'lock') {
       // Vale el enlace de padres o el de familia.
-      if (!(await resolveByToken(token))) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+      if (!(await resolveByToken(token))) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
       await lockNow(token);
       return json({ ok: true, data: null });
     }
     // El resto exige que el panel esté abierto (si tiene PIN, desbloqueado) y que sea el enlace de padres.
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     if (body.action === 'set') return reply(await setPin(token, body.pin));
     return reply(await removePin(token, body.pin));
   });

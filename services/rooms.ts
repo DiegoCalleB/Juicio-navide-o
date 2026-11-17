@@ -30,18 +30,18 @@ export interface Room {
   readingLevel: ReadingLevel;
   trialEndsAt: string | null;
   passId: string | null;
-  /** Variante de idioma de la sala (la misma para los padres y para el niño). */
+  /** Variante de idioma del portal (la misma para los padres y para el niño). */
   locale: Locale;
   /** Huella de la familia (null = sala sin familia). */
   familyHash: string | null;
-  /** La sala tiene PIN de padres. */
+  /** El portal tiene PIN de padres. */
   hasPin: boolean;
 }
 
 export type ReadingLevel = 'yes' | 'learning' | 'no';
 const asReading = (v: string): ReadingLevel => (v === 'learning' || v === 'no' ? v : 'yes');
 
-/** Estado de pago de la sala, tal como lo ven el panel y el niño. */
+/** Estado de pago del portal, tal como lo ven el panel y el niño. */
 export interface RoomAccess {
   /** 'free' = sin límites (cobros apagados o sala antigua) · 'trial' = prueba · 'pass' = con pase. */
   plan: 'free' | 'trial' | 'pass';
@@ -61,7 +61,7 @@ function assertOpen(room: Room): void {
   if (roomAccess(room).locked) throw new RoomError('TRIAL_ENDED');
 }
 
-// ── Salas ────────────────────────────────────────────────────────────────
+// ── Portales ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
   input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string; locale?: Locale; familyToken?: string; familyName?: string },
@@ -140,7 +140,7 @@ export async function findRoomByToken(token: string, opts: { allowLocked?: boole
 
 // ── Lectura ──────────────────────────────────────────────────────────────
 
-/** Versión del estado de la sala para el sondeo condicional. */
+/** Versión del estado del portal para el sondeo condicional. */
 export async function getMessagesVersion(room: Room, role: Role): Promise<string> {
   return getRoomStore().getRoomVersion(room.id, { deliveredOnly: role === 'child' });
 }
@@ -279,7 +279,7 @@ const previewCache = (): Map<string, { synth: Synth; exp: number }> => {
 const previewKey = (room: Room, text: string) =>
   createHash('sha256').update(`${room.id}|${voiceIdFor(room.character, room.characterGender)}|${voiceModel()}|${prepareSpeechText(text)}`).digest('base64url');
 
-/** ¿Puede esta sala usar la voz ahora? Devuelve el motivo si no. */
+/** ¿Puede este portal usar la voz ahora? Devuelve el motivo si no. */
 async function voiceAllowance(room: Room, text: string): Promise<'ok' | 'trial' | 'limit'> {
   const store = getRoomStore();
   if (roomAccess(room).plan === 'trial') {
@@ -373,7 +373,7 @@ export async function addKingReply(
 }
 
 // ── Saludo con el nombre ("¡Hola, Lucía!") ───────────────────────────────────
-// Se genera una vez por sala, la primera vez que el niño abre el sello, y se guarda en la carpeta de la sala
+// Se genera una vez por sala, la primera vez que el niño abre el sello, y se guarda en la carpeta del portal
 // (se borra con ella). El resto del saludo está pregrabado por personaje.
 const greetingPath = (room: Room) => `${room.id}/saludo.mp3`;
 const greetingInFlight = (): Map<string, Promise<string | null>> => {
@@ -423,7 +423,7 @@ export function signalTyping(room: Room, from: Role): void {
 }
 
 /**
- * Borra un mensaje de la sala (lo hacen los padres si hay un error). Desaparece también
+ * Borra un mensaje del portal (lo hacen los padres si hay un error). Desaparece también
  * para el niño en su próxima actualización, y se borran sus audios o fotos del almacén.
  */
 export async function eraseMessage(room: Room, messageId: string): Promise<boolean> {
@@ -448,7 +448,7 @@ export async function editMessage(room: Room, messageId: string, text: string): 
   return 'ok';
 }
 
-/** Cambia el nombre y/o el personaje de la sala. El niño lo verá al volver a abrir su enlace. */
+/** Cambia el nombre y/o el personaje del portal. El niño lo verá al volver a abrir su enlace. */
 export async function editRoom(
   room: Room,
   patch: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel },
@@ -463,8 +463,8 @@ export async function editRoom(
 }
 
 /**
- * Borra la sala por completo: mensajes, audios y fotos. Es irreversible.
- * El niño verá "esta sala ya no existe" en su siguiente actualización.
+ * Borral portal por completo: mensajes, audios y fotos. Es irreversible.
+ * El niño verá "este portal ya no existe" en su siguiente actualización.
  */
 export async function eraseRoom(room: Room): Promise<void> {
   const store = getRoomStore();
@@ -485,7 +485,7 @@ export async function rotateChildLink(room: Room, parentToken: string): Promise<
   const childToken = deriveChildToken(parentToken, version);
   const ok = await getRoomStore().updateChildLink(room.id, version, hashToken(childToken));
   if (!ok) throw new RoomError('NOT_FOUND');
-  // Si el niño tenía la sala abierta, en su próxima actualización verá que el enlace ya no vale.
+  // Si el niño teníal portal abierta, en su próxima actualización verá que el enlace ya no vale.
   publishRefresh(room.id);
   return childToken;
 }
@@ -511,7 +511,7 @@ export interface FamilyView {
   rooms: FamilyRoomView[];
 }
 
-/** Reconstruye todas las salas de una familia a partir de su enlace. null si no existe o ha caducado. */
+/** Reconstruye todos los portales de una familia a partir de su enlace. null si no existe o ha caducado. */
 export async function getFamily(familyToken: string): Promise<FamilyView | null> {
   if (!TOKEN_REGEX.test(familyToken)) return null;
   const recs = await getRoomStore().listRoomsByFamilyHash(hashToken(familyToken));

@@ -28,11 +28,11 @@ export const createRoomSchema = z.object({
   characterGender: z.enum(['m', 'f']).optional(),
   /** ¿Ya lee? Ajusta mayúsculas y consejos para los padres. */
   readingLevel: z.enum(['yes', 'learning', 'no']).optional(),
-  /** Enlace de familia guardado en este móvil (para añadir esta sala a la misma familia). */
+  /** Enlace de familia guardado en este móvil (para añadir este portal a la misma familia). */
   familyToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   /** Apodo de la familia (opcional, se ve dentro de la página de familia). */
   familyName: text(1, 30).optional(),
-  /** Variante de idioma elegida (o detectada) al crear la sala. */
+  /** Variante de idioma elegida (o detectada) al crear el portal. */
   locale: z.enum(['es', 'es-419']).optional(),
   /** Enlace de pase guardado en este móvil (propio o regalado). */
   passToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
@@ -40,7 +40,7 @@ export const createRoomSchema = z.object({
   website: honeypot,
 });
 
-/** Los padres cambian el nombre y/o el personaje de la sala. */
+/** Los padres cambian el nombre y/o el personaje del portal. */
 export const roomEditSchema = z
   .object({
     childName: text(1, 30).optional(),

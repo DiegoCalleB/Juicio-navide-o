@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string; pase?: string }> }) {
-  // Enlaces antiguos /?personaje=duende_chispa (campañas, trastadas): van directos a crear la sala con ese personaje.
+  // Enlaces antiguos /?personaje=duende_chispa (campañas, trastadas): van directos a crear el portal con ese personaje.
   const { personaje, pase } = await searchParams;
   // Enlaces de pase (/?pase=…): el pase se activa en la zona de mayores, nunca en la portada pública.
   if (pase && /^[A-Za-z0-9_-]{20,80}$/.test(pase)) redirect(`/crear?pase=${pase}`);

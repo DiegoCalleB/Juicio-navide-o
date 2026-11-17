@@ -45,7 +45,7 @@ const secret = () => {
 /** Nombre de la cookie de desbloqueo (una por familia o sala; no revela el identificador). */
 export const unlockCookieName = (scope: string) => `lm_u_${createHash('sha256').update(scope).digest('hex').slice(0, 12)}`;
 
-/** Valor firmado: caduca solo y no sirve para otra sala. */
+/** Valor firmado: caduca solo y no sirve para otro portal. */
 export function signUnlock(scope: string, expiresAt: number): string {
   const mac = createHmac('sha256', secret()).update(`unlock|${scope}|${expiresAt}`).digest('base64url');
   return `${expiresAt}.${mac}`;

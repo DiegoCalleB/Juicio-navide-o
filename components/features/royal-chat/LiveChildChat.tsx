@@ -58,7 +58,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
   const [caps, setCaps] = useState(false);
   const [locked, setLocked] = useState(false);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
-  // Si la prueba termina con la sala abierta, se cierra en ese momento (sin esperar a otro mensaje).
+  // Si la prueba termina con el portal abierta, se cierra en ese momento (sin esperar a otro mensaje).
   useEffect(() => {
     if (!trialEndsAt || locked) return;
     const ms = Date.parse(trialEndsAt) - Date.now();
@@ -126,7 +126,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
     if (res.status === 404) {
-      // Los padres han borrado la sala: dejamos de sondear y mostramos el aviso.
+      // Los padres han borrado el portal: dejamos de sondear y mostramos el aviso.
       setGone(true);
       return;
     }
@@ -169,7 +169,7 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
     // La primera carga es historial (también si está vacía): lo que llegue después es "en directo".
     const firstLoad = !loaded.current;
     loaded.current = true;
-    // Una sorpresa programada que llegó con la sala cerrada: se enseña a pantalla completa la primera vez.
+    // Una sorpresa programada que llegó con el portal cerrada: se enseña a pantalla completa la primera vez.
     if (firstLoad) {
       const seenIds = surpriseSeen(token);
       const missed = all.filter((m) => m.kind === 'text' && m.effect === 'surprise' && m.from === 'king' && !seenIds.has(m.id)).pop();
@@ -295,8 +295,8 @@ export function LiveChildChat({ token, character, childName, initialCaps = false
 
   if (gone) {
     return (
-      <StateScreen title="Este enlace ya no funciona">
-        <p>Pídele a tu familia el enlace nuevo. Si la sala se ha borrado, también tendrán que crear otra.</p>
+      <StateScreen title="Se ha perdido el camino">
+        <p>La nieve ha tapado el sendero hasta mí. Pídele a tu familia que te enseñe el camino otra vez.</p>
       </StateScreen>
     );
   }

@@ -56,7 +56,7 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 ### Cómo comprobarlo
 
 - `npm run test:e2e -- magia`: navega como un niño y falla si cualquier página pública, metadato, manifiesto,
-  sitemap, robots o la sala del niño contiene una frase de la lista `DELATAN`, o si alguna ruta de mayores se abre
+  sitemap, robots o el portal del niño contiene una frase de la lista `DELATAN`, o si alguna ruta de mayores se abre
   sin la puerta. Si aparece una frase nueva peligrosa, añádela a esa lista.
 - Revisar los textos nuevos con la lista de frases prohibidas de arriba.
 - Cualquier cambio en `lib/characters.ts`, mensajes del niño o páginas públicas requiere esta revisión.

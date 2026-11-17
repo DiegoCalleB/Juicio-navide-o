@@ -14,9 +14,9 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
   await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.screenshot({ path: S + '/rp1-selector.png' });
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
@@ -58,7 +58,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await demo.goto(BASE + '/demo/mensajeria?p=raton_perez', { waitUntil: 'networkidle' });
   check('demo del Ratoncito disponible', await demo.getByText(/se te ha caído un diente/).first().isVisible());
   const room = await fetch(`${BASE}/api/rooms/${pajeHref.split('/paje/')[1]}/messages`);
-  check('API de la sala funciona con el personaje nuevo', room.status === 200);
+  check('API del portal funciona con el personaje nuevo', room.status === 200);
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
   await b.close(); process.exit(results.every(Boolean) ? 0 : 1);

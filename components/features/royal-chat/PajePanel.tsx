@@ -45,7 +45,7 @@ interface PajePanelProps {
   /** ¿Lee ya el niño? Ajusta consejos y mayúsculas. */
   readingLevel?: 'yes' | 'learning' | 'no';
   billing?: BillingInfo;
-  /** La sala tiene PIN de padres (bloqueo). */
+  /** El portal tiene PIN de padres (bloqueo). */
   hasPin?: boolean;
 }
 
@@ -442,7 +442,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       const res = await fetch(`/api/rooms/${token}/child-link`, { method: 'POST' });
       const json = (await res.json()) as ApiResult<{ childPath: string }>;
       if (!json.ok || !json.data) throw new Error(json.error?.message ?? 'No se pudo cambiar el enlace.');
-      // Mantiene "Tus salas" al día y recarga para mostrar el enlace nuevo.
+      // Mantiene "Tus portales" al día y recarga para mostrar el enlace nuevo.
       const mine = loadRooms().find((r) => r.parentPath === `/paje/${token}`);
       if (mine) saveRoom({ ...mine, childPath: json.data.childPath });
       window.location.reload();
@@ -596,9 +596,9 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
             <p className="min-w-0 flex-1 leading-snug text-[#e8f1ff]/85">
               {presence.openedAt
-                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en la sala'}</>
+                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en el portal'}</>
                 : presence.online
-                  ? <>{childName} está en la sala, esperando a {short}</>
+                  ? <>{childName} está en el portal, esperando a {short}</>
                   : <>{childName} aún no ha abierto el enlace</>}
             </p>
             {presence.openedAt && messages.length === 0 && (
@@ -725,7 +725,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#e8f1ff]">Guarda este panel</p>
-            <p className="mt-1 text-[#e8f1ff]/70">{familyHref ? 'Es la llave de esta sala. Para todas las salas de la familia, guarda el enlace de familia.' : 'Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.'}</p>
+            <p className="mt-1 text-[#e8f1ff]/70">{familyHref ? 'Es la llave de este portal. Para todos los portales de la familia, guarda el enlace de familia.' : 'Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.'}</p>
             {familyHref && (
               <a href={familyHref} className="mt-2 grid min-h-10 place-items-center rounded-xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.98]">
                 ⭐ Ver el enlace de mi familia

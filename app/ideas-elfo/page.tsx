@@ -169,7 +169,7 @@ export default function IdeasElfoPage() {
         <section className="mt-10 rounded-3xl border-2 border-[#f6d77a]/60 bg-gradient-to-b from-[#f6d77a]/[.13] to-transparent p-6 text-center">
           <p className="font-serif text-2xl">Que el elfo le escriba a tu peque</p>
           <p className="mx-auto mt-2 max-w-md text-[15px] text-[#fff6dc]/75">Línea Mágica es un chat donde tu peque habla con el elfo en directo. Tú escribes sus mensajes en secreto y le mandas la foto de cada trastada.</p>
-          <Link href={CTA_HREF} className="mt-4 inline-flex min-h-12 items-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] px-6 font-bold text-[#2a0f4a]">Crear la sala del elfo</Link>
+          <Link href={CTA_HREF} className="mt-4 inline-flex min-h-12 items-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] px-6 font-bold text-[#2a0f4a]">Abrir el portal del elfo</Link>
         </section>
 
         <footer className="mt-10 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">

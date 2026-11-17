@@ -5,7 +5,7 @@ import { isMemoryStore } from '@/services/room-store';
 
 /**
  * Monetización (decidida el 12-nov):
- *  - Prueba gratis: 1 sala, texto y fotos durante 3 días.
+ *  - Prueba gratis: 1 portal, texto y fotos durante 3 días.
  *  - Pase de Navidad: pago único (3,99 €; 2,99 € en Black Friday; se cambia con PASS_PRICE_CENTS), salas ilimitadas
  *    (tope suave de 10), válido hasta el 20 de enero, y 1 pase para regalar.
  * Todo está apagado mientras no haya STRIPE_SECRET_KEY: la app sigue siendo gratis y sin límites.

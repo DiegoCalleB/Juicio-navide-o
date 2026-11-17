@@ -9,8 +9,8 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   const p = await mobile.newPage();
   await p.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await p.fill('#child', 'Valentina'); await p.locator('form').getByRole('checkbox').check();
-  await ensureChar(p); await p.getByRole('button', { name: /Crear la sala/ }).click();
-  await p.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(p); await p.getByRole('button', { name: /Abrir el portal/ }).click();
+  await p.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const panel = (await p.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
   const kid = (await childLinkOf(p)).replace(/^https?:\/\/[^/]+/, ''), fam = (await familyLinkOf(p)).replace(/^https?:\/\/[^/]+/, '');
   const storage = await mobile.storageState();

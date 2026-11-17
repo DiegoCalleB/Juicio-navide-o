@@ -23,7 +23,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.waitForTimeout(600);
   const afterReply = await scrollContainer.evaluate(el => el.scrollTop);
   check('al llegar la respuesta, la portada no salta (el chat se desplaza por dentro)', Math.abs(afterReply - afterSend) < 4, afterSend + ' → ' + afterReply);
-  // Portada corta: el botón para los mayores se ve sin bajar y lleva a crear la sala paso a paso
+  // Portada corta: el botón para los mayores se ve sin bajar y lleva a crear el portal paso a paso
   const vh = await page.evaluate(() => innerHeight);
   const total = await scrollContainer.evaluate(el => el.scrollHeight);
   check('portada corta (como mucho dos pantallas de móvil)', total <= vh * 2, total + ' px vs ' + vh);
@@ -41,8 +41,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   // Panel: momentos + wake lock
   await page.evaluate(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
-  await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
-  await page.waitForSelector('text=La sala está lista');
+  await ensureChar(page); await page.getByRole('button', { name: /Abrir el portal/ }).click();
+  await page.waitForSelector('text=El portal está abierto');
   const pajeHref = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const panel = await ctx.newPage();
   await panel.addInitScript(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });

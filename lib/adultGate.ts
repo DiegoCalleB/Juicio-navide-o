@@ -1,7 +1,7 @@
 /**
  * Puerta de la zona de mayores (ver la REGLA DE ORO en AGENTS.md).
  *
- * Todo lo que explica cómo funciona la magia (crear la sala, precios, instrucciones de las trastadas,
+ * Todo lo que explica cómo funciona la magia (crear el portal, precios, instrucciones de las trastadas,
  * paneles de los padres, textos legales) está detrás de esta puerta. Para entrar hay que resolver de
  * cabeza una cuenta sencilla para un adulto, en poco tiempo (como las «parental gates» de las apps
  * infantiles). La respuesta se comprueba en el servidor y la sesión caduca tras 30 min sin uso.

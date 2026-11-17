@@ -9,7 +9,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
   const { token } = await params;
   return guarded('typing', { key: 'typing', max: 60, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     signalTyping(found.room, found.role);
     return json({ ok: true, data: null });
   });

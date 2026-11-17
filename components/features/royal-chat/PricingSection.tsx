@@ -42,7 +42,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
           </div>
           <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/75 lg:mb-4 lg:text-[15px]">
             <li>✓ 3 días para probarlo con vuestros peques</li>
-            <li>✓ Una sala por cada peque (hasta 5)</li>
+            <li>✓ Un portal por cada peque (hasta 5)</li>
             <li>✓ Mensajes y fotos, sin registrarte</li>
             {KING_VOICE_ENABLED && <li>✓ 🎙️ Le saluda por su nombre y 3 mensajes con voz</li>}
           </ul>
@@ -64,7 +64,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
           <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/85">
             <li>✓ La magia sigue hasta el 20 de enero</li>
             {KING_VOICE_ENABLED && <li>✓ 🎙️ El personaje le habla con su voz en cada mensaje</li>}
-            <li>✓ Todos los peques y todos los personajes (hasta 10 salas)</li>
+            <li>✓ Todos los peques y todos los personajes (hasta 10 portales)</li>
             <li>✓ 🎁 Incluye un pase para regalar a otra familia</li>
             <li>✓ Se activa al momento, sin esperas</li>
           </ul>

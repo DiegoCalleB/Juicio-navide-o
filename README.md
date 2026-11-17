@@ -1,6 +1,6 @@
 # Línea Mágica
 
-Los padres crean una sala, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. El niño escribe, manda fotos o **audios**; los padres contestan con texto, fotos o **la voz del personaje**, y pueden **grabar su reacción** con el propio móvil.
+Los padres crean un portal, eligen quién contesta (Papá Noel o un Rey Mago) y desde su móvil responden **como el personaje** al chat del niño, en tiempo real. El niño escribe, manda fotos o **audios**; los padres contestan con texto, fotos o **la voz del personaje**, y pueden **grabar su reacción** con el propio móvil.
 
 ## Pantallas
 Regla de oro (ver `AGENTS.md`): nada de lo que pueda ver un peque delata la magia. La web se divide en un
@@ -14,7 +14,7 @@ servidor; 3 fallos bloquean el dispositivo y 9 la conexión, con bloqueos de 15 
 | `/polo-norte` | Todos | Rincón para los curiosos: chistes del elfo, adivinanzas, renos y mapa (sin formularios ni datos) |
 | `/r/[token]` | Niño | Chat con el personaje |
 | `/mayores` | Puerta | La pregunta y, ya dentro, el menú de la zona de mayores (salas guardadas, ideas, precios, legal) |
-| `/crear`, `/precios`, `/ideas-elfo/*` | Mayores | Crear la sala, precios e ideas de trastadas |
+| `/crear`, `/precios`, `/ideas-elfo/*` | Mayores | Abrir el portal, precios e ideas de trastadas |
 | `/paje/[token]`, `/familia/[token]`, `/pase/*` | Mayores | Panel para contestar, familia y Pase |
 | `/privacidad`, `/terminos`, `/demo/*` | Mayores | Textos legales y demo |
 

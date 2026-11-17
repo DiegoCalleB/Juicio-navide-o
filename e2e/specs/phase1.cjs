@@ -17,7 +17,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
     p.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(n + ':console:' + m.text().slice(0, 2500)); });
   }
 
-  // ── 1. Selección de personajes y creación de la sala
+  // ── 1. Selección de personajes y creación del portal
   await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.screenshot({ path: S + '/p1-landing.png' });
   await parent.fill('#child', 'Lucía');
@@ -26,8 +26,8 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   check('selector: Papá Noel y los 3 Reyes visibles', await parent.getByText('Papá Noel').first().isVisible() && await parent.getByText('Baltasar').first().isVisible());
   // Ningún personaje viene marcado: hay que elegir (y se ven todas las opciones)
   check('ningún personaje viene marcado', !(await parent.getByRole('radio', { name: /Papá Noel/ }).isChecked()));
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   check('se generan enlaces de niño y padres', /\/paje\/[\w-]{43}$/.test(pajeHref) && /\/r\/[\w-]{43}$/.test(childLink), pajeHref.slice(-12));

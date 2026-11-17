@@ -292,7 +292,7 @@ export class SupabaseRoomStore implements RoomStore {
     if (patch.characterAlias !== undefined) update.character_alias = patch.characterAlias;
     if (patch.characterGender !== undefined) update.character_gender = patch.characterGender;
     const { data, error } = await getAdminClient().from('rooms').update(update).eq('id', roomId).select('id');
-    if (error) throw new Error('No se pudo editar la sala.');
+    if (error) throw new Error('No se pudo editar el portal.');
     return (data?.length ?? 0) > 0;
   }
 
@@ -309,7 +309,7 @@ export class SupabaseRoomStore implements RoomStore {
 
   async deleteRoom(roomId: string): Promise<void> {
     const { error } = await getAdminClient().from('rooms').delete().eq('id', roomId);
-    if (error) throw new Error('No se pudo borrar la sala.');
+    if (error) throw new Error('No se pudo borrar el portal.');
   }
 
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {

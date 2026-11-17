@@ -26,10 +26,10 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
     await page.fill('#child', name);
     if (reading) await page.getByRole('radio', { name: reading }).click();
     await page.locator('form').getByRole('checkbox').check();
-    await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
+    await ensureChar(page); await page.getByRole('button', { name: /Abrir el portal/ }).click();
   };
   const linksAfterCreate = async () => {
-    await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
+    await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
     const panel = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
     const child = (await childLinkOf(page));
     return { panel: local(panel), child: local(child) };
@@ -39,22 +39,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const t0 = Date.now();
   const r1 = await linksAfterCreate();
   check('sala 1: es una prueba gratis de 3 días', await page.getByText(/Prueba gratis de 3 días/).isVisible());
-  await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+  await page.getByRole('button', { name: /Abrir otro portal/ }).click();
   await create('Mateo');
   const r2 = await linksAfterCreate();
   // Una prueba por peque: hasta cinco por móvil
   for (const n of ['Pablo', 'Sofía', 'Hugo']) {
-    await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+    await page.getByRole('button', { name: /Abrir otro portal/ }).click();
     await create(n);
-    await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
+    await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   }
   check('se pueden preparar cinco salas de prueba (una por peque)', true);
-  await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+  await page.getByRole('button', { name: /Abrir otro portal/ }).click();
   await create('Lola');
-  await page.getByText(/Ya has creado todas las salas de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
-  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todas las salas de prueba gratis/).count()) > 0 && await page.locator('form').getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
+  await page.getByText(/Ya has creado todos los portales de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
+  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todos los portales de prueba gratis/).count()) > 0 && await page.locator('form').getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
 
-  // Panel y niño de la sala 1
+  // Panel y niño del portal 1
   const panel = await ctxA.newPage();
   await panel.goto(r1.panel, { waitUntil: 'networkidle' });
   await panel.getByText(/Prueba gratis · queda/).waitFor({ timeout: 15000 }).catch(() => {});
@@ -89,7 +89,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('incluye un enlace de regalo', /\?pase=[A-Za-z0-9_-]{43}$/.test(giftLink), giftLink.slice(-20));
   await panel.getByRole('link', { name: 'Volver a mi panel' }).click();
   await panel.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
-  check('de vuelta al panel: la sala ya no tiene límite', (await panel.locator('#reply').count()) === 1 && (await panel.getByText('La prueba gratis ha terminado').count()) === 0);
+  check('de vuelta al panel: el portal ya no tiene límite', (await panel.locator('#reply').count()) === 1 && (await panel.getByText('La prueba gratis ha terminado').count()) === 0);
   await kid.waitForSelector('text=se ha ido a preparar la magia', { state: 'detached', timeout: 15000 }).catch(() => {});
   check('niño: puede volver a escribir sin recargar', (await kid.getByText(/se ha ido a preparar la magia/).count()) === 0);
 
@@ -97,22 +97,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const panel2 = await ctxA.newPage();
   await panel2.goto(r2.panel, { waitUntil: 'networkidle' });
   await panel2.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
-  check('el pase cuelga de la familia: la sala del hermano ya está desbloqueada', (await panel2.locator('#reply').count()) === 1 && (await panel2.getByText('La prueba gratis ha terminado').count()) === 0);
+  check('el pase cuelga de la familia: el portal del hermano ya está desbloqueada', (await panel2.locator('#reply').count()) === 1 && (await panel2.getByText('La prueba gratis ha terminado').count()) === 0);
 
-  // Salas nuevas con el pase
+  // Portales nuevas con el pase
   await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   check('crear: recuerda que hay un pase en este móvil', await page.getByText(/Tienes un Pase de Navidad en este móvil/).isVisible());
   await create('Pablo');
-  await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('con el pase, la sala nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
+  await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('con el pase, el portal nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
 
-  // Pase de regalo en otra familia: tenía una sala en prueba y usa el pase con un toque
+  // Pase de regalo en otra familia: tenía un portal en prueba y usa el pase con un toque
   const other = await ctxB.newPage();
   await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
   await other.locator('form').getByRole('checkbox').check();
-  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
-  await other.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(other); await other.getByRole('button', { name: /Abrir el portal/ }).click();
+  await other.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const martinaPanel = local(await other.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
   await other.goto(local(giftLink), { waitUntil: 'networkidle' });
   await other.getByText('🎁 ¡Tienes un Pase de Navidad!').waitFor({ timeout: 15000 }).catch(() => {});
@@ -120,16 +120,16 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('regalo: el enlace se quita de la barra de direcciones', !other.url().includes('pase='));
   await other.goto(martinaPanel, { waitUntil: 'networkidle' });
   await other.getByRole('button', { name: /^Pase 3,99/ }).click();
-  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).waitFor({ timeout: 15000 }).catch(() => {});
-  check('regalo: su sala en prueba ofrece usar el pase', await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).isVisible());
-  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).click();
+  await other.getByRole('button', { name: 'Usar mi pase en este portal' }).waitFor({ timeout: 15000 }).catch(() => {});
+  check('regalo: su sala en prueba ofrece usar el pase', await other.getByRole('button', { name: 'Usar mi pase en este portal' }).isVisible());
+  await other.getByRole('button', { name: 'Usar mi pase en este portal' }).click();
   await other.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
   check('regalo: con un toque, desbloqueada', (await other.locator('#reply').count()) === 1);
   await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Sofia');
   await other.locator('form').getByRole('checkbox').check();
-  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
-  await other.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(other); await other.getByRole('button', { name: /Abrir el portal/ }).click();
+  await other.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   check('regalo: su siguiente sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
 
   // Comprar el Pase desde la portada, antes de crear nada (p. ej. unos abuelos que lo regalan)
@@ -146,16 +146,16 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await buyer.getByText(/Quiero que el pase se active ya/).click();
   await Promise.all([buyer.waitForURL(/\/pase\/listo/, { timeout: 20000 }), buyer.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
   check('comprar desde la portada: muestra el pase y el regalo', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible() && await buyer.getByRole('link', { name: 'Regalar por WhatsApp' }).isVisible());
-  await buyer.getByRole('link', { name: 'Crear una sala' }).click();
+  await buyer.getByRole('link', { name: 'Abrir un portal' }).click();
   await buyer.locator('#child').waitFor({ timeout: 15000 });
   await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });
   check('con el pase ya comprado, la página de precios deja de ofrecerlo', (await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).count()) === 0);
   await buyer.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await buyer.fill('#child', 'Julia');
   await buyer.locator('form').getByRole('checkbox').check();
-  await ensureChar(buyer); await buyer.getByRole('button', { name: /Crear la sala/ }).click();
-  await buyer.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
+  await ensureChar(buyer); await buyer.getByRole('button', { name: /Abrir el portal/ }).click();
+  await buyer.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
 
   // Webhook de Stripe: firma obligatoria e idempotente
   const hook = async (body, sig) => (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', headers: { 'stripe-signature': sig, 'content-type': 'application/json' }, body })).status;

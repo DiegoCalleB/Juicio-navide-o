@@ -17,8 +17,8 @@ import type { RoomRecord } from '@/services/room-store/types';
 
 /**
  * Bloqueo parental: un PIN protege el panel de los padres (y la lista de la familia) en el SERVIDOR.
- * Sin la cookie de desbloqueo (firmada, caduca a los 30 min) no se devuelve ningún dato de la sala.
- * El ámbito del PIN es la familia (todas sus salas) o, si la sala no tiene familia, la propia sala.
+ * Sin la cookie de desbloqueo (firmada, caduca a los 30 min) no se devuelve ningún dato del portal.
+ * El ámbito del PIN es la familia (todos sus portales) o, si el portal no tiene familia, la propia sala.
  */
 
 export const scopeOf = (room: { id: string; familyHash: string | null }) => room.familyHash ?? room.id;

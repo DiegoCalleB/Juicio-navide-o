@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 export const metadata: Metadata = { title: 'Abre el portal mágico de tu peque', robots: { index: false, follow: true } };
 
-/** Crear la sala, paso a paso (1: el peque · 2: el personaje). /crear?personaje=duende_chispa deja elegido al personaje. */
+/** Abrir el portal, paso a paso (1: el peque · 2: el personaje). /crear?personaje=duende_chispa deja elegido al personaje. */
 export default async function CrearPage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {
   const { personaje } = await searchParams;
   const initialCharacter = personaje && isCharacterId(personaje) ? personaje : undefined;
@@ -26,7 +26,7 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
           <Link href="/precios" className="min-h-10 rounded-full px-2 py-2 text-[13px] font-semibold text-[#f6d77a]/85 underline underline-offset-2">Precios</Link>
         </nav>
         <PassWelcome />
-        <section id="crear" aria-label="Crear la sala">
+        <section id="crear" aria-label="Abrir el portal">
           <CreateRoomForm billing={billing} defaultCharacter={heroFor(siteNow()).defaultCharacter} initialCharacter={initialCharacter} />
         </section>
       </div>
