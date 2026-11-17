@@ -13,7 +13,7 @@ export const GATE_COOKIE = 'lm_mayores';
 /** Sin usar la zona de mayores durante este tiempo, la puerta se vuelve a cerrar. */
 export const GATE_IDLE_MS = 30 * 60_000;
 /** Tiempo para contestar la cuenta (el servidor da unos segundos de margen por la red). */
-export const GATE_ANSWER_SECONDS = 4;
+export const GATE_ANSWER_SECONDS = 8;
 const ANSWER_GRACE_MS = 3_000;
 
 /** Rutas que solo se ven tras la puerta. */
@@ -24,7 +24,7 @@ export function isAdultPath(pathname: string): boolean {
   return ADULT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 4. */
+/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 8. */
 export function answerSeconds(): number {
   const t = Number(process.env.ADULT_GATE_SECONDS);
   return process.env.ROOMS_STORE === 'memory' && t >= 1 && t <= 120 ? t : GATE_ANSWER_SECONDS;
@@ -115,15 +115,15 @@ export async function newChallenge(now = Date.now()): Promise<Challenge> {
   let answer: number;
   const kind = rand(0, 2);
   if (kind === 0) {
-    const a = rand(12, 19), b = rand(3, 6);
+    const a = rand(12, 19), b = rand(2, 4);
     question = `${a} × ${b}`;
     answer = a * b;
   } else if (kind === 1) {
-    const a = rand(41, 89), b = rand(12, 38);
+    const a = rand(31, 79), b = rand(11, 29);
     question = `${a} − ${b}`;
     answer = a - b;
   } else {
-    const a = rand(31, 69), b = rand(14, 39);
+    const a = rand(21, 59), b = rand(14, 38);
     question = `${a} + ${b}`;
     answer = a + b;
   }

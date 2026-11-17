@@ -28,7 +28,7 @@ const env = {
   // Fecha fija para que la portada de temporada y los precios sean predecibles (18-dic: Papá Noel, precio normal).
   FAKE_NOW: nowArg || '2026-12-18T12:00:00+01:00',
   ROOMS_STORE: 'memory',
-  ADULT_GATE_SECONDS: '30', // en producción son 4 s; el servidor de pruebas va más lento que una persona
+  ADULT_GATE_SECONDS: '30', // en producción son 8 s; el servidor de pruebas va más lento que una persona
   CRON_SECRET: 'testsecret-testsecret-1234',
   FINGERPRINT_SALT: process.env.FINGERPRINT_SALT || 'e2e-salt-e2e-salt-e2e-salt',
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co',

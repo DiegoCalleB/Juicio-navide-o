@@ -163,7 +163,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   await liar.screenshot({ path: S + '/mg2-puerta.png' });
   const q = await liar.getByTestId('gate-question').innerText();
   check('si dice ser mayor, la puerta pide una cuenta de cabeza', /^\d+ [×−+] \d+ = \?$/.test(q.trim()), q);
-  // Con solo 4 s, la pregunta puede refrescarse justo al escribir y vaciar el campo: se reintenta hasta contar
+  // Con tan pocos segundos, la pregunta puede refrescarse justo al escribir y vaciar el campo: se reintenta hasta contar
   // exactamente 3 envíos reales (los reintentos no deben sumar fallos de más y bloquear la conexión entera).
   let posts = 0;
   liar.on('request', (r) => { if (r.url().endsWith('/api/mayores') && r.method() === 'POST') posts++; });
