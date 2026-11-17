@@ -35,7 +35,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await child.screenshot({ path: S + '/rp3-chat.png' });
   await child.fill('#royal-draft', '¡Se me ha caído un diente!'); await child.keyboard.press('Enter');
   await parent.waitForSelector('text=Se me ha caído un diente');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('acuse automático en la voz del propio Ratoncito', true)).catch(() => check('acuse automático del Ratoncito', false));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   check('el niño nunca ve "Papá Noel" ni "Polo Norte"', (await child.locator('body').innerText()).match(/Papá Noel|Polo Norte|duende|Quesito|ayudante/i) === null);
   await parent.getByRole('tab', { name: 'Primer saludo' }).click();
   await parent.getByRole('button', { name: /Quic, quic! ¿Lucía\?/ }).first().click();

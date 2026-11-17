@@ -196,25 +196,10 @@ function notify(room: Room, rec: MessageRecord): void {
   publishRefresh(room.id, rec.deliverAt);
 }
 
-/** Acuse automático en la voz del personaje ("he recibido tu mensaje…"). Máximo uno cada 15 min. */
-async function maybeAcknowledge(room: Room): Promise<void> {
-  const since = new Date(Date.now() - 15 * 60_000).toISOString();
-  if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
-  const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale: room.locale });
-  const rec = await getRoomStore().insertMessage({
-    roomId: room.id,
-    sender: 'system',
-    kind: 'text',
-    body: fillChild(c.busyAck, room.childName),
-  });
-  notify(room, rec);
-}
-
 export async function addChildText(room: Room, text: string): Promise<void> {
   assertOpen(room);
   const rec = await getRoomStore().insertMessage({ roomId: room.id, sender: 'child', kind: 'text', body: text });
   notify(room, rec);
-  await maybeAcknowledge(room);
 }
 
 export async function addPhoto(
@@ -244,7 +229,6 @@ export async function addPhoto(
       role === 'parent' ? (scheduledAt ?? (delayMinutes > 0 ? new Date(Date.now() + delayMinutes * 60_000).toISOString() : undefined)) : undefined,
   });
   notify(room, rec);
-  if (role === 'child') await maybeAcknowledge(room);
 }
 
 export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
@@ -259,7 +243,6 @@ export async function addChildVoice(room: Room, audio: Buffer, mime: string, sec
   await store.uploadFile('voices', path, audio, type);
   const rec = await store.insertMessage({ roomId: room.id, sender: 'child', kind: 'voice', audioPath: path, durationS: seconds });
   notify(room, rec);
-  await maybeAcknowledge(room);
 }
 
 export interface ReplyOutcome {

@@ -43,8 +43,8 @@ const pad = (n) => String(n).padStart(2, '0');
   check('sala vacía: "Soy Chispita, la elfa traviesa"', await child.getByText('Soy Chispita, la elfa traviesa').isVisible());
   await child.screenshot({ path: S + '/du2-child.png' });
   await child.fill('#royal-draft', '¡Te encontré detrás del sofá!'); await child.keyboard.press('Enter');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('acuse en primera persona y en femenino ("escondida")', true)).catch(() => check('acuse del elfo', false));
-  check('el acuse concuerda con el género', (await child.locator('body').innerText()).includes('escondida'));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   check('el niño no ve ayudantes, otros personajes ni marcas sin rellenar', (await child.locator('body').innerText()).match(/Quesito|Cascabel|Zafiro|ayudante|Ratoncito|Melchor|\{(elf|o|el|un|del|Elfo)\}/i) === null);
 
   // Ideas de travesuras: los padres eligen idea, escriben ellos y programan

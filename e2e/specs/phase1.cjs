@@ -51,7 +51,8 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.waitForSelector('text=quiero una bici roja', { timeout: 8000 });
   const latency = Date.now() - t0;
   check('mensaje del niño llega a los padres en < 2 s', latency < 2000, latency + ' ms');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('niño recibe el aviso "Papá Noel está ocupado"', true)).catch(() => check('niño recibe el aviso "Papá Noel está ocupado"', false));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   await parent.waitForTimeout(500);
   await parent.screenshot({ path: S + '/p2-parent-got-message.png' });
 

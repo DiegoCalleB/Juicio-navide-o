@@ -35,7 +35,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await child.mouse.up();
   await parent.waitForSelector('[role=log] button[aria-label="Reproducir nota de voz"]', { timeout: 10000 });
   check('el audio del niño llega a los padres', true, (Date.now() - t0) + ' ms');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('niño recibe el aviso "Papá Noel está ocupado"', true)).catch(() => check('niño recibe el aviso', false));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
 
   // Los padres lo reproducen (audio real servido por el almacén)
   const audioInfo = await parent.evaluate(async () => {
