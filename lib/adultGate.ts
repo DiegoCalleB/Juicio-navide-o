@@ -13,7 +13,7 @@ export const GATE_COOKIE = 'lm_mayores';
 /** Sin usar la zona de mayores durante este tiempo, la puerta se vuelve a cerrar. */
 export const GATE_IDLE_MS = 30 * 60_000;
 /** Tiempo para contestar la cuenta (el servidor da unos segundos de margen por la red). */
-export const GATE_ANSWER_SECONDS = 8;
+export const GATE_ANSWER_SECONDS = 5;
 const ANSWER_GRACE_MS = 3_000;
 
 /** Rutas que solo se ven tras la puerta. */
@@ -24,7 +24,7 @@ export function isAdultPath(pathname: string): boolean {
   return ADULT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 8. */
+/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 5. */
 export function answerSeconds(): number {
   const t = Number(process.env.ADULT_GATE_SECONDS);
   return process.env.ROOMS_STORE === 'memory' && t >= 1 && t <= 120 ? t : GATE_ANSWER_SECONDS;
