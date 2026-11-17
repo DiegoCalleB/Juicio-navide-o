@@ -107,6 +107,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const [pickedDay, setPickedDay] = useState<number | null>(null);
   /** Programar para otro momento (fecha y hora a elegir). */
   const [whenCustom, setWhenCustom] = useState(false);
+  const [optsOpen, setOptsOpen] = useState(false);
   const [whenValue, setWhenValue] = useState('');
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
   const [capsLink, setCapsLink] = useState(readingLevel !== 'yes');
@@ -541,14 +542,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   return (
     <div className="fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#12203a,#04070d)]">
       <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff] lg:h-[min(calc(100dvh-3rem),58rem)] lg:max-w-4xl lg:overflow-hidden lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-[0_30px_90px_rgba(0,0,0,.6)]">
-        <div className="flex items-center justify-center gap-2 bg-[#5eead4] px-3 pb-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] text-[10.5px] font-bold uppercase tracking-[.08em] text-[#04302b]">
-          <span aria-hidden>🔒</span> Zona secreta de los padres · {childName} no ve esta pantalla
-        </div>
-        <header className="flex items-center gap-3 border-b border-[#5eead4]/20 bg-[#121d33] px-4 pb-3 pt-3">
+        <header className="flex items-center gap-3 border-b border-[#5eead4]/20 bg-[#121d33] px-4 pb-2.5 pt-[max(0.7rem,env(safe-area-inset-top))]">
           <RoyalAvatar character={character} size={40} />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-[#5eead4]">
-              <IconSeal className="size-3.5" /> Panel de los padres
+              <IconSeal className="size-3.5" /> Panel de los padres · {childName} no lo ve
             </p>
             <p className="truncate text-[15px] font-semibold">Contestas como {character.name} a {childName}</p>
           </div>
@@ -592,11 +590,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         )}
 
         {presence && (
-          <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-2 text-[13px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
+          <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-1.5 text-[12.5px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
             <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
             <p className="min-w-0 flex-1 leading-snug text-[#e8f1ff]/85">
               {presence.openedAt
-                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en el portal'}</>
+                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} abrió el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en el portal'}</>
                 : presence.online
                   ? <>{childName} está en el portal, esperando a {short}</>
                   : <>{childName} aún no ha abierto el enlace</>}
@@ -856,14 +854,14 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </div>
             </div>
           )}
-          {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#5eead4]/80">💡 {activeMoment.tip}</p>}
+          {activeMoment?.tip && !text.trim() && <p className="truncate text-[11.5px] leading-snug text-[#5eead4]/80" title={activeMoment.tip}>💡 {activeMoment.tip}</p>}
           {readingLevel === 'learning' && (
-            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">✏️ Está aprendiendo a leer: frases cortas y palabras sencillas. Lo verá en MAYÚSCULAS.</p>
+            <p className="truncate text-[11.5px] leading-snug text-[#f6d77a]/85">✏️ Aprende a leer: frases cortas. Lo verá en MAYÚSCULAS.</p>
           )}
           {readingLevel === 'no' && (
-            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">📖 Todavía no lee: que se lo lea en voz alta quien esté a su lado. Las fotos ayudan mucho.</p>
+            <p className="truncate text-[11.5px] leading-snug text-[#f6d77a]/85">📖 Aún no lee: que se lo lean en voz alta.</p>
           )}
-          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
+          <div className={`-mx-3 gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] ${text.trim() ? 'hidden' : 'flex'}`}>
             {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button
                 key={q}
@@ -895,7 +893,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <label htmlFor="reply" className="sr-only">Mensaje de {character.name}</label>
             <textarea
               id="reply"
-              rows={3}
+              rows={2}
               maxLength={MAX_CHARS}
               value={text}
               onChange={(e) => {
@@ -931,6 +929,31 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
           )}
 
+          {KING_VOICE_ENABLED && !photo && !access.locked && trialVoiceLeft !== null && (
+              <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">
+                {trialVoiceLeft > 0
+                  ? `🎙️ Prueba gratis: ${trialVoiceLeft === 1 ? 'te queda 1 mensaje' : `te quedan ${trialVoiceLeft} mensajes`} con la voz de ${short}.`
+                  : `🎙️ Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba.`}{' '}
+                {billing?.enabled && (
+                  <button type="button" onClick={() => setOfferOpen(true)} className="font-bold underline underline-offset-2">
+                    Con el Pase, todos con voz
+                  </button>
+                )}
+              </p>
+          )}
+          <button
+            type="button"
+            aria-expanded={optsOpen}
+            aria-controls="send-opts"
+            onClick={() => setOptsOpen((v) => !v)}
+            className="flex min-h-10 w-full items-center gap-2 rounded-xl bg-white/5 px-3 text-left text-[12.5px] font-semibold text-[#e8f1ff]/80"
+          >
+            <span className="flex-1 truncate">
+              Opciones de envío · {voiceNow ? '🎙️ Con voz' : '✏️ Texto'} · {whenCustom ? 'Otro día' : DELAY_LABEL[delay]}
+            </span>
+            <span aria-hidden className={`transition-transform ${optsOpen ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          <div id="send-opts" hidden={!optsOpen} className="space-y-2.5">
           {KING_VOICE_ENABLED && !photo && !access.locked && (
             <div className="space-y-1.5">
               {trialVoiceLeft !== 0 ? (
@@ -962,18 +985,6 @@ export function PajePanel({ token, childLink, character, childName, characterAli
                   )}
                 </div>
               ) : null}
-              {trialVoiceLeft !== null && (
-                <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">
-                  {trialVoiceLeft > 0
-                    ? `🎙️ Prueba gratis: ${trialVoiceLeft === 1 ? 'te queda 1 mensaje' : `te quedan ${trialVoiceLeft} mensajes`} con la voz de ${short}.`
-                    : `🎙️ Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba.`}{' '}
-                  {billing?.enabled && (
-                    <button type="button" onClick={() => setOfferOpen(true)} className="font-bold underline underline-offset-2">
-                      Con el Pase, todos con voz
-                    </button>
-                  )}
-                </p>
-              )}
             </div>
           )}
 
@@ -1031,6 +1042,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </button>
             </div>
           )}
+          </div>
 
           {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#5eead4]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
 

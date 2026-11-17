@@ -24,7 +24,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
 
   // Niño: botón Aa y mayúsculas
   await openChild(child, childLink, {});
-  await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 });
+  await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 });
   await child.fill('#royal-draft', 'hola papá noel'); await child.keyboard.press('Enter');
   await parent.waitForSelector('text=hola papá noel');
   const tt = () => child.evaluate(() => getComputedStyle(document.querySelector('[role=log]')).textTransform);

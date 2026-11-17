@@ -33,6 +33,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await parent.waitForSelector('[aria-label="Conectado en tiempo real"]');
 
   // 2) Panel: voz por defecto + contador de la prueba
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   check('padres: "Con voz" seleccionada por defecto', await parent.getByRole('radio', { name: /Con voz/ }).getAttribute('aria-checked') === 'true');
   check('padres: la prueba muestra los 3 mensajes con voz', await parent.getByText(/te quedan 3 mensajes con la voz/).isVisible());
   check('padres: el botón dice "Enviar con la voz de Papá Noel"', await parent.getByRole('button', { name: /Enviar con la voz de Papá Noel/ }).isVisible());
@@ -77,6 +78,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
     await parent.waitForSelector('text=ya ha contestado', { timeout: 40000 });
   }
   await parent.waitForSelector('text=/Ya has usado los 3 mensajes con voz/', { timeout: 10000 }).then(() => check('al agotarlas, el panel lo dice y ofrece el Pase', true), () => check('al agotarlas, el panel lo dice', false));
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   check('ya no se ofrece "Con voz" (va por escrito)', (await parent.getByRole('radio', { name: /Con voz/ }).count()) === 0 && await parent.getByRole('button', { name: /^Enviar como Papá Noel/ }).isVisible());
   await parent.screenshot({ path: S + '/v3-parent-trial-used.png' });
   const forced = await parent.evaluate(async () => { const t = location.pathname.split('/paje/')[1]; const r = await fetch('/api/rooms/' + t + '/reply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'Cuarta, aunque pida voz', delayMinutes: 0, mode: 'voice' }) }); return r.json(); });

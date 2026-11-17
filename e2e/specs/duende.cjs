@@ -70,6 +70,7 @@ const pad = (n) => String(n).padStart(2, '0');
   // Programar el mensaje (con foto) para mañana a las 8:00
   await parent.getByTestId('photo-input').setInputFiles(FIX + '/foto-padres.png');
   await parent.getByText('Foto lista').waitFor({ timeout: 10000 });
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   await parent.getByRole('radio', { name: 'Otro día' }).click();
   await parent.getByRole('button', { name: 'Mañana a las 8:00' }).click();
   check('el selector de fecha acepta "Mañana a las 8:00"', (await parent.inputValue('#when-custom')).endsWith('T08:00'));
@@ -85,6 +86,7 @@ const pad = (n) => String(n).padStart(2, '0');
 
   // texto programado para otro día
   await parent.fill('#reply', 'Mensaje de texto para mañana');
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   check('tras programar, el selector vuelve a "Ahora"', (await parent.getByRole('radio', { name: 'Ahora' }).getAttribute('aria-checked')) === 'true');
   await parent.getByRole('radio', { name: 'Otro día' }).click();
   await parent.getByRole('button', { name: 'Mañana a las 8:00' }).click();

@@ -25,10 +25,10 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
 
   await child.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'domcontentloaded' });
   check('padres: ven que Lucía está en el portal', await parent.getByText('Lucía está en el portal').waitFor({ timeout: 15000 }).then(() => true, () => false));
-  check('el aviso de apertura aún no aparece', (await parent.getByText('ha abierto el mensaje').count()) === 0);
+  check('el aviso de apertura aún no aparece', (await parent.getByText('abrió el mensaje').count()) === 0);
 
   await child.getByRole('button', { name: /Abrir mensaje de/ }).click({ timeout: 20000 });
-  check('padres: "Lucía ha abierto el mensaje" al tocar el sello', await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 }).then(() => true, () => false));
+  check('padres: "Lucía abrió el mensaje" al tocar el sello', await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 }).then(() => true, () => false));
   check('padres: el título avisa con 🎁', (await parent.title()).includes('🎁'));
   await parent.screenshot({ path: S + '/pr1-opened.png' });
   await parent.getByRole('button', { name: 'Primer saludo' }).first().click();

@@ -88,6 +88,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
 
   // ── 6. Entrega diferida
   await parent.fill('#reply', 'Mensaje con retraso de dos minutos');
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   await parent.getByRole('radio', { name: '2 min' }).click();
   await parent.getByRole('button', { name: /Enviar como Papá Noel/ }).click();
   await parent.waitForSelector('text=Se entregará a las', { timeout: 8000 });

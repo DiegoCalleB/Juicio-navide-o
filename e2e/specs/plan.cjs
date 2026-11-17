@@ -28,7 +28,7 @@ const pad = (n) => String(n).padStart(2, '0');
   const toggle = parent.getByRole('button', { name: /Preparativos/ });
   check('sala nueva: los preparativos están abiertos', (await toggle.getAttribute('aria-expanded')) === 'true');
   await openChild(child, childLink, {});
-  await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 });
+  await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 });
   check('al abrir el niño, los preparativos se pliegan solos', (await toggle.getAttribute('aria-expanded')) === 'false');
   check('plegados: "Empezar la sorpresa" no se ve', !(await parent.getByRole('button', { name: /Empezar la sorpresa/ }).isVisible()));
   await toggle.click();

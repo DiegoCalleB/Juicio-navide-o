@@ -16,7 +16,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const childToken = childLink.split('/r/')[1], parentToken = pajeHref.split('/paje/')[1];
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await openChild(child, childLink, {});
-  await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 });
+  await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 });
 
   // 1. Editar un mensaje del personaje
   await parent.fill('#reply', 'Te contesto con una errata: Jo jo jo');
