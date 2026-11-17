@@ -4,6 +4,7 @@ import { BRAND, heroFor } from '@/lib/brand';
 import { billingInfo } from '@/lib/billing';
 import { isCharacterId } from '@/lib/characters';
 import { siteNow } from '@/lib/clock';
+import { track } from '@/lib/metrics';
 import { CreateRoomForm } from '@/components/features/royal-chat/CreateRoomForm';
 import { PassWelcome } from '@/components/features/royal-chat/PassWelcome';
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: 'Abre el portal mágico de tu peque',
 /** Abrir el portal, paso a paso (1: el peque · 2: el personaje). /crear?personaje=duende_chispa deja elegido al personaje. */
 export default async function CrearPage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {
   const { personaje } = await searchParams;
+  await track('crear_vista', { src: 'web' });
   const initialCharacter = personaje && isCharacterId(personaje) ? personaje : undefined;
   const billing = billingInfo();
   return (

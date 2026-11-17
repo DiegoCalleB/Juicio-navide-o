@@ -5,6 +5,7 @@ import { siteNow } from '@/lib/clock';
 import { diaryFor } from '@/lib/elfDiary';
 import { elfArt } from '@/lib/elfArt';
 import { currentAge } from '@/lib/ageServer';
+import { trackEntry } from '@/lib/metrics';
 import { ShareBar } from '@/components/features/ShareBar';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,8 @@ export const metadata: Metadata = {
 };
 
 /** Página pública: la magia, nunca el truco (AGENTS.md). */
-export default async function DiarioPage() {
+export default async function DiarioPage({ searchParams }: { searchParams: Promise<{ src?: string }> }) {
+  await trackEntry('diario_vista', (await searchParams).src);
   const { mode, entries } = diaryFor(siteNow());
   const age = await currentAge();
   return (

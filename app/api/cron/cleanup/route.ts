@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { getCronSecret } from '@/lib/env.server';
 import { fail, json } from '@/lib/http';
+import { purgeSeen } from '@/lib/metrics';
 import { getRoomStore } from '@/services/room-store';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
   if (!authorized(req)) return fail('UNAUTHORIZED', 'No autorizado', 401);
   try {
     const result = await getRoomStore().deleteExpired(new Date().toISOString());
+    await purgeSeen();
     return json({ ok: true, data: result });
   } catch (err) {
     console.error('[cleanup]', err);

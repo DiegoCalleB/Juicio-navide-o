@@ -2,13 +2,15 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { BRAND } from '@/lib/brand';
 import { billingInfo } from '@/lib/billing';
+import { track } from '@/lib/metrics';
 import { PricingSection } from '@/components/features/royal-chat/PricingSection';
 
 export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 export const metadata: Metadata = { title: 'Precios · Prueba gratis y Pase de Navidad' };
 
-export default function PreciosPage() {
+export default async function PreciosPage() {
+  await track('precios_vista', { src: 'web' });
   const billing = billingInfo();
   return (
     <div data-scroll-root className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">

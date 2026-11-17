@@ -50,6 +50,12 @@ Programar una llamada diaria (cron de Railway o similar):
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://TU-DOMINIO/api/cron/cleanup
 ```
 
+## Métricas (`/metricas`)
+Contadores propios, sin cookies ni terceros ni JS en el cliente: por día (Madrid), evento y origen, en `metrics_daily`. `metrics_seen` guarda un hash que rota cada día (nadie es seguible entre días) y el cron de borrado lo purga. Eventos en `lib/metrics.ts` (portada, edad mayor/menor, puerta, cuenta, crear, precios, diario, Polo Norte, portal del niño). Portales y pases salen directamente de la base de datos.
+- Panel privado: poner `METRICS_TOKEN` (≥12 caracteres) en Railway y abrir `/metricas`. Sin la variable devuelve 404. Es `noindex` y no se enlaza desde ningún sitio.
+- Origen de las visitas: `?src=fb|ig|tt|yt|wa` en el enlace (p. ej. `https://www.lineamagica.es/?src=ig` en la bio); si no, se deduce del Referer o queda como «directo».
+- Migración: `supabase/migrations/20261117000000_metrics.sql`. Las métricas por publicación de Facebook/Instagram se miran en Meta Business Suite.
+
 ## Añadir un personaje
 1. Una entrada en `lib/characters.ts` (nombre, colores, textos, días de vida).
 2. Su voz en `lib/voice.ts`.

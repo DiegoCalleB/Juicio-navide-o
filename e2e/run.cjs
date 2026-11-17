@@ -20,7 +20,7 @@ const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
-const SPECS = ['magia', 'landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', ...(withVoice ? ['voice'] : [])];
+const SPECS = ['magia', 'landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', 'metricas', ...(withVoice ? ['voice'] : [])];
 const selected = nowArg ? ['blackfriday'] : withBilling ? ['billing'] : SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {
@@ -30,6 +30,7 @@ const env = {
   ROOMS_STORE: 'memory',
   ADULT_GATE_SECONDS: '30', // en producción son 5 s; el servidor de pruebas va más lento que una persona
   CRON_SECRET: 'testsecret-testsecret-1234',
+  METRICS_TOKEN: 'clave-de-pruebas-1234',
   FINGERPRINT_SALT: process.env.FINGERPRINT_SALT || 'e2e-salt-e2e-salt-e2e-salt',
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'e2e-anon-key-e2e-anon-key',

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { track } from '@/lib/metrics';
 import { ADULT_AGE, AGE_COOKIE, ageCookie, ageStatus, newAgeToken } from '@/lib/adultGate';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
     return res(400, { ok: false, error: { code: 'INVALID', message: 'Mmm… ¿seguro? Escríbelo otra vez, con números.' } });
   }
   const adult = age >= ADULT_AGE;
+  if (prev === null) await track(adult ? 'edad_mayor' : 'edad_menor', { src: 'web' });
   const r = res(200, { ok: true, data: { adult } });
   r.cookies.set(ageCookie(await newAgeToken(adult ? 'ok' : 'menor')));
   return r;

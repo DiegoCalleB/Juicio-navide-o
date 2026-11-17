@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { LocaleProvider } from '@/components/LocaleProvider';
 import { LiveChildChat } from '@/components/features/royal-chat/LiveChildChat';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
+import { track } from '@/lib/metrics';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -20,5 +21,6 @@ export default async function ChildRoomPage({ params, searchParams }: { params: 
   const { letras } = await searchParams;
   const found = await findRoomByToken(token);
   if (!found || found.role !== 'child') notFound();
+  await track('portal_nino', { src: 'web' });
   return <LocaleProvider locale={found.room.locale}><LiveChildChat token={token} character={resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender, locale: found.room.locale })} childName={found.room.childName} initialCaps={letras === 'mayus' || found.room.readingLevel !== 'yes'} /></LocaleProvider>;
 }

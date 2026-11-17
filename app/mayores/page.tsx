@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { AGE_COOKIE, GATE_COOKIE, ageStatus, gateEnabled, newChallenge, safeNext, sessionValid } from '@/lib/adultGate';
+import { track } from '@/lib/metrics';
 import { billingInfo } from '@/lib/billing';
 import { EdadChispa } from '@/components/features/gate/EdadChispa';
 import { GateForm } from '@/components/features/gate/GateForm';
@@ -20,6 +21,7 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
   if (!open) {
     // Primero Chispa pregunta la edad; quien dice ser menor se queda ahí. Después, la cuenta de cabeza.
     const age = await ageStatus((await cookies()).get(AGE_COOKIE)?.value);
+    await track(age === 'ok' ? 'mayores_puerta' : 'mayores_edad', { src: 'web' });
     return (
       <main className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-[#120c22] px-6 py-10">
         {age === 'ok' ? <GateForm initial={await newChallenge()} next={safeNext(next)} /> : <EdadChispa initialMinor={age === 'menor'} />}
@@ -27,6 +29,7 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
     );
   }
 
+  await track('mayores_cuenta', { src: 'web' });
   const billing = billingInfo();
   const items: { href: string; title: string; text: string }[] = [
     { href: '/crear', title: 'Abrir un portal', text: 'Abre el portal para que tu peque hable con sus seres mágicos esta Navidad.' },

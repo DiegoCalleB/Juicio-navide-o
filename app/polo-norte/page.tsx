@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { BRAND } from '@/lib/brand';
 import { PLACES, REINDEER, RIDDLES } from '@/lib/poloNorte';
+import { trackEntry } from '@/lib/metrics';
 import { ChisteDelElfo } from '@/components/features/ChisteDelElfo';
 
 export const viewport: Viewport = { themeColor: '#0d2b3a' };
@@ -19,7 +20,8 @@ const NAV = [
 ] as const;
 
 /** Página pública para los curiosos: pura magia, sin formularios ni datos (AGENTS.md). */
-export default function PoloNortePage() {
+export default async function PoloNortePage({ searchParams }: { searchParams: Promise<{ src?: string }> }) {
+  await trackEntry('polo_norte_vista', (await searchParams).src);
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#0d2b3a] text-[#fff6dc]">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />

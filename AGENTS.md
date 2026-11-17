@@ -68,3 +68,4 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 - No crear PRs sin que se pidan. Sin cambios destructivos en Supabase sin confirmación.
 - Los secretos (Railway, Stripe, claves de API) los pone el usuario; nunca pedirlos ni verlos en el chat.
 - Nada que parezca «hecho con IA» a la vista: sin avisos de IA ni ✨ decorativos en la interfaz.
+- Métricas (`lib/metrics.ts`, `/metricas`): solo contadores propios sin cookies ni terceros; nunca guardar IP, edad ni datos de niños. El panel va con `METRICS_TOKEN` y no se enlaza ni indexa.

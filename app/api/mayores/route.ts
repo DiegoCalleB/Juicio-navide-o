@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { AGE_COOKIE, ageStatus, checkAnswer, newChallenge, newSession, safeNext, sessionCookie } from '@/lib/adultGate';
+import { track } from '@/lib/metrics';
 import { DEVICE, NETWORK, clearFails, humanWait, lockedFor, recordFail } from '@/lib/gateLock';
 import { getClientFingerprint, getClientNetwork } from '@/lib/security';
 
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
   const result = token ? await checkAnswer(token, answer) : 'wrong';
 
   if (result === 'ok') {
+    await track('puerta_ok', { src: 'web' });
     clearFails(device);
     const r = res(200, { ok: true, data: { next: safeNext(typeof body?.next === 'string' ? body.next : null) } });
     r.cookies.set(sessionCookie(await newSession()));
@@ -38,7 +40,11 @@ export async function POST(req: NextRequest) {
   if (result === 'expired') {
     return res(400, { ok: false, error: { code: 'EXPIRED', message: 'Se ha acabado el tiempo. Aquí tienes otra.' }, data: await newChallenge() });
   }
+  await track('puerta_fallo', { src: 'web' });
   const lock = Math.max(recordFail(device, DEVICE), recordFail(network, NETWORK));
-  if (lock > 0) return locked(lock);
+  if (lock > 0) {
+    await track('puerta_bloqueo', { src: 'web' });
+    return locked(lock);
+  }
   return res(400, { ok: false, error: { code: 'WRONG', message: 'No es correcto. Prueba con esta otra.' }, data: await newChallenge() });
 }
