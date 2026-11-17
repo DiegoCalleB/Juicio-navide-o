@@ -9,8 +9,9 @@ servidor; 3 fallos bloquean el dispositivo y 9 la conexión, con bloqueos de 15 
 
 | Ruta | Quién | Qué |
 |---|---|---|
-| `/` | Todos | Portada mágica (sin precios ni instrucciones); «Para mamás y papás» lleva a la puerta |
+| `/` | Todos | Portada mágica de temporada (sin precios ni instrucciones). Título de pestaña y vista previa siguen al gancho de la temporada. Chispa pregunta la edad; solo si es de mayor aparecen «Mi cuenta» y «Condiciones de uso» |
 | `/diario-de-chispa` | Todos | Lo que el elfo Chispa cuenta que hizo cada noche |
+| `/polo-norte` | Todos | Rincón para los curiosos: chistes del elfo, adivinanzas, renos y mapa (sin formularios ni datos) |
 | `/r/[token]` | Niño | Chat con el personaje |
 | `/mayores` | Puerta | La pregunta y, ya dentro, el menú de la zona de mayores (salas guardadas, ideas, precios, legal) |
 | `/crear`, `/precios`, `/ideas-elfo/*` | Mayores | Crear la sala, precios e ideas de trastadas |
