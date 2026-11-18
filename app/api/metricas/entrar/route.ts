@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { clientIp } from '@/lib/clientIp';
 import { METRICS_COOKIE, metricsCookieValue, metricsToken, tokenMatches } from '@/lib/metricsAuth';
 import { rateLimit } from '@/lib/security';
+import { secAlert } from '@/lib/securityAlert';
 import { secEvent } from '@/lib/securityLog';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as { token?: unknown } | null;
   const given = typeof body?.token === 'string' ? body.token.slice(0, 200) : '';
   if (!tokenMatches(given)) {
-    secEvent('metricas_clave_incorrecta');
+    secAlert('metricas_clave_incorrecta');
     return res(401, { ok: false, error: 'Clave incorrecta.' });
   }
   const r = res(200, { ok: true });

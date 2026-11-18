@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { AGE_COOKIE, ageStatus, checkAnswer, newChallenge, newSession, safeNext, sessionCookie } from '@/lib/adultGate';
 import { track } from '@/lib/metrics';
-import { secEvent } from '@/lib/securityLog';
+import { secAlert } from '@/lib/securityAlert';
 import { DEVICE, NETWORK, clearFails, humanWait, lockedFor, recordFail } from '@/lib/gateLock';
 import { getClientFingerprint, getClientNetwork } from '@/lib/security';
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const lock = Math.max(recordFail(device, DEVICE), recordFail(network, NETWORK));
   if (lock > 0) {
     await track('puerta_bloqueo', { src: 'web' });
-    secEvent('puerta_bloqueo', { minutos: Math.round(lock / 60_000) });
+    secAlert('puerta_bloqueo', { minutos: Math.round(lock / 60_000) });
     return locked(lock);
   }
   return res(400, { ok: false, error: { code: 'WRONG', message: 'No es correcto. Prueba con esta otra.' }, data: await newChallenge() });

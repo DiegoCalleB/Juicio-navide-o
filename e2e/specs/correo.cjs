@@ -73,6 +73,16 @@ const DELATAN = /pap[aá] noel|trastada|no es real|no son reales|los padres (con
   await bad.goto(BASE + '/baja?e=abc&s=def', { waitUntil: 'networkidle' });
   check('baja con enlace inválido: mensaje neutro, sin botón', (await bad.getByRole('button', { name: 'Darme de baja' }).count()) === 0);
 
+  // 6b. Alertas de seguridad al dueño: una clave incorrecta en el panel de métricas avisa (y solo una vez por hora)
+  await post('/api/metricas/entrar', { token: 'clave-equivocada' }); // calienta la ruta (los contadores se reinician al compilar)
+  const antes = (await box()).outbox.filter((m) => m.to === 'alertas@ejemplo.com').length;
+  await post('/api/metricas/entrar', { token: 'otra-clave-equivocada' });
+  await post('/api/metricas/entrar', { token: 'y-otra-mas' });
+  const alertas = (await box()).outbox.filter((m) => m.to === 'alertas@ejemplo.com');
+  check('alerta: una clave incorrecta en las métricas avisa al dueño', alertas.length >= 1 && /métricas/i.test(alertas.at(-1).subject) && /Alerta/.test(alertas.at(-1).subject));
+  check('alerta: no se repite durante una hora (sin llenar el buzón)', alertas.length - antes <= 1 && alertas.length <= 1, `${antes} → ${alertas.length}`);
+  check('alerta: sin datos personales ni enlaces secretos', !/https?:\/\//.test(alertas.at(-1).text) && !/clave-equivocada/.test(alertas.at(-1).text + alertas.at(-1).html));
+
   // 7. Interfaz: el formulario aparece en el panel y la casilla de novedades viene SIN marcar
   await p.goto(BASE + panel, { waitUntil: 'networkidle' });
   const form = p.getByRole('region', { name: 'Enlace por correo' });
