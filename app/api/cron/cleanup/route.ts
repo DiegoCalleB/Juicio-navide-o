@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
   try {
     const result = await getRoomStore().deleteExpired(new Date().toISOString());
     await purgeSeen();
-    const contacts = await getRoomStore().purgeContacts(new Date(Date.now() - 150 * 86_400_000).toISOString());
+    // Correos sin consentimiento de novedades pasada la temporada. Si la tabla aún no existe (migración sin aplicar), no frena la limpieza.
+    const contacts = await getRoomStore().purgeContacts(new Date(Date.now() - 150 * 86_400_000).toISOString()).catch((e) => {
+      console.error('[cleanup] contactos:', e instanceof Error ? e.message : e);
+      return 0;
+    });
     return json({ ok: true, data: { ...result, contacts } });
   } catch (err) {
     console.error('[cleanup]', err);
