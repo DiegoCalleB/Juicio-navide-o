@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { getCronSecret } from '@/lib/env.server';
 import { fail, json } from '@/lib/http';
+import { secEvent } from '@/lib/securityLog';
 import { purgeSeen } from '@/lib/metrics';
 import { getRoomStore } from '@/services/room-store';
 
@@ -21,7 +22,10 @@ function authorized(req: NextRequest): boolean {
  * Llamar a diario: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://tu-dominio/api/cron/cleanup`
  */
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return fail('UNAUTHORIZED', 'No autorizado', 401);
+  if (!authorized(req)) {
+    secEvent('cron_no_autorizado');
+    return fail('UNAUTHORIZED', 'No autorizado', 401);
+  }
   try {
     const result = await getRoomStore().deleteExpired(new Date().toISOString());
     await purgeSeen();

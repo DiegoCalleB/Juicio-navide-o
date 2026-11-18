@@ -233,6 +233,14 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   const o = await solveApi(other);
   check('otra conexión distinta entra con normalidad', (await other.post(BASE + '/api/mayores', { data: { token: o.token, answer: o.right } })).status() === 200);
 
+  // CSRF: una web ajena no puede hacer que el navegador de un visitante cambie datos
+  const evil = await other.post(BASE + '/api/mayores/edad', { data: { age: '30' }, headers: { origin: 'https://sitio-ajeno.example' } });
+  check('CSRF: una petición que cambia datos desde otro origen se rechaza (403)', evil.status() === 403);
+  const evil2 = await other.post(BASE + '/api/mayores/edad', { data: { age: '30' }, headers: { 'sec-fetch-site': 'cross-site' } });
+  check('CSRF: «Sec-Fetch-Site: cross-site» también se rechaza', evil2.status() === 403);
+  const okSame = await other.post(BASE + '/api/mayores/edad', { data: { age: '30' }, headers: { origin: BASE, 'sec-fetch-site': 'same-origin' } });
+  check('CSRF: desde nuestra propia web, la misma petición funciona', okSame.status() === 200);
+
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`RESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
   await b.close(); await b2.close(); process.exit(results.every(Boolean) ? 0 : 1);

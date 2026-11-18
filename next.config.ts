@@ -22,7 +22,18 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
+  ...(isDev ? [] : ['upgrade-insecure-requests']),
 ].join('; ');
+
+// Con dominio fijo, el redirect a HTTPS va siempre a él (nunca a lo que diga la cabecera Host).
+const siteOrigin = (() => {
+  try {
+    const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? '';
+    return raw ? new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).origin.replace(/^http:/, 'https:') : '';
+  } catch {
+    return '';
+  }
+})();
 
 const config: NextConfig = {
   // Grabaciones de vídeo y capturas: sin el indicador de desarrollo de Next (NEXT_DEV_INDICATORS=0).
@@ -31,6 +42,22 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  async redirects() {
+    // Railway termina el TLS y avisa con x-forwarded-proto: todo lo que llegue por http se manda a https.
+    if (isDev) return [];
+    return [
+      {
+        source: '/:path*',
+        has: [
+          { type: 'header' as const, key: 'x-forwarded-proto', value: 'http' },
+          ...(siteOrigin ? [] : [{ type: 'header' as const, key: 'host', value: '(?<host>.+)' }]),
+        ],
+        destination: siteOrigin ? `${siteOrigin}/:path*` : 'https://:host/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -41,6 +68,7 @@ const config: NextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
         ],
       },
