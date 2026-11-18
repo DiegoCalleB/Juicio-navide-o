@@ -46,7 +46,8 @@ const SOURCES: [RegExp, string][] = [
   [/google\./, 'google'],
   [/bing\.com|duckduckgo\.com|ecosia\./, 'buscador'],
   [/wa\.me|whatsapp\.com/, 'wa'],
-  [/t\.co|twitter\.com|x\.com/, 'x'],
+  [/linkedin\.com|lnkd\.in/, 'li'],
+  [/^t\.co$|twitter\.com|(^|\.)x\.com$/, 'x'],
 ];
 
 /** Origen de la visita: ?src= (enlaces propios) o, si no, el sitio del que viene. */

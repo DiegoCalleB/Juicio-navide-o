@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#0f1420' };
 export const metadata: Metadata = { title: 'Métricas', robots: { index: false, follow: false } };
 
-const SRC_NAMES: Record<string, string> = { fb: 'Facebook', ig: 'Instagram', tt: 'TikTok', yt: 'YouTube', wa: 'WhatsApp', x: 'X', google: 'Google', buscador: 'Otro buscador', otra_web: 'Otra web', directo: 'Directo / sin origen', web: 'Dentro de la web' };
+const SRC_NAMES: Record<string, string> = { fb: 'Facebook', ig: 'Instagram', tt: 'TikTok', yt: 'YouTube', wa: 'WhatsApp', x: 'X', li: 'LinkedIn', google: 'Google', buscador: 'Otro buscador', otra_web: 'Otra web', directo: 'Directo / sin origen', web: 'Dentro de la web' };
 
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : '—');
 const money = (cents: number) => `${(cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
