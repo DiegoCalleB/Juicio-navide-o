@@ -67,7 +67,7 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
 
   const maxDay = Math.max(1, ...list.map((d) => sum('landing', 'uniq', d)));
   const site = getSiteUrl();
-  const links: [string, string][] = [['Facebook', 'fb'], ['Instagram (bio)', 'ig'], ['TikTok (bio)', 'tt'], ['YouTube', 'yt'], ['WhatsApp', 'wa']];
+  const links: [string, string][] = [['Facebook', 'fb'], ['Instagram (bio)', 'ig'], ['TikTok (bio)', 'tt'], ['LinkedIn', 'li'], ['YouTube', 'yt'], ['WhatsApp', 'wa']];
 
   const Card = ({ t, v, s }: { t: string; v: string | number; s?: string }) => (
     <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
