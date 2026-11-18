@@ -15,6 +15,8 @@ interface State {
 }
 
 const g = globalThis as unknown as { __roomMemory?: State };
+const gc = globalThis as unknown as { __contactsMem?: import('./types').ContactRecord[] };
+const contactsMem = () => (gc.__contactsMem ??= []);
 const state = (): State => (g.__roomMemory ??= { rooms: new Map(), byHash: new Map(), messages: new Map(), files: new Map(), passes: new Map() });
 
 /** Lee un archivo del almacén en memoria (lo sirve la ruta de desarrollo). */
@@ -178,6 +180,34 @@ export class MemoryRoomStore implements RoomStore {
     return [...state().rooms.values()]
       .filter((r) => r.familyHash === hash && Date.parse(r.expiresAt) > Date.now())
       .sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  async upsertContact(c: { scope: string; email: string; marketing: boolean; consentVersion: string }): Promise<void> {
+    const list = contactsMem();
+    const i = list.findIndex((x) => x.scope === c.scope && x.email === c.email);
+    const rec = { scope: c.scope, email: c.email, marketingOptIn: c.marketing, createdAt: i >= 0 ? list[i]!.createdAt : new Date().toISOString() };
+    if (i >= 0) list[i] = rec;
+    else list.push(rec);
+  }
+
+  async deleteContactsByEmail(email: string): Promise<number> {
+    const list = contactsMem();
+    const keep = list.filter((x) => x.email !== email);
+    const n = list.length - keep.length;
+    list.splice(0, list.length, ...keep);
+    return n;
+  }
+
+  async purgeContacts(beforeIso: string): Promise<number> {
+    const list = contactsMem();
+    const keep = list.filter((x) => x.marketingOptIn || x.createdAt >= beforeIso);
+    const n = list.length - keep.length;
+    list.splice(0, list.length, ...keep);
+    return n;
+  }
+
+  async listContacts(): Promise<import('./types').ContactRecord[]> {
+    return [...contactsMem()];
   }
 
   async setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void> {

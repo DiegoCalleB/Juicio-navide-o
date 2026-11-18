@@ -20,7 +20,7 @@ const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
-const SPECS = ['magia', 'landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', 'metricas', ...(withVoice ? ['voice'] : [])];
+const SPECS = ['magia', 'landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', 'metricas', 'correo', ...(withVoice ? ['voice'] : [])];
 const selected = nowArg ? ['blackfriday'] : withBilling ? ['billing'] : SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {
@@ -28,6 +28,7 @@ const env = {
   // Fecha fija para que la portada de temporada y los precios sean predecibles (18-dic: Papá Noel, precio normal).
   FAKE_NOW: nowArg || '2026-12-18T12:00:00+01:00',
   ROOMS_STORE: 'memory',
+  MAIL_FAKE: '1', // el correo va a un buzón de pruebas, nunca a Resend
   ADULT_GATE_SECONDS: '30', // en producción son 5 s; el servidor de pruebas va más lento que una persona
   CRON_SECRET: 'testsecret-testsecret-1234',
   METRICS_TOKEN: 'clave-de-pruebas-1234',

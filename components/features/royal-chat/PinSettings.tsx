@@ -8,7 +8,7 @@ type Mode = 'idle' | 'set' | 'remove';
 
 /**
  * Bloqueo parental: poner, cambiar o quitar el PIN de los padres, y bloquear ya.
- * Al poner el PIN se enseña UNA vez el código de rescate (por si se olvida el PIN: no hay cuentas ni correo).
+ * Al poner el PIN se enseña UNA vez el código de rescate (por si se olvida el PIN: no hay cuentas).
  */
 export function PinSettings({ token, hasPin, intro, tone = 'panel', onDone }: { token: string; hasPin: boolean; intro?: string; tone?: 'panel' | 'landing'; onDone?: () => void }) {
   const [mode, setMode] = useState<Mode>('idle');

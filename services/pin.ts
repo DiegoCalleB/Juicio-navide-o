@@ -11,6 +11,7 @@ import {
   verifySecret,
   verifyUnlock,
 } from '@/lib/pin';
+import { secEvent } from '@/lib/securityLog';
 import { hashToken, TOKEN_REGEX } from '@/lib/tokens';
 import { getRoomStore } from '@/services/room-store';
 import type { RoomRecord } from '@/services/room-store/types';
@@ -64,6 +65,7 @@ function registerFail(key: string): { locked: boolean; left: number } {
   f.count += 1;
   if (f.count >= MAX_FAILS) {
     f.lockedUntil = Date.now() + Math.min(6 * 3_600_000, 15 * 60_000 * 2 ** f.locks);
+    secEvent('pin_bloqueo', { bloqueos: f.locks + 1 });
     f.locks += 1;
     f.count = 0;
     map.set(key, f);

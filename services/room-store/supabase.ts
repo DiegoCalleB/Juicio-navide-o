@@ -157,6 +157,34 @@ export class SupabaseRoomStore implements RoomStore {
     return (data ?? []).map(toRoom);
   }
 
+  async upsertContact(c: { scope: string; email: string; marketing: boolean; consentVersion: string }): Promise<void> {
+    const { error } = await getAdminClient()
+      .from('parent_contacts')
+      .upsert(
+        { scope: c.scope, email: c.email, marketing_opt_in: c.marketing, consent_at: c.marketing ? new Date().toISOString() : null, consent_version: c.marketing ? c.consentVersion : null },
+        { onConflict: 'scope,email' },
+      );
+    if (error) throw new Error(`upsertContact: ${error.message}`);
+  }
+
+  async deleteContactsByEmail(email: string): Promise<number> {
+    const { data, error } = await getAdminClient().from('parent_contacts').delete().eq('email', email).select('id');
+    if (error) throw new Error(`deleteContactsByEmail: ${error.message}`);
+    return data?.length ?? 0;
+  }
+
+  async purgeContacts(beforeIso: string): Promise<number> {
+    const { data, error } = await getAdminClient().from('parent_contacts').delete().eq('marketing_opt_in', false).lt('created_at', beforeIso).select('id');
+    if (error) throw new Error(`purgeContacts: ${error.message}`);
+    return data?.length ?? 0;
+  }
+
+  async listContacts(): Promise<import('./types').ContactRecord[]> {
+    const { data, error } = await getAdminClient().from('parent_contacts').select('scope,email,marketing_opt_in,created_at').order('created_at', { ascending: false }).limit(5000);
+    if (error) throw new Error(`listContacts: ${error.message}`);
+    return (data ?? []).map((r) => ({ scope: r.scope as string, email: r.email as string, marketingOptIn: !!r.marketing_opt_in, createdAt: r.created_at as string }));
+  }
+
   async setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void> {
     const q = getAdminClient().from('rooms').update({ parent_pin: pin, pin_recovery: recovery });
     const { error } = await (scope.familyHash ? q.eq('family_hash', scope.familyHash) : q.eq('id', scope.roomId));
