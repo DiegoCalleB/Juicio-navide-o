@@ -36,7 +36,10 @@ export function gateEnabled(): boolean {
 }
 
 function secret(): string {
-  return process.env.ADULT_GATE_SECRET || process.env.FINGERPRINT_SALT || 'lm-dev-only-secret-change-me';
+  const s = process.env.ADULT_GATE_SECRET || process.env.FINGERPRINT_SALT;
+  if (s && s.length >= 16) return s;
+  if (process.env.NODE_ENV === 'production') throw new Error('Falta ADULT_GATE_SECRET (o FINGERPRINT_SALT) de al menos 16 caracteres.');
+  return 'lm-dev-only-secret-change-me';
 }
 
 const enc = new TextEncoder();

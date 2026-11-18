@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { clientIp } from '@/lib/clientIp';
 import { METRICS_COOKIE, metricsCookieValue, metricsToken, tokenMatches } from '@/lib/metricsAuth';
 import { rateLimit } from '@/lib/security';
 
@@ -10,7 +11,7 @@ const res = (status: number, body: unknown) => NextResponse.json(body, { status,
 /** Entrada al panel de métricas con la clave del dueño. Sin METRICS_TOKEN configurado, no existe. */
 export async function POST(req: NextRequest) {
   if (!metricsToken()) return res(404, { ok: false });
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'x';
+  const ip = clientIp(req.headers);
   if (!rateLimit(`metricas:${ip}`, 8, 10 * 60_000)) return res(429, { ok: false, error: 'Demasiados intentos.' });
   const body = (await req.json().catch(() => null)) as { token?: unknown } | null;
   const given = typeof body?.token === 'string' ? body.token.slice(0, 200) : '';

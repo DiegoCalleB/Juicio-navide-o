@@ -1,4 +1,5 @@
 import 'server-only';
+import { clientIp } from '@/lib/clientIp';
 import { createHash } from 'node:crypto';
 import { headers } from 'next/headers';
 import { after } from 'next/server';
@@ -96,7 +97,7 @@ export async function track(event: MetricEvent, opts: { src?: string | null } = 
     if (!isMemoryStore() && (!ua || BOT.test(ua))) return;
     if (h.get('next-router-prefetch') || h.get('purpose') === 'prefetch' || h.get('sec-purpose')?.includes('prefetch')) return;
     const day = madridDay();
-    const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+    const ip = clientIp(h);
     const visitor = createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|m|${day}|${ip}|${ua}`).digest('hex').slice(0, 32);
     const src = opts.src === undefined || opts.src === null ? sourceOf(null, h.get('referer')) : opts.src;
     after(() => bump(day, event, src, visitor).catch((e) => console.error('[metrics]', e)));
