@@ -48,6 +48,8 @@ export interface NewPass {
   tokenHash: string;
   kind: 'paid' | 'gift';
   stripeSessionId?: string | null;
+  /** Pago de Stripe (pi_…): sirve para retirar el pase si se devuelve el dinero. */
+  stripePaymentIntent?: string | null;
   parentPassId?: string | null;
   amountCents?: number | null;
   expiresAt: string;
@@ -162,6 +164,9 @@ export interface RoomStore {
   findPassByTokenHash(hash: string): Promise<PassRecord | null>;
   findPassById(id: string): Promise<PassRecord | null>;
   findPassByStripeSession(sessionId: string): Promise<PassRecord | null>;
+  findPassByPaymentIntent(paymentIntent: string): Promise<PassRecord | null>;
+  /** Retira el pase (y el de regalo que salió de él): caduca ya y las salas vuelven a la prueba ya terminada. Devuelve cuántas salas se bloquean. */
+  revokePass(passId: string, nowIso: string): Promise<number>;
   /** El pase regalado por otro pase (si existe). */
   findGiftOf(passId: string): Promise<PassRecord | null>;
   countRoomsByPass(passId: string): Promise<number>;

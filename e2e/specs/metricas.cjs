@@ -30,9 +30,9 @@ const TOKEN = process.env.METRICS_TOKEN || 'clave-de-pruebas-1234';
     const m = t.replace(/\n+/g, ' ').match(new RegExp(label + '\\s+(\\d+)', 'i'));
     return m ? Number(m[1]) : NaN;
   };
-  const ig = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const row = p.locator('tr', { hasText: 'Instagram' }); return (await row.count()) ? Number((await row.first().locator('td').nth(1).innerText()).trim()) : 0; };
+  const ig = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/Instagram\s+(\d+)/i); return m ? Number(m[1]) : 0; };
 
-  const v0 = await num('Visitas hoy');
+  const v0 = await num('Han entrado');
   const ig0 = await ig();
 
   // 2. Un visitante (peque o no) llega desde Instagram; otro contesta la edad y pasa por la puerta
@@ -40,18 +40,18 @@ const TOKEN = process.env.METRICS_TOKEN || 'clave-de-pruebas-1234';
   const kp = await kid.newPage();
   await kp.goto(BASE + '/?src=ig', { waitUntil: 'networkidle' });
   await kp.waitForTimeout(1500);
-  const v1 = await num('Visitas hoy');
-  check('una visita nueva suma a «Visitas hoy»', v1 === v0 + 1, `${v0} → ${v1}`);
+  const v1 = await num('Han entrado');
+  check('una visita nueva suma a «Han entrado» (Hoy)', v1 === v0 + 1, `${v0} → ${v1}`);
   const ig1 = await ig();
   check('el origen ?src=ig aparece como Instagram', ig1 === ig0 + 1, `${ig0} → ${ig1}`);
 
-  const mm = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/Mayores \/ menores\s+(\d+) \/ (\d+)/i); return m ? [Number(m[1]), Number(m[2])] : [NaN, NaN]; };
+  const mm = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/Han contestado a Chispa\s+(\d+)/i); return m ? [Number(m[1])] : [NaN]; };
   const [a0] = await mm();
   const r = await kid.request.post(BASE + '/api/mayores/edad', { data: { age: 41 } });
   check('contestar la edad funciona', r.ok());
   await kp.waitForTimeout(1000);
   const [a1] = await mm();
-  check('«18 o más» suma uno', a1 === a0 + 1, `${a0} → ${a1}`);
+  check('contestar la edad suma uno a «Han contestado a Chispa»', a1 === a0 + 1, `${a0} → ${a1}`);
 
   // 3. Nada de esto deja cookies de seguimiento
   const names = (await kid.cookies()).map((c) => c.name).sort();

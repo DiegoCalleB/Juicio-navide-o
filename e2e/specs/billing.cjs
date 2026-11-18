@@ -145,6 +145,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('portada: sin la casilla legal no se abre el pago', await buyer.getByText('Marca la casilla para continuar.').isVisible());
   await buyer.getByText(/Quiero que el pase se active ya/).click();
   await Promise.all([buyer.waitForURL(/\/pase\/listo/, { timeout: 20000 }), buyer.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
+  const paidSession = new URL(buyer.url()).searchParams.get('session_id');
   check('comprar desde la portada: muestra el pase y el regalo', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible() && await buyer.getByRole('link', { name: 'Regalar por WhatsApp' }).isVisible());
   await buyer.getByRole('link', { name: 'Abrir un portal' }).click();
   await buyer.locator('#child').waitFor({ timeout: 15000 });
@@ -156,6 +157,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await ensureChar(buyer); await buyer.getByRole('button', { name: /Abrir el portal/ }).click();
   await buyer.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   check('el portal creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
+  const julia = (await buyer.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
 
   // Webhook de Stripe: firma obligatoria e idempotente
   const hook = async (body, sig) => (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', headers: { 'stripe-signature': sig, 'content-type': 'application/json' }, body })).status;
@@ -166,6 +168,21 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('webhook: rechaza una firma antigua (más de 5 min)', (await hook(evt, `t=${t - 900},v1=${crypto.createHmac('sha256', 'whsec_e2e_test_secret_123456').update(`${t - 900}.${evt}`).digest('hex')}`)) === 400);
   const s1 = await hook(evt, good), s2 = await hook(evt, good);
   check('webhook: acepta la firma válida y es idempotente', s1 === 200 && s2 === 200, `${s1}/${s2}`);
+
+  // Reembolso: se devuelve el dinero en Stripe y el pase deja de valer (las salas vuelven a la prueba ya terminada)
+  const sign = (b) => { const ts = Math.floor(Date.now() / 1000); return `t=${ts},v1=${crypto.createHmac('sha256', 'whsec_e2e_test_secret_123456').update(`${ts}.${b}`).digest('hex')}`; };
+  const pi = `pi_fake_${paidSession.slice('cs_fake_'.length)}`;
+  const partial = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: pi, refunded: false, amount: 399, amount_refunded: 100 } } });
+  check('reembolso parcial: el webhook responde bien y el pase sigue valiendo', (await hook(partial, sign(partial))) === 200);
+  await buyer.goto(BASE + julia, { waitUntil: 'networkidle' });
+  check('reembolso parcial: el portal sigue sin límite', (await buyer.locator('#reply').count()) === 1);
+  const refund = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: pi, refunded: true, amount: 399, amount_refunded: 399 } } });
+  check('reembolso total: el webhook responde bien (y es idempotente)', (await hook(refund, sign(refund))) === 200 && (await hook(refund, sign(refund))) === 200);
+  await buyer.goto(BASE + julia, { waitUntil: 'networkidle' });
+  await buyer.getByText('La prueba gratis ha terminado').waitFor({ timeout: 15000 }).catch(() => {});
+  check('reembolso total: el portal vuelve a quedar bloqueado', (await buyer.getByText('La prueba gratis ha terminado').count()) === 1 && (await buyer.locator('#reply').count()) === 0);
+  const unknown = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: 'pi_desconocido', refunded: true } } });
+  check('reembolso de un pago sin pase: se ignora sin error', (await hook(unknown, sign(unknown))) === 200);
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);

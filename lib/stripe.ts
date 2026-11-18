@@ -14,6 +14,8 @@ export interface CheckoutSession {
   paid: boolean;
   amountTotal: number | null;
   metadata: Record<string, string>;
+  /** Pago de Stripe (pi_…), para poder retirar el pase si se devuelve el dinero. */
+  paymentIntent: string | null;
   /** Correo que el comprador puso en Stripe. Solo se usa para mandarle su pase; no se guarda. */
   email: string | null;
 }
@@ -25,6 +27,7 @@ interface StripeSessionJson {
   status: string;
   amount_total: number | null;
   metadata: Record<string, string> | null;
+  payment_intent?: string | { id?: string } | null;
   customer_details?: { email?: string | null } | null;
 }
 
@@ -37,6 +40,7 @@ const toSession = (s: StripeSessionJson): CheckoutSession => ({
   paid: s.payment_status === 'paid' || s.payment_status === 'no_payment_required',
   amountTotal: s.amount_total,
   metadata: s.metadata ?? {},
+  paymentIntent: (typeof s.payment_intent === 'string' ? s.payment_intent : s.payment_intent?.id) || null,
   email: s.customer_details?.email?.trim().toLowerCase().slice(0, 120) || null,
 });
 
@@ -73,7 +77,7 @@ export async function createCheckoutSession(opts: {
 }): Promise<CheckoutSession> {
   if (isStripeFake()) {
     const id = `cs_fake_${randomBytes(12).toString('hex')}`;
-    const s: CheckoutSession = { id, url: opts.successUrl.replace('{CHECKOUT_SESSION_ID}', id), paid: true, amountTotal: opts.amountCents, metadata: opts.metadata, email: 'pago-de-prueba@example.com' };
+    const s: CheckoutSession = { id, url: opts.successUrl.replace('{CHECKOUT_SESSION_ID}', id), paid: true, amountTotal: opts.amountCents, metadata: opts.metadata, paymentIntent: `pi_fake_${id.slice(8)}`, email: 'pago-de-prueba@example.com' };
     fakeSessions().set(id, s);
     return s;
   }
