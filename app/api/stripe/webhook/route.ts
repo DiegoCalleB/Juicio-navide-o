@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { fail, json } from '@/lib/http';
-import { secEvent } from '@/lib/securityLog';
+import { secAlert } from '@/lib/securityAlert';
 import { sessionFromWebhookObject, verifyWebhookSignature } from '@/lib/stripe';
 import { fulfillCheckout, revokeByPaymentIntent } from '@/services/passes';
 
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const raw = await req.text();
   if (!verifyWebhookSignature(raw, req.headers.get('stripe-signature'))) {
-    secEvent('stripe_firma_invalida');
+    secAlert('stripe_firma_invalida');
     return fail('UNAUTHORIZED', 'Firma no válida', 400);
   }
   try {
