@@ -107,6 +107,13 @@ export interface NewRoom {
  *  - MemoryRoomStore (solo desarrollo/tests, nunca en producción)
  * Las implementaciones lanzan RoomError('RATE_LIMITED') cuando toca.
  */
+export interface ContactRecord {
+  scope: string;
+  email: string;
+  marketingOptIn: boolean;
+  createdAt: string;
+}
+
 export interface RoomStore {
   insertRoom(room: NewRoom): Promise<void>;
   /** Devuelve null si no existe o ha caducado. */
@@ -166,6 +173,14 @@ export interface RoomStore {
   setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void>;
   /** Cambia el apodo de todos los portales de la familia. */
   updateFamilyName(hash: string, name: string | null): Promise<void>;
+  // ── Correo de los padres (opcional) ──
+  /** Guarda (o actualiza) el correo de un ámbito. `marketing` es la última decisión de la persona. */
+  upsertContact(c: { scope: string; email: string; marketing: boolean; consentVersion: string }): Promise<void>;
+  /** Borra todos los registros de ese correo (baja). Devuelve cuántos. */
+  deleteContactsByEmail(email: string): Promise<number>;
+  /** Borra los correos SIN consentimiento de novedades guardados antes de `beforeIso`. */
+  purgeContacts(beforeIso: string): Promise<number>;
+  listContacts(): Promise<ContactRecord[]>;
   /** Cambia el nivel de lectura del portal. */
   updateReadingLevel(roomId: string, level: string): Promise<boolean>;
 }

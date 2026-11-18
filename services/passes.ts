@@ -1,5 +1,8 @@
 import 'server-only';
 import { derivePassTokens, passExpiresAt, paymentsEnabled } from '@/lib/billing';
+import { mailEnabled, sendMail } from '@/lib/mail';
+import { passMail } from '@/lib/mailTemplates';
+import { getSiteUrl } from '@/lib/site';
 import type { CheckoutSession } from '@/lib/stripe';
 import { hashToken, TOKEN_REGEX } from '@/lib/tokens';
 import { publishRefresh } from '@/services/realtime';
@@ -37,6 +40,7 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
   const store = getRoomStore();
   const tokens = derivePassTokens(session.id);
   const expiresAt = passExpiresAt().toISOString();
+  const alreadyDone = !!(await store.findPassByStripeSession(session.id));
   const pass = await store.insertPass({
     tokenHash: hashToken(tokens.pass),
     kind: 'paid',
@@ -46,6 +50,12 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
   });
   if (!(await store.findGiftOf(pass.id))) {
     await store.insertPass({ tokenHash: hashToken(tokens.gift), kind: 'gift', parentPassId: pass.id, expiresAt: pass.expiresAt });
+  }
+  // Primera vez que se da por bueno este pago: se le manda el pase al correo que puso en Stripe (no se guarda).
+  if (!alreadyDone && session.email && mailEnabled()) {
+    const origin = getSiteUrl();
+    const mail = passMail(`${origin}/?pase=${tokens.pass}`, `${origin}/?pase=${tokens.gift}`);
+    void sendMail({ to: session.email, ...mail, idempotencyKey: `pase-${session.id}` }).catch(() => {});
   }
   const roomId = session.metadata.room_id;
   if (roomId && /^[0-9a-f-]{36}$/.test(roomId)) {

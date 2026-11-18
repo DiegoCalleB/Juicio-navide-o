@@ -10,6 +10,7 @@ import { saveRoom } from '@/lib/myRooms';
 import type { FamilyView } from '@/services/rooms';
 import { InstallApp } from '@/components/features/InstallApp';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { EmailLink } from './EmailLink';
 import { PinSettings } from './PinSettings';
 import { useAutoLock } from './useAutoLock';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -160,6 +161,8 @@ export function FamilyPanel({ familyToken, family, origin, billing, hasPin = fal
         </section>
 
         {panelToken && <PinSettings token={panelToken} hasPin={hasPin} intro="Si tu peque coge tu móvil, no podrá ver vuestros portales ni lo que escribes. El PIN vale para todas." />}
+
+        <EmailLink token={familyToken} />
 
         <InstallApp what="tus portales" tone="panel" />
 
