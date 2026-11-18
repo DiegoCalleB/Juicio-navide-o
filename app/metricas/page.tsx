@@ -13,8 +13,6 @@ export const metadata: Metadata = { title: 'Métricas', robots: { index: false, 
 
 const SRC_NAMES: Record<string, string> = { fb: 'Facebook', ig: 'Instagram', tt: 'TikTok', yt: 'YouTube', wa: 'WhatsApp', x: 'X', li: 'LinkedIn', google: 'Google', buscador: 'Otro buscador', otra_web: 'Otra web', directo: 'Directo / sin origen', web: 'Dentro de la web' };
 
-const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)} %` : '—');
-const money = (cents: number) => `${(cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
 export default async function MetricasPage({ searchParams }: { searchParams: Promise<{ dias?: string }> }) {
   if (!metricsToken()) notFound();
@@ -43,27 +41,24 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
 
   const visitas = sum('landing', 'uniq');
   const contestan = sum('edad_mayor', 'uniq') + sum('edad_menor', 'uniq');
-  const mayores = sum('edad_mayor', 'uniq');
-  const menores = sum('edad_menor', 'uniq');
-  const funnel: [string, number, string][] = [
-    ['Visitan la portada', visitas, 'personas distintas por día'],
-    ['Contestan a Chispa (edad)', contestan, ''],
-    ['Dicen 18 o más', mayores, ''],
-    ['Entran a «Mi cuenta» y ven la cuenta de cabeza', sum('mayores_puerta', 'uniq'), 'incluye a quien llega con el enlace directo'],
-    ['Aciertan la cuenta', sum('puerta_ok', 'uniq'), ''],
-    ['Ven «Abre el portal»', sum('crear_vista', 'uniq'), ''],
-    ['Portales abiertos', sumBiz(biz.portales), 'de la base de datos'],
-    ['Pases de pago', sumBiz(biz.pases), 'de la base de datos'],
+  const funnel: [string, number][] = [
+    ['Han entrado', visitas],
+    ['Han contestado a Chispa', contestan],
+    ['Han pulsado «Mi cuenta»', sum('mayores_cuenta', 'uniq')],
+    ['Han entrado en su cuenta', sum('puerta_ok', 'uniq')],
+    ['Han creado un portal', sumBiz(biz.portales)],
+    ['Han comprado el Pase', sumBiz(biz.pases)],
   ];
 
-  const bySrc = new Map<string, { total: number; uniq: number; mayor: number }>();
+  const bySrc = new Map<string, { total: number; hoy: number }>();
   for (const r of rows) {
-    if (r.event !== 'landing' && r.event !== 'edad_mayor') continue;
-    const s = bySrc.get(r.src) ?? { total: 0, uniq: 0, mayor: 0 };
-    if (r.event === 'landing') { s.total += r.total; s.uniq += r.uniq; } else s.mayor += r.uniq;
+    if (r.event !== 'landing') continue;
+    const s = bySrc.get(r.src) ?? { total: 0, hoy: 0 };
+    s.total += r.total;
+    if (r.day === today) s.hoy += r.total;
     bySrc.set(r.src, s);
   }
-  const srcRows = [...bySrc.entries()].sort((a, b) => b[1].uniq - a[1].uniq);
+  const srcRows = [...bySrc.entries()].sort((a, b) => b[1].total - a[1].total);
 
   const maxDay = Math.max(1, ...list.map((d) => sum('landing', 'uniq', d)));
   const site = getSiteUrl();
@@ -89,85 +84,62 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
             <MetricasLogout />
           </nav>
         </header>
-        <p className="mt-1 text-[12.5px] text-white/50">Del {from} al {today} (hora de Madrid). Sin cookies ni datos personales. «Personas» = visitantes distintos por día; si alguien vuelve otro día cuenta otra vez.</p>
+        <p className="mt-1 text-[12.5px] text-white/50">Cada número es «personas»: si alguien entra dos veces el mismo día cuenta una. Hora de Madrid.</p>
         {problem && <p role="alert" className="mt-4 rounded-xl border border-[#ff9a9a]/40 bg-[#ff9a9a]/10 p-3 text-[13px]">No se han podido leer las métricas: {problem}</p>}
 
-        <section aria-label="Resumen" className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Card t="Visitas hoy" v={sum('landing', 'uniq', today)} s={`${sum('landing', 'total', today)} páginas vistas`} />
-          <Card t="Visitas ayer" v={sum('landing', 'uniq', list[list.length - 2] ?? today)} />
-          <Card t={`Visitas ${days} días`} v={visitas} s={`${sum('landing', 'total')} páginas vistas`} />
-          <Card t="Mayores / menores" v={`${mayores} / ${menores}`} s={`${pct(mayores, contestan)} dicen 18 o más`} />
-          <Card t="Cuenta acertada" v={sum('puerta_ok', 'uniq')} s={`${sum('puerta_fallo', 'total')} fallos · ${sum('puerta_bloqueo', 'total')} bloqueos`} />
-          <Card t="Portales abiertos" v={sumBiz(biz.portales)} s={`hoy: ${sumBiz(biz.portales, today)}`} />
-          <Card t="Pases de pago" v={sumBiz(biz.pases)} s={money(biz.ingresos)} />
-          <Card t="Peques en su portal" v={sum('portal_nino', 'uniq')} s="aperturas distintas por día" />
+        <section aria-label="Hoy" className="mt-5">
+          <h2 className="mb-2 text-[18px] font-semibold">Hoy</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Card t="Han entrado" v={sum('landing', 'uniq', today)} />
+            <Card t="Ayer entraron" v={sum('landing', 'uniq', list[list.length - 2] ?? today)} />
+            <Card t="Han pulsado «Mi cuenta»" v={sum('mayores_cuenta', 'uniq', today)} />
+            <Card t="Han creado un portal" v={sumBiz(biz.portales, today)} />
+          </div>
         </section>
 
-        <section aria-label="Embudo" className="mt-8">
-          <h2 className="mb-2 text-[18px] font-semibold">Del primer vistazo al Pase</h2>
+        <section aria-label="Origen" className="mt-8">
+          <h2 className="mb-1 text-[18px] font-semibold">De dónde llegan</h2>
+          <p className="mb-2 text-[12.5px] text-white/50">Entradas en los últimos {days} días. Hoy entre paréntesis.</p>
+          {srcRows.length === 0 ? (
+            <p className="text-[13px] text-white/50">Aún no hay visitas en este periodo.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {srcRows.map(([s, v]) => (
+                <li key={s} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[.03] px-4 py-3">
+                  <span className="text-[16px]">{SRC_NAMES[s] ?? s}</span>
+                  <span className="text-[22px] font-bold tabular-nums">{v.total}<span className="ml-2 text-[13px] font-normal text-white/50">({v.hoy})</span></span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-label="Pasos" className="mt-8">
+          <h2 className="mb-1 text-[18px] font-semibold">Qué hacen {days} días</h2>
           <ol className="space-y-1.5">
-            {funnel.map(([label, n, note], i) => (
-              <li key={label} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5">
-                <span className="text-[14px]">{label}{note && <span className="block text-[11.5px] text-white/45">{note}</span>}</span>
-                <span className="text-[18px] font-bold tabular-nums">{n}</span>
-                <span className="w-14 text-right text-[12.5px] tabular-nums text-white/55">{i === 0 ? '' : pct(n, funnel[i - 1]![1])}</span>
+            {funnel.map(([label, n]) => (
+              <li key={label} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[.03] px-4 py-3">
+                <span className="text-[16px]">{label}</span>
+                <span className="text-[22px] font-bold tabular-nums">{n}</span>
               </li>
             ))}
           </ol>
         </section>
 
-        <section aria-label="Origen" className="mt-8">
-          <h2 className="mb-2 text-[18px] font-semibold">De dónde llegan</h2>
-          {srcRows.length === 0 ? (
-            <p className="text-[13px] text-white/50">Aún no hay visitas en este periodo.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-white/10">
-              <table className="w-full text-[13.5px]">
-                <thead className="bg-white/[.05] text-left text-white/60"><tr><th className="px-3 py-2">Origen</th><th className="px-3 py-2">Personas</th><th className="px-3 py-2">Páginas vistas</th><th className="px-3 py-2">Dicen 18+</th></tr></thead>
-                <tbody>
-                  {srcRows.map(([s, v]) => (
-                    <tr key={s} className="border-t border-white/10"><td className="px-3 py-2">{SRC_NAMES[s] ?? s}</td><td className="px-3 py-2 tabular-nums">{v.uniq}</td><td className="px-3 py-2 tabular-nums">{v.total}</td><td className="px-3 py-2 tabular-nums">{v.mayor}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
         <section aria-label="Por día" className="mt-8">
           <h2 className="mb-2 text-[18px] font-semibold">Día a día</h2>
-          <div className="overflow-x-auto rounded-xl border border-white/10">
-            <table className="w-full min-w-[640px] text-[13px]">
-              <thead className="bg-white/[.05] text-left text-white/60">
-                <tr><th className="px-3 py-2">Día</th><th className="px-3 py-2">Visitas</th><th className="px-3 py-2"> </th><th className="px-3 py-2">18+</th><th className="px-3 py-2">&lt;18</th><th className="px-3 py-2">Cuenta ok</th><th className="px-3 py-2">Fallos</th><th className="px-3 py-2">Portales</th><th className="px-3 py-2">Pases</th></tr>
-              </thead>
-              <tbody>
-                {[...list].reverse().map((d) => {
-                  const v = sum('landing', 'uniq', d);
-                  return (
-                    <tr key={d} className="border-t border-white/10">
-                      <td className="px-3 py-1.5 tabular-nums">{d.slice(5)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{v}</td>
-                      <td className="w-28 px-3 py-1.5"><div aria-hidden className="h-2 rounded bg-[#f6d77a]" style={{ width: `${Math.max(v ? 4 : 0, (v / maxDay) * 100)}%` }} /></td>
-                      <td className="px-3 py-1.5 tabular-nums">{sum('edad_mayor', 'uniq', d)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{sum('edad_menor', 'uniq', d)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{sum('puerta_ok', 'uniq', d)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{sum('puerta_fallo', 'total', d)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{sumBiz(biz.portales, d)}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{sumBiz(biz.pases, d)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section aria-label="Otras páginas" className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Card t="Diario de Chispa" v={sum('diario_vista', 'uniq')} />
-          <Card t="Polo Norte" v={sum('polo_norte_vista', 'uniq')} />
-          <Card t="Ven precios" v={sum('precios_vista', 'uniq')} />
-          <Card t="Cuenta fallada y bloqueada" v={sum('puerta_bloqueo', 'total')} s="bloqueos de dispositivo o red" />
+          <ul className="space-y-1">
+            {[...list].reverse().map((d) => {
+              const v = sum('landing', 'uniq', d);
+              return (
+                <li key={d} className="flex items-center gap-3 px-1 py-1 text-[15px]">
+                  <span className="w-12 tabular-nums text-white/60">{d.slice(5)}</span>
+                  <span className="w-8 text-right text-[17px] font-bold tabular-nums">{v}</span>
+                  <span aria-hidden className="h-2 rounded bg-[#f6d77a]" style={{ width: `${Math.max(v ? 4 : 0, (v / maxDay) * 60)}%` }} />
+                </li>
+              );
+            })}
+          </ul>
         </section>
 
         <section aria-label="Enlaces para redes" className="mt-8">
