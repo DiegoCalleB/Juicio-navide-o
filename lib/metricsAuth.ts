@@ -9,7 +9,9 @@ export function metricsToken(): string | null {
   return t && t.length >= 12 ? t : null;
 }
 
-const sign = (token: string) => createHmac('sha256', 'metricas-panel').update(token).digest('base64url');
+/** La cookie lleva su caducidad firmada con la clave del panel: si se filtra, deja de valer sola y cambiar METRICS_TOKEN la anula. */
+const SESSION_MS = 7 * 24 * 60 * 60_000;
+const sign = (token: string, exp: string) => createHmac('sha256', token).update(`metricas|${exp}`).digest('base64url');
 
 export function tokenMatches(given: string): boolean {
   const t = metricsToken();
@@ -19,14 +21,17 @@ export function tokenMatches(given: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export function metricsCookieValue(): string {
-  return sign(metricsToken() ?? '');
+export function metricsCookieValue(now = Date.now()): string {
+  const exp = String(now + SESSION_MS);
+  return `${exp}.${sign(metricsToken() ?? '', exp)}`;
 }
 
-export function cookieValid(v: string | undefined): boolean {
+export function cookieValid(v: string | undefined, now = Date.now()): boolean {
   const t = metricsToken();
   if (!t || !v) return false;
-  const a = Buffer.from(v);
-  const b = Buffer.from(sign(t));
+  const [exp, mac] = v.split('.');
+  if (!exp || !mac || !/^\d{10,16}$/.test(exp) || Number(exp) <= now) return false;
+  const a = Buffer.from(mac);
+  const b = Buffer.from(sign(t, exp));
   return a.length === b.length && timingSafeEqual(a, b);
 }
