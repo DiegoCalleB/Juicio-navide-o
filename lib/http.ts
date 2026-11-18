@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { getClientFingerprint, rateLimit } from '@/lib/security';
+import { secEvent } from '@/lib/securityLog';
 import { RoomError } from '@/services/room-errors';
 
 const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
@@ -28,6 +29,7 @@ export async function guarded(name: string, limit: Limit, fn: () => Promise<Next
   try {
     const fp = await getClientFingerprint();
     if (!rateLimit(`all:${fp}`, PER_CLIENT_MAX, 60_000) || !rateLimit(`${limit.key}:${limit.scope ?? fp}`, limit.max, limit.windowMs)) {
+      secEvent('limite_peticiones', { ruta: name });
       return fail('RATE_LIMITED', 'Demasiadas peticiones. Espera un momento.', 429);
     }
     return await fn();

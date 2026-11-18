@@ -31,6 +31,9 @@ export function getSiteUrl(): string {
  * `headers` viene de `next/headers`.
  */
 export function originFromHeaders(headers: { get(name: string): string | null }): string {
+  // En producción, con dominio configurado, nunca se fía de la cabecera Host (evita enlaces de pago falsificados).
+  const fixed = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (process.env.NODE_ENV === 'production' && fixed && normalize(fixed)) return normalize(fixed)!;
   const host = (headers.get('x-forwarded-host') ?? headers.get('host') ?? '').split(',')[0]?.trim();
   if (host && !isPrivateHost(host.split(':')[0] ?? host)) {
     const local = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);

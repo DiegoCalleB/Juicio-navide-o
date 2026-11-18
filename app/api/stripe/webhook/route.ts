@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { fail, json } from '@/lib/http';
+import { secEvent } from '@/lib/securityLog';
 import { sessionFromWebhookObject, verifyWebhookSignature } from '@/lib/stripe';
 import { fulfillCheckout } from '@/services/passes';
 
@@ -12,7 +13,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
   const raw = await req.text();
-  if (!verifyWebhookSignature(raw, req.headers.get('stripe-signature'))) return fail('UNAUTHORIZED', 'Firma no válida', 400);
+  if (!verifyWebhookSignature(raw, req.headers.get('stripe-signature'))) {
+    secEvent('stripe_firma_invalida');
+    return fail('UNAUTHORIZED', 'Firma no válida', 400);
+  }
   try {
     const event = JSON.parse(raw) as { type?: string; data?: { object?: unknown } };
     if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {

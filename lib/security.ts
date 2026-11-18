@@ -1,11 +1,12 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { headers } from 'next/headers';
+import { clientIp } from '@/lib/clientIp';
 import { getServerEnv } from '@/lib/env.server';
 
 export async function getClientFingerprint(): Promise<string> {
   const h = await headers();
-  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+  const ip = clientIp(h);
   const ua = h.get('user-agent') ?? '';
   return createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|${ip}|${ua}`).digest('hex');
 }
@@ -13,7 +14,7 @@ export async function getClientFingerprint(): Promise<string> {
 /** Solo la conexión (IP), sin el navegador: para límites que no se puedan esquivar cambiando de navegador. */
 export async function getClientNetwork(): Promise<string> {
   const h = await headers();
-  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+  const ip = clientIp(h);
   return createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|net|${ip}`).digest('hex');
 }
 
