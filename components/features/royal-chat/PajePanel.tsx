@@ -16,6 +16,7 @@ import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
 import { InstallApp } from '@/components/features/InstallApp';
+import { EmailLink } from './EmailLink';
 import { PinSettings } from './PinSettings';
 import { useAutoLock } from './useAutoLock';
 import { loadFamily } from '@/lib/myFamily';
@@ -718,6 +719,8 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           </section>
 
           <PinSettings token={token} hasPin={hasPin} />
+
+          <EmailLink token={token} />
 
           <InstallApp what="este panel" tone="panel" />
 

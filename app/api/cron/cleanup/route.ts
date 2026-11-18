@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
   try {
     const result = await getRoomStore().deleteExpired(new Date().toISOString());
     await purgeSeen();
-    return json({ ok: true, data: result });
+    const contacts = await getRoomStore().purgeContacts(new Date(Date.now() - 150 * 86_400_000).toISOString());
+    return json({ ok: true, data: { ...result, contacts } });
   } catch (err) {
     console.error('[cleanup]', err);
     return fail('UNKNOWN', 'Error en la limpieza', 500);
