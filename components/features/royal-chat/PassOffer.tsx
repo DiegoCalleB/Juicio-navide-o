@@ -96,7 +96,6 @@ export function PassOffer({
           <ul className="space-y-1 opacity-85">
             <li><R>✓ {childName ? `${childName} sigue` : 'Seguís'} escribiéndose hasta el 20 de enero</R></li>
             <li>✓ Papá Noel, el elfo y los Reyes, para todos los hermanos</li>
-            <li>✓ Un pase de regalo para otra familia</li>
             <li>✓ Pago único, sin suscripción</li>
           </ul>
           <label className="flex items-start gap-2.5 text-[12px] leading-snug opacity-80">

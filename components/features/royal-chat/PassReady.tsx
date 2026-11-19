@@ -5,12 +5,8 @@ import { useEffect, useState } from 'react';
 import { getCheckoutReturn, savePass, setCheckoutReturn } from '@/lib/myPass';
 import { R } from '@/components/LocaleProvider';
 
-const giftText = (link: string) =>
-  `¡Te regalo un Pase de Navidad de Línea Mágica! Con él, tus peques pueden escribirse en directo con Papá Noel, el elfo o los Reyes Magos (tú contestas en secreto). Ábrelo aquí: ${link}`;
-
-export function PassReady({ passToken, passLink, giftLink }: { passToken: string | null; passLink: string | null; giftLink: string | null }) {
+export function PassReady({ passToken, passLink }: { passToken: string | null; passLink: string | null }) {
   const [back, setBack] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (passToken) savePass(passToken);
@@ -18,7 +14,7 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
     setCheckoutReturn(null);
   }, [passToken]);
 
-  if (!passToken || !passLink || !giftLink) {
+  if (!passToken || !passLink) {
     return (
       <main className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-[#0a1220] px-4 text-center text-[#e8f1ff]">
         <div className="max-w-sm space-y-4">
@@ -49,31 +45,6 @@ export function PassReady({ passToken, passLink, giftLink }: { passToken: string
             Abrir un portal
           </Link>
         )}
-
-        <section className="space-y-2.5 rounded-2xl border border-[#f6d77a]/40 bg-[#f6d77a]/[.07] p-4 text-[13px]">
-          <p className="text-[15px] font-bold text-[#f6d77a]">🎁 Regala la magia a otra familia</p>
-          <p className="opacity-80">Tu pase incluye otro de regalo. Mándaselo a quien quieras: lo abre y ya puede empezar.</p>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(giftText(giftLink))}`}
-            className="flex min-h-11 items-center justify-center rounded-xl bg-[#25d366] font-bold text-[#062b14]"
-          >
-            Regalar por WhatsApp
-          </a>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(giftLink);
-                setCopied(true);
-              } catch {
-                /* sin portapapeles */
-              }
-            }}
-            className="min-h-10 w-full rounded-xl bg-white/10 font-semibold"
-          >
-            {copied ? '¡Copiado!' : 'Copiar el enlace de regalo'}
-          </button>
-        </section>
 
         <section className="space-y-2 rounded-2xl border border-white/15 bg-white/[.04] p-4 text-[13px]">
           <p className="font-semibold">Guarda tu pase</p>

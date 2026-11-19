@@ -37,16 +37,15 @@ export function savedLinkMail(link: string, unsubscribeUrl?: string) {
   };
 }
 
-/** Tras pagar: el enlace del pase y el de regalo. */
-export function passMail(passLink: string, giftLink: string) {
+/** Tras pagar: el enlace del pase. */
+export function passMail(passLink: string) {
   return {
     subject: 'Tu Pase de Navidad está activo',
     html: shell(
       'Tu Pase de Navidad está activo',
-      `<p style="margin:0;font-size:15px;line-height:1.5">Gracias. Este es tu pase: guárdalo por si lo necesitas en otro móvil.</p>${button(passLink, 'Mi pase')}
-<p style="margin:16px 0 0;font-size:15px;line-height:1.5">Y este es el pase para regalar a otra familia:</p>${button(giftLink, 'Pase de regalo')}`,
+      `<p style="margin:0;font-size:15px;line-height:1.5">Gracias. Este es tu pase: guárdalo por si lo necesitas en otro móvil.</p>${button(passLink, 'Mi pase')}`,
       'Es un pago único, no una suscripción: no hay nada que cancelar. Si algo no funciona, responde a este correo.',
     ),
-    text: `Gracias. Tu Pase de Navidad está activo.\n\nTu pase: ${passLink}\nPase para regalar a otra familia: ${giftLink}\n\nEs un pago único, no una suscripción: no hay nada que cancelar. Si algo no funciona, responde a este correo.`,
+    text: `Gracias. Tu Pase de Navidad está activo.\n\nTu pase: ${passLink}\n\nEs un pago único, no una suscripción: no hay nada que cancelar. Si algo no funciona, responde a este correo.`,
   };
 }

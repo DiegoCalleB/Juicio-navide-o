@@ -84,9 +84,10 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await Promise.all([panel.waitForURL(/\/pase\/listo/, { timeout: 20000 }), panel.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
   await panel.waitForLoadState('networkidle');
   check('pago completado: muestra el pase', await panel.getByText('¡Ya tienes tu Pase de Navidad!').isVisible());
-  const wa = await panel.getByRole('link', { name: 'Regalar por WhatsApp' }).getAttribute('href');
-  const giftLink = decodeURIComponent(wa.split('text=')[1]).match(/https?:\/\/\S+/)[0];
-  check('incluye un enlace de regalo', /\?pase=[A-Za-z0-9_-]{43}$/.test(giftLink), giftLink.slice(-20));
+  const mailTo = await panel.getByRole('link', { name: 'Enviármelo por correo' }).getAttribute('href');
+  const giftLink = decodeURIComponent(mailTo.split('body=')[1]); // enlace del pase: lo usa otro móvil de la familia
+  check('el pase tiene su enlace para guardarlo en otro móvil', /\?pase=[A-Za-z0-9_-]{43}$/.test(giftLink), giftLink.slice(-20));
+  check('ya no se regala un pase con la compra', (await panel.getByRole('link', { name: 'Regalar por WhatsApp' }).count()) === 0);
   await panel.getByRole('link', { name: 'Volver a mi panel' }).click();
   await panel.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
   check('de vuelta al panel: el portal ya no tiene límite', (await panel.locator('#reply').count()) === 1 && (await panel.getByText('La prueba gratis ha terminado').count()) === 0);
@@ -106,7 +107,7 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   check('con el pase, el portal nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
 
-  // Pase de regalo en otra familia: tenía un portal en prueba y usa el pase con un toque
+  // El enlace del pase, abierto en otro móvil: tenía un portal en prueba y usa el pase con un toque
   const other = await ctxB.newPage();
   await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
@@ -140,13 +141,13 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('zona de mayores: enlace a los precios con el del Pase', await buyer.getByRole('link', { name: /Pase de Navidad 3,99/ }).isVisible());
   await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });
   check('portada: sección "Elige cómo empezar" con las dos opciones', await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).isVisible() && await buyer.getByRole('heading', { name: 'Prueba gratis' }).isVisible() && await buyer.getByRole('heading', { name: 'Pase de Navidad' }).isVisible());
-  check('portada: explica las ventajas del Pase', await buyer.getByText('Incluye un pase para regalar a otra familia').isVisible() && await buyer.getByText(/hasta el 20 de enero/).first().isVisible());
+  check('portada: explica las ventajas del Pase', await buyer.getByText(/hasta el 20 de enero/).first().isVisible() && (await buyer.getByText(/para regalar/).count()) === 0);
   await buyer.getByRole('button', { name: /Conseguir el Pase/ }).click();
   check('portada: sin la casilla legal no se abre el pago', await buyer.getByText('Marca la casilla para continuar.').isVisible());
   await buyer.getByText(/Quiero que el pase se active ya/).click();
   await Promise.all([buyer.waitForURL(/\/pase\/listo/, { timeout: 20000 }), buyer.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
   const paidSession = new URL(buyer.url()).searchParams.get('session_id');
-  check('comprar desde la portada: muestra el pase y el regalo', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible() && await buyer.getByRole('link', { name: 'Regalar por WhatsApp' }).isVisible());
+  check('comprar desde la portada: muestra el pase', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible());
   await buyer.getByRole('link', { name: 'Abrir un portal' }).click();
   await buyer.locator('#child').waitFor({ timeout: 15000 });
   await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });

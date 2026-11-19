@@ -33,10 +33,10 @@ export async function checkPassById(id: string): Promise<boolean> {
 }
 
 /**
- * Da por bueno un pago de Stripe: crea el pase y el de regalo (idempotente, por id de sesión) y
+ * Da por bueno un pago de Stripe: crea el pase (idempotente, por id de sesión) y
  * desbloqueal portal desde la que se pagó. Lo llaman el webhook y la página de pago completado.
  */
-export async function fulfillCheckout(session: CheckoutSession): Promise<{ passToken: string; giftToken: string } | null> {
+export async function fulfillCheckout(session: CheckoutSession): Promise<{ passToken: string } | null> {
   if (!session.paid) return null;
   const store = getRoomStore();
   const tokens = derivePassTokens(session.id);
@@ -50,24 +50,21 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
     amountCents: session.amountTotal,
     expiresAt,
   });
-  if (!(await store.findGiftOf(pass.id))) {
-    await store.insertPass({ tokenHash: hashToken(tokens.gift), kind: 'gift', parentPassId: pass.id, expiresAt: pass.expiresAt });
-  }
   // Primera vez que se da por bueno este pago: se le manda el pase al correo que puso en Stripe (no se guarda).
   if (!alreadyDone && session.email && mailEnabled()) {
     const origin = getSiteUrl();
-    const mail = passMail(`${origin}/?pase=${tokens.pass}`, `${origin}/?pase=${tokens.gift}`);
+    const mail = passMail(`${origin}/?pase=${tokens.pass}`);
     void sendMail({ to: session.email, ...mail, idempotencyKey: `pase-${session.id}` }).catch(() => {});
   }
   const roomId = session.metadata.room_id;
   if (roomId && /^[0-9a-f-]{36}$/.test(roomId)) {
     if (await store.attachPass(roomId, pass.id)) publishRefresh(roomId);
   }
-  return { passToken: tokens.pass, giftToken: tokens.gift };
+  return { passToken: tokens.pass };
 }
 
 /**
- * Reembolso total o disputa en Stripe: se retira el pase (y su regalo) y las salas vuelven a la prueba ya terminada.
+ * Reembolso total o disputa en Stripe: se retira el pase (y los regalos que ya salieran de él) y las salas vuelven a la prueba ya terminada.
  * Devuelve false si ese pago no corresponde a ningún pase (pagos anteriores a guardar el identificador).
  */
 export async function revokeByPaymentIntent(paymentIntent: string, reason: 'reembolso' | 'disputa'): Promise<boolean> {

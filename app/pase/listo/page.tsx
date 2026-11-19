@@ -19,7 +19,6 @@ export default async function PassReadyPage({ searchParams }: { searchParams: Pr
     <PassReady
       passToken={tokens?.passToken ?? null}
       passLink={tokens ? `${origin}/?pase=${tokens.passToken}` : null}
-      giftLink={tokens ? `${origin}/?pase=${tokens.giftToken}` : null}
     />
   );
 }

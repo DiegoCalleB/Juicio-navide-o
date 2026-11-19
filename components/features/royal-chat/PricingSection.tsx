@@ -84,7 +84,6 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
             <li>✓ La magia sigue hasta el 20 de enero</li>
             {KING_VOICE_ENABLED && <li>✓ 🎙️ El personaje le habla con su voz en cada mensaje</li>}
             <li>✓ Todos los peques y todos los personajes (hasta 10 portales)</li>
-            <li>✓ 🎁 Incluye un pase para regalar a otra familia</li>
             <li>✓ Se activa al momento, sin esperas</li>
           </ul>
           <label className="mt-3 flex items-start gap-2.5 text-[11.5px] leading-snug text-[#fff6dc]/70">
@@ -98,7 +97,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
             {busy ? 'Abriendo el pago…' : `Conseguir el Pase · ${billing.price}`}
           </button>
           {error && <p role="alert" className="mt-2 text-[13px] text-[#ff8a8c]">{error}</p>}
-          <p className="mt-2 text-center text-[11.5px] text-[#fff6dc]/50">Pago seguro con Stripe · también para regalar a abuelos y tíos</p>
+          <p className="mt-2 text-center text-[11.5px] text-[#fff6dc]/50">Pago seguro con Stripe</p>
         </article>
       </div>
     </section>
