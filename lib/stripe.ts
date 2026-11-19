@@ -46,7 +46,7 @@ const toSession = (s: StripeSessionJson): CheckoutSession => ({
 
 function secretKey(): string {
   const k = process.env.STRIPE_SECRET_KEY;
-  if (!k || !k.startsWith('sk_')) throw new Error('Falta STRIPE_SECRET_KEY.');
+  if (!k || !/^(sk|rk)_/.test(k)) throw new Error('Falta STRIPE_SECRET_KEY.');
   return k;
 }
 

@@ -35,7 +35,7 @@ export function trialMs(): number {
 
 /** Cobros activos: hay clave de Stripe (o el simulador de pruebas). */
 export function paymentsEnabled(): boolean {
-  return isStripeFake() || (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_');
+  return isStripeFake() || /^(sk|rk)_/.test(process.env.STRIPE_SECRET_KEY ?? '');
 }
 
 /** Hora que usa la facturación (la real, salvo FAKE_NOW en pruebas). */
