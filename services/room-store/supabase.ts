@@ -436,6 +436,7 @@ export class SupabaseRoomStore implements RoomStore {
         token_hash: p.tokenHash,
         kind: p.kind,
         stripe_session_id: p.stripeSessionId ?? null,
+        stripe_payment_intent: p.stripePaymentIntent ?? null,
         parent_pass_id: p.parentPassId ?? null,
         amount_cents: p.amountCents ?? null,
         expires_at: p.expiresAt,
@@ -466,6 +467,24 @@ export class SupabaseRoomStore implements RoomStore {
   async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
     const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_session_id', sessionId).maybeSingle<PassRow>();
     return data ? toPass(data) : null;
+  }
+
+  async findPassByPaymentIntent(paymentIntent: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_payment_intent', paymentIntent).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
+  async revokePass(passId: string, nowIso: string): Promise<number> {
+    const db = getAdminClient();
+    const { data: gifts, error: e0 } = await db.from('passes').select('id').eq('parent_pass_id', passId);
+    if (e0) throw new Error(`revokePass: ${e0.message}`);
+    const ids = [passId, ...(gifts ?? []).map((g) => g.id as string)];
+    const { error: e1 } = await db.from('passes').update({ expires_at: nowIso }).in('id', ids);
+    if (e1) throw new Error(`revokePass: ${e1.message}`);
+    // Sin pase y con la prueba ya vencida: quedan bloqueadas (sin esto, una sala sin prueba pasaría a «gratis»).
+    const { data: rooms, error: e2 } = await db.from('rooms').update({ pass_id: null, trial_ends_at: nowIso }).in('pass_id', ids).select('id');
+    if (e2) throw new Error(`revokePass: ${e2.message}`);
+    return rooms?.length ?? 0;
   }
 
   async findGiftOf(passId: string): Promise<PassRecord | null> {

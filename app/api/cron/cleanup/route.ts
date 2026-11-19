@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { getCronSecret } from '@/lib/env.server';
 import { fail, json } from '@/lib/http';
-import { secEvent } from '@/lib/securityLog';
+import { secAlert } from '@/lib/securityAlert';
 import { purgeSeen } from '@/lib/metrics';
 import { getRoomStore } from '@/services/room-store';
 
@@ -23,7 +23,7 @@ function authorized(req: NextRequest): boolean {
  */
 export async function POST(req: NextRequest) {
   if (!authorized(req)) {
-    secEvent('cron_no_autorizado');
+    secAlert('cron_no_autorizado');
     return fail('UNAUTHORIZED', 'No autorizado', 401);
   }
   try {

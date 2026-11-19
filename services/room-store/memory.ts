@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Bucket, MessageRecord, NewMessage, NewPass, NewRoom, PassRecord, RoomRecord, RoomStore } from './types';
 
 type RoomRow = RoomRecord & { creatorHash: string; createdAt: number };
-type PassRow = PassRecord & { tokenHash: string };
+type PassRow = PassRecord & { tokenHash: string; stripePaymentIntent?: string | null };
 
 /** Con índices: las pruebas de carga miden la aplicación, no un barrido lineal del almacén. */
 interface State {
@@ -136,6 +136,7 @@ export class MemoryRoomStore implements RoomStore {
       tokenHash: p.tokenHash,
       kind: p.kind,
       stripeSessionId: p.stripeSessionId ?? null,
+      stripePaymentIntent: p.stripePaymentIntent ?? null,
       parentPassId: p.parentPassId ?? null,
       roomsLimit: 10,
       expiresAt: p.expiresAt,
@@ -163,6 +164,28 @@ export class MemoryRoomStore implements RoomStore {
   async countRoomsByPass(passId: string): Promise<number> {
     let n = 0;
     for (const r of state().rooms.values()) if (r.passId === passId) n++;
+    return n;
+  }
+
+  async findPassByPaymentIntent(paymentIntent: string): Promise<PassRecord | null> {
+    return [...state().passes.values()].find((x) => x.stripePaymentIntent === paymentIntent) ?? null;
+  }
+
+  async revokePass(passId: string, nowIso: string): Promise<number> {
+    const st = state();
+    const ids = new Set([passId, ...[...st.passes.values()].filter((x) => x.parentPassId === passId).map((x) => x.id)]);
+    for (const id of ids) {
+      const p = st.passes.get(id);
+      if (p) p.expiresAt = nowIso;
+    }
+    let n = 0;
+    for (const r of st.rooms.values()) {
+      if (r.passId && ids.has(r.passId)) {
+        r.passId = null;
+        r.trialEndsAt = nowIso;
+        n++;
+      }
+    }
     return n;
   }
 

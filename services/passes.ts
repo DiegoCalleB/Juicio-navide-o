@@ -2,6 +2,7 @@ import 'server-only';
 import { derivePassTokens, passExpiresAt, paymentsEnabled } from '@/lib/billing';
 import { mailEnabled, sendMail } from '@/lib/mail';
 import { passMail } from '@/lib/mailTemplates';
+import { secEvent } from '@/lib/securityLog';
 import { getSiteUrl } from '@/lib/site';
 import type { CheckoutSession } from '@/lib/stripe';
 import { hashToken, TOKEN_REGEX } from '@/lib/tokens';
@@ -45,6 +46,7 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
     tokenHash: hashToken(tokens.pass),
     kind: 'paid',
     stripeSessionId: session.id,
+    stripePaymentIntent: session.paymentIntent,
     amountCents: session.amountTotal,
     expiresAt,
   });
@@ -62,6 +64,22 @@ export async function fulfillCheckout(session: CheckoutSession): Promise<{ passT
     if (await store.attachPass(roomId, pass.id)) publishRefresh(roomId);
   }
   return { passToken: tokens.pass, giftToken: tokens.gift };
+}
+
+/**
+ * Reembolso total o disputa en Stripe: se retira el pase (y su regalo) y las salas vuelven a la prueba ya terminada.
+ * Devuelve false si ese pago no corresponde a ningún pase (pagos anteriores a guardar el identificador).
+ */
+export async function revokeByPaymentIntent(paymentIntent: string, reason: 'reembolso' | 'disputa'): Promise<boolean> {
+  const store = getRoomStore();
+  const pass = await store.findPassByPaymentIntent(paymentIntent);
+  if (!pass) {
+    secEvent('pase_no_encontrado', { motivo: reason });
+    return false;
+  }
+  const rooms = await store.revokePass(pass.id, new Date().toISOString());
+  secEvent('pase_retirado', { motivo: reason, salas: rooms });
+  return true;
 }
 
 /** Desbloquea un portal con un pase que ya se tiene (propio o regalado). */

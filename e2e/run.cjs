@@ -28,6 +28,7 @@ const env = {
   // Fecha fija para que la portada de temporada y los precios sean predecibles (18-dic: Papá Noel, precio normal).
   FAKE_NOW: nowArg || '2026-12-18T12:00:00+01:00',
   ROOMS_STORE: 'memory',
+  SECURITY_ALERT_EMAIL: 'alertas@ejemplo.com',
   MAIL_FAKE: '1', // el correo va a un buzón de pruebas, nunca a Resend
   ADULT_GATE_SECONDS: '30', // en producción son 5 s; el servidor de pruebas va más lento que una persona
   CRON_SECRET: 'testsecret-testsecret-1234',
