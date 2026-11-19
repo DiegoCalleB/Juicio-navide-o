@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const session = await createCheckoutSession({
       amountCents: price.cents,
       successUrl: `${origin}/pase/listo?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/`,
+      cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/precios`,
       locale,
       blackFriday: price.blackFriday,
       metadata: { ...(roomId ? { room_id: roomId } : {}), waiver: 'accepted', price_cents: String(price.cents) },
