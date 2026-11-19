@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { loadPass, startCheckout } from '@/lib/myPass';
+import { forgetPass, loadPass, startCheckout } from '@/lib/myPass';
 import type { BillingInfo } from './PassOffer';
 import { KING_VOICE_ENABLED } from '@/lib/features';
 
@@ -18,7 +18,26 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => setHasPass(!!loadPass()), []);
 
-  if (!billing.enabled || hasPass) return null;
+  if (hasPass) {
+    return (
+      <section aria-label="Pase guardado" className="mb-8 rounded-2xl border border-white/15 bg-white/[.05] p-4 text-center text-[13.5px] leading-relaxed text-[#fff6dc]/85">
+        <p>En este móvil ya hay un Pase de Navidad guardado, por eso no se ofrece comprar otro.</p>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('Se quitará el pase de este móvil (no se anula). Si no tienes guardado su enlace, no podrás volver a usarlo desde aquí. ¿Quitarlo?')) {
+              forgetPass();
+              setHasPass(false);
+            }
+          }}
+          className="mt-3 min-h-11 rounded-xl border border-white/25 px-4 font-semibold text-[#fff6dc] active:scale-[0.98]"
+        >
+          Quitar el pase de este móvil
+        </button>
+      </section>
+    );
+  }
+  if (!billing.enabled) return null;
 
   const buy = async () => {
     if (!waiver) return setError('Marca la casilla para continuar.');
