@@ -5,16 +5,20 @@ import { vibrate } from '@/lib/haptics';
 import { fillChild, type CharacterProfile } from '@/lib/characters';
 import { KING_VOICE_ENABLED } from '@/lib/features';
 import { compressForChat } from '@/lib/image';
-import { REPLY_DELAYS, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
+import { REPLY_DELAYS, TRIAL_VOICE_MESSAGES, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { IconCamera, IconClose, IconFilm, IconSeal } from './icons';
 import { fmtTime, seedFrom, voiceFollowUps, type ApiResult } from './mapping';
 import { ReactionCamera } from './ReactionCamera';
 import { ReactionReview } from './ReactionReview';
 import { IdeasList } from './IdeasList';
+import { AssistantBox } from './AssistantBox';
 import { PhotoPicker } from './PhotoPicker';
 import { RoomAdmin } from './RoomAdmin';
 import { PassOffer, type BillingInfo } from './PassOffer';
 import { InstallApp } from '@/components/features/InstallApp';
+import { EmailLink } from './EmailLink';
+import { PinSettings } from './PinSettings';
+import { useAutoLock } from './useAutoLock';
 import { loadFamily } from '@/lib/myFamily';
 import { loadRooms, saveRoom } from '@/lib/myRooms';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -30,6 +34,8 @@ const TYPING_SIGNAL_EVERY_MS = 2500;
 const DELAY_LABEL: Record<ReplyDelay, string> = { 0: 'Ahora', 2: '2 min', 10: '10 min', 30: '30 min' };
 
 interface PajePanelProps {
+  /** Ayudante para escribir (Gemini) disponible en el servidor. */
+  assistant?: boolean;
   token: string;
   childLink: string;
   character: CharacterProfile;
@@ -40,6 +46,8 @@ interface PajePanelProps {
   /** ¿Lee ya el niño? Ajusta consejos y mayúsculas. */
   readingLevel?: 'yes' | 'learning' | 'no';
   billing?: BillingInfo;
+  /** El portal tiene PIN de padres (bloqueo). */
+  hasPin?: boolean;
 }
 
 interface Access {
@@ -58,7 +66,8 @@ function timeLeft(iso: string): string {
 }
 
 /** Panel secreto de los padres: ven lo que escribe el niño y contestan como el personaje. */
-export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing }: PajePanelProps) {
+export function PajePanel({ token, childLink, character, childName, characterAlias = null, characterGender = null, readingLevel = 'yes', billing, hasPin = false, assistant = false }: PajePanelProps) {
+  useAutoLock(hasPin, token);
   const r = useRegional();
   const [access, setAccess] = useState<Access>({ plan: 'free', trialEndsAt: null, locked: false });
   const [offerOpen, setOfferOpen] = useState(false);
@@ -94,11 +103,12 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   const [presence, setPresence] = useState<{ online: boolean; openedAt?: string } | null>(null);
   const openedSeen = useRef<string | undefined>(undefined);
   const [planner, setPlanner] = useState(false);
-  const [ideasOpen, setIdeasOpen] = useState(false);
+  const [ideasOpen, setIdeasOpen] = useState<boolean | 'quick'>(false);
   /** Idea de travesura elegida a mano (si no, la de hoy). */
   const [pickedDay, setPickedDay] = useState<number | null>(null);
   /** Programar para otro momento (fecha y hora a elegir). */
   const [whenCustom, setWhenCustom] = useState(false);
+  const [optsOpen, setOptsOpen] = useState(false);
   const [whenValue, setWhenValue] = useState('');
   /** Primeros lectores: el enlace del niño abre con todo en MAYÚSCULAS. */
   const [capsLink, setCapsLink] = useState(readingLevel !== 'yes');
@@ -119,6 +129,11 @@ export function PajePanel({ token, childLink, character, childName, characterAli
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/rooms/${token}/messages?v=${encodeURIComponent(versionRef.current)}`, { cache: 'no-store' });
+    // Con PIN, si caduca el desbloqueo (30 min) el servidor deja de contestar: se recarga y vuelve a pedir el PIN.
+    if (res.status === 404 && hasPin) {
+      window.location.reload();
+      return;
+    }
     const body = (await res.json()) as ApiResult<{ version: string; unchanged?: boolean; messages?: RoomMessageDTO[]; access?: Access }>;
     if (!body.ok || !body.data) return;
     if (body.data.access) {
@@ -136,7 +151,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
     childCount.current = fromChild;
     setMessages(list);
-  }, [token, childName]);
+  }, [token, childName, hasPin]);
 
   const onChildTyping = useCallback(() => {
     setChildTyping(true);
@@ -222,6 +237,56 @@ export function PajePanel({ token, childLink, character, childName, characterAli
     }
   };
 
+  // «✨ Mejorar con magia»: reescribe el texto de los padres con la voz del personaje y sin faltas.
+  const [polishing, setPolishing] = useState(false);
+  const [beforePolish, setBeforePolish] = useState<string | null>(null);
+  const polish = async () => {
+    const original = text.trim();
+    if (original.length < 5 || polishing) return;
+    setPolishing(true);
+    setNotice(null);
+    // El nombre del niño no sale del navegador: se cambia por [nombre] y se vuelve a poner al recibirlo.
+    const esc = childName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const masked = esc ? original.replace(new RegExp(`(^|[^\\p{L}])${esc}(?![\\p{L}])`, 'giu'), '$1[nombre]') : original;
+    try {
+      const res = await fetch(`/api/rooms/${token}/suggest`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idea: masked, mode: 'rewrite' }) });
+      const j = (await res.json().catch(() => null)) as ApiResult<{ suggestions: string[] }> | null;
+      const out = j?.ok ? j.data?.suggestions[0] : undefined;
+      if (!out) throw new Error(j?.error?.message ?? 'No he podido mejorarlo ahora.');
+      setBeforePolish(text);
+      setText(out.split('[nombre]').join(childName).slice(0, MAX_CHARS));
+    } catch (err) {
+      setNotice({ tone: 'warn', msg: err instanceof Error ? err.message : 'No he podido mejorarlo ahora.' });
+    } finally {
+      setPolishing(false);
+    }
+  };
+  const [previewing, setPreviewing] = useState(false);
+  const previewAudio = useRef<HTMLAudioElement | null>(null);
+  /** Escuchar antes de enviar: lo que suena aquí es exactamente lo que recibirá el niño. */
+  const preview = async () => {
+    if (!text.trim() || previewing) return;
+    setPreviewing(true);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/rooms/${token}/voice-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.trim() }) });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as ApiResult<null> | null;
+        throw new Error(j?.error?.message ?? 'No se pudo preparar la voz.');
+      }
+      const url = URL.createObjectURL(await res.blob());
+      previewAudio.current?.pause();
+      const a = new Audio(url);
+      previewAudio.current = a;
+      a.onended = () => URL.revokeObjectURL(url);
+      await a.play().catch(() => undefined);
+    } catch (err) {
+      setNotice({ tone: 'warn', msg: err instanceof Error ? err.message : 'No se pudo preparar la voz.' });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const canSend = (text.trim().length > 0 || photo !== null) && !sending;
 
   const send = async () => {
@@ -250,12 +315,14 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         res = await fetch(`/api/rooms/${token}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: KING_VOICE_ENABLED ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
+          body: JSON.stringify({ text: text.trim(), delayMinutes: scheduledAt ? 0 : delay, mode: voiceAvailable ? mode : 'text', ...(scheduledAt ? { scheduledAt } : {}) }),
         });
       }
-      const json = (await res.json()) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' }>;
+      const json = (await res.json().catch(() => null)) as ApiResult<{ delivered: 'voice' | 'text'; fallback?: 'limit' | 'unavailable' | 'trial' }> | null;
+      if (!json) throw new Error(res.status === 413 ? 'La foto es demasiado grande.' : `No se pudo enviar (error ${res.status}). Inténtalo de nuevo.`);
       if (!json.ok) throw new Error(json.error?.message ?? 'No se pudo enviar.');
       setText('');
+      setBeforePolish(null);
       setPhoto(null);
       // Tras programar, el siguiente mensaje vuelve a enviarse al momento (así no se programa otro sin querer).
       setWhenCustom(false);
@@ -269,7 +336,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       if (fb) {
         setNotice({
           tone: 'warn',
-          msg: `${fb === 'limit' ? 'Se ha alcanzado el límite diario de voz' : 'La voz no está disponible ahora'}: se ha enviado por escrito. ${when}`,
+          msg: `${fb === 'trial' ? `Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba` : fb === 'limit' ? 'Se ha alcanzado el límite diario de voz' : 'La voz no está disponible ahora'}: se ha enviado por escrito. ${when}`,
         });
       } else {
         setNotice({ tone: 'ok', msg: when });
@@ -377,7 +444,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
       const res = await fetch(`/api/rooms/${token}/child-link`, { method: 'POST' });
       const json = (await res.json()) as ApiResult<{ childPath: string }>;
       if (!json.ok || !json.data) throw new Error(json.error?.message ?? 'No se pudo cambiar el enlace.');
-      // Mantiene "Tus salas" al día y recarga para mostrar el enlace nuevo.
+      // Mantiene "Tus portales" al día y recarga para mostrar el enlace nuevo.
       const mine = loadRooms().find((r) => r.parentPath === `/paje/${token}`);
       if (mine) saveRoom({ ...mine, childPath: json.data.childPath });
       window.location.reload();
@@ -467,22 +534,37 @@ export function PajePanel({ token, childLink, character, childName, characterAli
   };
 
   const activeMoment = character.moments.find((m) => m.id === momentId) ?? character.moments[0];
-  const voiceNow = KING_VOICE_ENABLED && mode === 'voice' && !photo;
+  // Prueba gratis: unos pocos mensajes con voz (el servidor también lo comprueba).
+  const voiceUsed = messages.filter((m) => m.from === 'king' && m.kind === 'voice').length;
+  const trialVoiceLeft = access.plan === 'trial' ? Math.max(0, TRIAL_VOICE_MESSAGES - voiceUsed) : null;
+  const voiceAvailable = KING_VOICE_ENABLED && !access.locked && trialVoiceLeft !== 0;
+  const voiceNow = voiceAvailable && mode === 'voice' && !photo;
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-center bg-black">
-      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff]">
-        <div className="flex items-center justify-center gap-2 bg-[#5eead4] px-3 pb-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] text-[10.5px] font-bold uppercase tracking-[.08em] text-[#04302b]">
-          <span aria-hidden>🔒</span> Zona secreta de los padres · {childName} no ve esta pantalla
-        </div>
-        <header className="flex items-center gap-3 border-b border-[#5eead4]/20 bg-[#121d33] px-4 pb-3 pt-3">
+    <div className="fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#12203a,#04070d)]">
+      <div className="relative flex h-dvh w-full max-w-md flex-col bg-[#0a1220] text-[#e8f1ff] lg:h-[min(calc(100dvh-3rem),58rem)] lg:max-w-4xl lg:overflow-hidden lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-[0_30px_90px_rgba(0,0,0,.6)]">
+        <header className="flex items-center gap-3 border-b border-[#5eead4]/20 bg-[#121d33] px-4 pb-2.5 pt-[max(0.7rem,env(safe-area-inset-top))]">
           <RoyalAvatar character={character} size={40} />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-[#5eead4]">
-              <IconSeal className="size-3.5" /> Panel de los padres
+              <IconSeal className="size-3.5" /> Panel de los padres · {childName} no lo ve
             </p>
             <p className="truncate text-[15px] font-semibold">Contestas como {character.name} a {childName}</p>
           </div>
+          {hasPin && (
+            <button
+              type="button"
+              aria-label="Bloquear la pantalla de los padres"
+              title="Bloquear ahora"
+              onClick={async () => {
+                await fetch(`/api/rooms/${token}/pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lock' }) });
+                window.location.reload();
+              }}
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-[#5eead4]/15 text-[16px] active:scale-90"
+            >
+              🔒
+            </button>
+          )}
           {!connected && <span className="text-[11px] font-semibold text-[#5eead4]">Reconectando…</span>}
           <span
             title={connected ? 'Conectado en tiempo real' : 'Reconectando…'}
@@ -509,13 +591,13 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         )}
 
         {presence && (
-          <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-2 text-[13px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
+          <div role="status" aria-live="polite" className={`flex items-center gap-2.5 border-b border-white/10 px-4 py-1.5 text-[12.5px] ${presence.openedAt ? 'bg-[#7ee2a8]/10' : 'bg-white/[.03]'}`}>
             <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${presence.online ? 'bg-[#7ee2a8] shadow-[0_0_8px_#7ee2a8]' : 'bg-white/25'}`} />
             <p className="min-w-0 flex-1 leading-snug text-[#e8f1ff]/85">
               {presence.openedAt
-                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} ha abierto el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en la sala'}</>
+                ? <><span className="font-semibold text-[#7ee2a8]">🎁 {childName} abrió el mensaje</span> a las {fmtTime(presence.openedAt)}{presence.online ? '' : ' · ahora no está en el portal'}</>
                 : presence.online
-                  ? <>{childName} está en la sala, esperando a {short} ✨</>
+                  ? <>{childName} está en el portal, esperando a {short}</>
                   : <>{childName} aún no ha abierto el enlace</>}
             </p>
             {presence.openedAt && messages.length === 0 && (
@@ -526,7 +608,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           </div>
         )}
 
-        <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        <div role="log" aria-label="Conversación" className="flex-1 space-y-3 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6">
           <button
             type="button"
             aria-expanded={setupVisible}
@@ -538,7 +620,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <span aria-hidden className={`transition-transform ${setupVisible ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
-          <div id="panel-setup" hidden={!setupVisible} className="space-y-3" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
+          <div id="panel-setup" hidden={!setupVisible} className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0" onClickCapture={() => setSetupOpen((v) => v ?? true)} onFocusCapture={() => setSetupOpen((v) => v ?? true)}>
           <section className="rounded-2xl border border-[#5eead4]/25 bg-[#5eead4]/[.07] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#5eead4]"><R>Enlace para el móvil de {childName}</R></p>
             <p className="mt-1 text-[#e8f1ff]/70"><R>Ábrelo en el móvil o la tablet que usará. No compartas esta página: es tu panel secreto.</R></p>
@@ -636,11 +718,15 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             )}
           </section>
 
+          <PinSettings token={token} hasPin={hasPin} />
+
+          <EmailLink token={token} />
+
           <InstallApp what="este panel" tone="panel" />
 
           <section className="rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
             <p className="font-semibold text-[#e8f1ff]">Guarda este panel</p>
-            <p className="mt-1 text-[#e8f1ff]/70">{familyHref ? 'Es la llave de esta sala. Para todas las salas de la familia, guarda el enlace de familia.' : 'Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.'}</p>
+            <p className="mt-1 text-[#e8f1ff]/70">{familyHref ? 'Es la llave de este portal. Para todos los portales de la familia, guarda el enlace de familia.' : 'Es tu única llave: si pierdes este enlace no se puede recuperar. Mándatelo para tenerlo a mano.'}</p>
             {familyHref && (
               <a href={familyHref} className="mt-2 grid min-h-10 place-items-center rounded-xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.98]">
                 ⭐ Ver el enlace de mi familia
@@ -670,14 +756,17 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               <p className="font-semibold text-[#5eead4]">🧝 Idea de travesura · día {todayMischief.day}</p>
               <p className="mt-1 text-[#e8f1ff]/80"><strong className="font-semibold">Monta esta noche:</strong> {todayMischief.idea}</p>
               <p className="mt-1 text-[12px] text-[#e8f1ff]/55">Después haz una foto, escribe lo que quieras y prográmalo para la mañana.</p>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setIdeasOpen(true)} className="min-h-10 flex-1 rounded-xl border border-white/20 font-semibold text-[#e8f1ff]/85 active:scale-[0.98]">
                   Otras ideas
+                </button>
+                <button type="button" onClick={() => setIdeasOpen('quick')} className="min-h-10 flex-1 rounded-xl border border-[#f6d77a]/50 font-semibold text-[#f6d77a] active:scale-[0.98]">
+                  ⚡ Sin tiempo
                 </button>
                 <button
                   type="button"
                   onClick={() => setText(fillChild(todayMischief.suggestion, childName).slice(0, MAX_CHARS))}
-                  className="min-h-10 flex-1 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
+                  className="col-span-2 min-h-10 rounded-xl border border-[#5eead4]/50 font-bold text-[#5eead4] active:scale-[0.98]"
                 >
                   Ver una sugerencia de mensaje
                 </button>
@@ -768,14 +857,14 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </div>
             </div>
           )}
-          {activeMoment?.tip && <p className="text-[11.5px] leading-snug text-[#5eead4]/80">💡 {activeMoment.tip}</p>}
+          {activeMoment?.tip && !text.trim() && <p className="truncate text-[11.5px] leading-snug text-[#5eead4]/80" title={activeMoment.tip}>💡 {activeMoment.tip}</p>}
           {readingLevel === 'learning' && (
-            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">✏️ Está aprendiendo a leer: frases cortas y palabras sencillas. Lo verá en MAYÚSCULAS.</p>
+            <p className="truncate text-[11.5px] leading-snug text-[#f6d77a]/85">✏️ Aprende a leer: frases cortas. Lo verá en MAYÚSCULAS.</p>
           )}
           {readingLevel === 'no' && (
-            <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">📖 Todavía no lee: que se lo lea en voz alta quien esté a su lado. Las fotos ayudan mucho.</p>
+            <p className="truncate text-[11.5px] leading-snug text-[#f6d77a]/85">📖 Aún no lee: que se lo lean en voz alta.</p>
           )}
-          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
+          <div className={`-mx-3 gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] ${text.trim() ? 'hidden' : 'flex'}`}>
             {(activeMoment?.replies ?? []).map((tpl) => fillChild(tpl, childName)).map((q) => (
               <button
                 key={q}
@@ -799,11 +888,15 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             </div>
           )}
 
+          {assistant && !access.locked && (
+            <AssistantBox token={token} childName={childName} characterShort={short} onPick={(t) => setText(t.slice(0, MAX_CHARS))} />
+          )}
+
           <div className="relative">
             <label htmlFor="reply" className="sr-only">Mensaje de {character.name}</label>
             <textarea
               id="reply"
-              rows={3}
+              rows={2}
               maxLength={MAX_CHARS}
               value={text}
               onChange={(e) => {
@@ -823,23 +916,78 @@ export function PajePanel({ token, childLink, character, childName, characterAli
             <span className="pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-[#e8f1ff]/40">{text.length}/{MAX_CHARS}</span>
           </div>
 
-          {KING_VOICE_ENABLED && !photo && (
-            <div className="flex items-center gap-2">
-              <span className="w-14 text-[12px] text-[#e8f1ff]/60">Como</span>
-              <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
-                {(['voice', 'text'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={mode === m}
-                    onClick={() => setMode(m)}
-                    className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
-                  >
-                    {m === 'voice' ? 'Nota de voz' : 'Por escrito'}
+          {assistant && !access.locked && (text.trim().length >= 5 || beforePolish !== null) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {text.trim().length >= 5 && (
+                <button type="button" onClick={polish} disabled={polishing} className="rounded-full border border-[#f6d77a]/60 px-3 py-1 text-[12.5px] font-bold text-[#f6d77a] disabled:opacity-50 active:bg-white/5">
+                  {polishing ? 'Poniendo magia…' : 'Mejorar con magia'}
+                </button>
+              )}
+              {beforePolish !== null && (
+                <button type="button" onClick={() => { setText(beforePolish); setBeforePolish(null); }} className="text-[12px] text-[#e8f1ff]/60 underline underline-offset-2">
+                  Deshacer
+                </button>
+              )}
+              <span className="text-[11px] text-[#e8f1ff]/40">Corrige faltas y lo dice como {short}</span>
+            </div>
+          )}
+
+          {KING_VOICE_ENABLED && !photo && !access.locked && trialVoiceLeft !== null && (
+              <p className="text-[11.5px] leading-snug text-[#f6d77a]/85">
+                {trialVoiceLeft > 0
+                  ? `🎙️ Prueba gratis: ${trialVoiceLeft === 1 ? 'te queda 1 mensaje' : `te quedan ${trialVoiceLeft} mensajes`} con la voz de ${short}.`
+                  : `🎙️ Ya has usado los ${TRIAL_VOICE_MESSAGES} mensajes con voz de la prueba.`}{' '}
+                {billing?.enabled && (
+                  <button type="button" onClick={() => setOfferOpen(true)} className="font-bold underline underline-offset-2">
+                    Con el Pase, todos con voz
                   </button>
-                ))}
-              </div>
+                )}
+              </p>
+          )}
+          <button
+            type="button"
+            aria-expanded={optsOpen}
+            aria-controls="send-opts"
+            onClick={() => setOptsOpen((v) => !v)}
+            className="flex min-h-10 w-full items-center gap-2 rounded-xl bg-white/5 px-3 text-left text-[12.5px] font-semibold text-[#e8f1ff]/80"
+          >
+            <span className="flex-1 truncate">
+              Opciones de envío · {voiceNow ? '🎙️ Con voz' : '✏️ Texto'} · {whenCustom ? 'Otro día' : DELAY_LABEL[delay]}
+            </span>
+            <span aria-hidden className={`transition-transform ${optsOpen ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          <div id="send-opts" hidden={!optsOpen} className="space-y-2.5">
+          {KING_VOICE_ENABLED && !photo && !access.locked && (
+            <div className="space-y-1.5">
+              {trialVoiceLeft !== 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="w-14 text-[12px] text-[#e8f1ff]/60">Como</span>
+                  <div role="radiogroup" aria-label="Formato de la respuesta" className="flex flex-1 gap-1 rounded-xl bg-white/5 p-1">
+                    {(['voice', 'text'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        role="radio"
+                        aria-checked={mode === m}
+                        onClick={() => setMode(m)}
+                        className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${mode === m ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/70'}`}
+                      >
+                        {m === 'voice' ? '🎙️ Con voz' : '✏️ Solo texto'}
+                      </button>
+                    ))}
+                  </div>
+                  {voiceNow && (
+                    <button
+                      type="button"
+                      onClick={preview}
+                      disabled={!text.trim() || previewing}
+                      className="shrink-0 rounded-xl border border-[#5eead4]/50 px-2.5 py-1.5 text-[12px] font-bold text-[#5eead4] disabled:opacity-40"
+                    >
+                      {previewing ? 'Preparando…' : '▶ Escuchar'}
+                    </button>
+                  )}
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -897,6 +1045,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
               </button>
             </div>
           )}
+          </div>
 
           {notice && <p role="status" className={`text-center text-[13px] ${notice.tone === 'ok' ? 'text-[#7ee2a8]' : notice.tone === 'warn' ? 'text-[#5eead4]' : 'text-[#ff8a8c]'}`}>{notice.msg}</p>}
 
@@ -913,7 +1062,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
         </footer>
         )}
 
-        {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onClose={() => setIdeasOpen(false)} />}
+        {ideasOpen && <IdeasList character={character} selectedDay={todayMischief?.day ?? null} onPick={setPickedDay} onUseText={(t) => setText(fillChild(t, childName).slice(0, MAX_CHARS))} initialTab={ideasOpen === 'quick' ? 'quick' : 'nights'} onClose={() => setIdeasOpen(false)} />}
 
         {planner && (
           <SchedulePlanner
@@ -954,7 +1103,7 @@ export function PajePanel({ token, childLink, character, childName, characterAli
           <div role="alertdialog" aria-modal="true" aria-label="Cuenta atrás" className="absolute inset-0 z-40 grid place-items-center bg-black/95 p-6 text-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-[#5eead4]">Empieza a grabar</p>
-              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '✨'}</p>
+              <p aria-live="assertive" className="my-6 font-serif text-[120px] leading-none text-[#e8f1ff]">{countdown > 0 ? countdown : '¡Ya!'}</p>
               <p className="text-[15px] text-[#e8f1ff]/70"><R>Enfoca al niño con el otro móvil. La sorpresa llega en cuanto llegue a cero.</R></p>
               <button type="button" onClick={cancelCountdown} className="mt-6 min-h-11 rounded-xl border border-white/25 px-5 font-semibold text-[#e8f1ff]/80">
                 Cancelar
@@ -1006,7 +1155,7 @@ function PanelMessage({
   const child = m.from === 'child';
   return (
     <div className={`flex ${child ? 'justify-start' : 'justify-end'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow ${child ? 'rounded-bl-md bg-[#fde68a] text-[#2b1b0e]' : 'rounded-br-md bg-[#eaf2ff] text-[#2b1b0e]'}`}>
+      <div className={`max-w-[88%] rounded-2xl px-3 py-2 shadow lg:max-w-[68%] ${child ? 'rounded-bl-md bg-[#fde68a] text-[#2b1b0e]' : 'rounded-br-md bg-[#eaf2ff] text-[#2b1b0e]'}`}>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-60">{child ? childName : character.name}</p>
         {m.kind === 'voice' && <VoiceNote id={m.id} followUps={followUps} duration={m.duration ?? 5} seed={seedFrom(m.id)} mine={child} character={character} src={m.audioUrl} />}
         {m.kind === 'photo' && m.imageUrl && (

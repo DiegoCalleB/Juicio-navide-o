@@ -1,5 +1,5 @@
 // Prueba gratis (acortada a 45 s), Pase de Navidad con Stripe simulado, pase de regalo y nivel de lectura.
-const { childLinkOf, familyLinkOf, ensureChar } = require('../_lib.cjs');
+const { childLinkOf, familyLinkOf, ensureChar, nextStep } = require('../_lib.cjs');
 // Se lanza aparte: npm run test:e2e -- --billing
 const { BASE, launch, openChild } = require('../_lib.cjs');
 const results = [];
@@ -16,17 +16,20 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('portada: anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
-  check('portada: mensaje para primeros lectores', await page.getByText('Para primeros lectores').isVisible());
+  check('portada (la puede ver un peque): sin precios ni pagos', (await page.getByText(/€|prueba gratis|Pase de Navidad/i).count()) === 0);
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check(); await nextStep(page);
+  check('crear (paso 2): anuncia la prueba gratis y el precio', await page.getByText(/Gratis 3 días · después, Pase de Navidad 3,99 €/).isVisible());
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
 
   const create = async (name, reading) => {
     await page.fill('#child', name);
     if (reading) await page.getByRole('radio', { name: reading }).click();
     await page.locator('form').getByRole('checkbox').check();
-    await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
+    await ensureChar(page); await page.getByRole('button', { name: /Abrir el portal/ }).click();
   };
   const linksAfterCreate = async () => {
-    await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
+    await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
     const panel = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
     const child = (await childLinkOf(page));
     return { panel: local(panel), child: local(child) };
@@ -36,22 +39,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const t0 = Date.now();
   const r1 = await linksAfterCreate();
   check('sala 1: es una prueba gratis de 3 días', await page.getByText(/Prueba gratis de 3 días/).isVisible());
-  await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+  await page.getByRole('button', { name: /Abrir otro portal/ }).click();
   await create('Mateo');
   const r2 = await linksAfterCreate();
   // Una prueba por peque: hasta cinco por móvil
   for (const n of ['Pablo', 'Sofía', 'Hugo']) {
-    await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+    await page.getByRole('button', { name: /Abrir otro portal/ }).click();
     await create(n);
-    await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
+    await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   }
   check('se pueden preparar cinco salas de prueba (una por peque)', true);
-  await page.getByRole('button', { name: /Preparar otra sala/ }).click();
+  await page.getByRole('button', { name: /Abrir otro portal/ }).click();
   await create('Lola');
-  await page.getByText(/Ya has creado todas las salas de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
-  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todas las salas de prueba gratis/).count()) > 0 && await page.locator('form').getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
+  await page.getByText(/Ya has creado todos los portales de prueba gratis/).waitFor({ timeout: 15000 }).catch(() => {});
+  check('la 6.ª prueba en el mismo móvil: avisa y ofrece el pase', (await page.getByText(/Ya has creado todos los portales de prueba gratis/).count()) > 0 && await page.locator('form').getByRole('button', { name: /Conseguir el Pase · 3,99 €/ }).isVisible());
 
-  // Panel y niño de la sala 1
+  // Panel y niño del portal 1
   const panel = await ctxA.newPage();
   await panel.goto(r1.panel, { waitUntil: 'networkidle' });
   await panel.getByText(/Prueba gratis · queda/).waitFor({ timeout: 15000 }).catch(() => {});
@@ -81,12 +84,13 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   await Promise.all([panel.waitForURL(/\/pase\/listo/, { timeout: 20000 }), panel.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
   await panel.waitForLoadState('networkidle');
   check('pago completado: muestra el pase', await panel.getByText('¡Ya tienes tu Pase de Navidad!').isVisible());
-  const wa = await panel.getByRole('link', { name: 'Regalar por WhatsApp' }).getAttribute('href');
-  const giftLink = decodeURIComponent(wa.split('text=')[1]).match(/https?:\/\/\S+/)[0];
-  check('incluye un enlace de regalo', /\?pase=[A-Za-z0-9_-]{43}$/.test(giftLink), giftLink.slice(-20));
+  const mailTo = await panel.getByRole('link', { name: 'Enviármelo por correo' }).getAttribute('href');
+  const giftLink = decodeURIComponent(mailTo.split('body=')[1]); // enlace del pase: lo usa otro móvil de la familia
+  check('el pase tiene su enlace para guardarlo en otro móvil', /\?pase=[A-Za-z0-9_-]{43}$/.test(giftLink), giftLink.slice(-20));
+  check('ya no se regala un pase con la compra', (await panel.getByRole('link', { name: 'Regalar por WhatsApp' }).count()) === 0);
   await panel.getByRole('link', { name: 'Volver a mi panel' }).click();
   await panel.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
-  check('de vuelta al panel: la sala ya no tiene límite', (await panel.locator('#reply').count()) === 1 && (await panel.getByText('La prueba gratis ha terminado').count()) === 0);
+  check('de vuelta al panel: el portal ya no tiene límite', (await panel.locator('#reply').count()) === 1 && (await panel.getByText('La prueba gratis ha terminado').count()) === 0);
   await kid.waitForSelector('text=se ha ido a preparar la magia', { state: 'detached', timeout: 15000 }).catch(() => {});
   check('niño: puede volver a escribir sin recargar', (await kid.getByText(/se ha ido a preparar la magia/).count()) === 0);
 
@@ -94,22 +98,22 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   const panel2 = await ctxA.newPage();
   await panel2.goto(r2.panel, { waitUntil: 'networkidle' });
   await panel2.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
-  check('el pase cuelga de la familia: la sala del hermano ya está desbloqueada', (await panel2.locator('#reply').count()) === 1 && (await panel2.getByText('La prueba gratis ha terminado').count()) === 0);
+  check('el pase cuelga de la familia: el portal del hermano ya está desbloqueada', (await panel2.locator('#reply').count()) === 1 && (await panel2.getByText('La prueba gratis ha terminado').count()) === 0);
 
-  // Salas nuevas con el pase
-  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-  check('portada: recuerda que hay un pase en este móvil', await page.getByText(/Tienes un Pase de Navidad en este móvil/).isVisible());
+  // Portales nuevas con el pase
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  check('crear: recuerda que hay un pase en este móvil', await page.getByText(/Tienes un Pase de Navidad en este móvil/).isVisible());
   await create('Pablo');
-  await page.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('con el pase, la sala nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
+  await page.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('con el pase, el portal nueva no tiene límite', await page.getByText(/Con tu Pase de Navidad/).isVisible());
 
-  // Pase de regalo en otra familia: tenía una sala en prueba y usa el pase con un toque
+  // El enlace del pase, abierto en otro móvil: tenía un portal en prueba y usa el pase con un toque
   const other = await ctxB.newPage();
-  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Martina');
   await other.locator('form').getByRole('checkbox').check();
-  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
-  await other.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(other); await other.getByRole('button', { name: /Abrir el portal/ }).click();
+  await other.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const martinaPanel = local(await other.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href'));
   await other.goto(local(giftLink), { waitUntil: 'networkidle' });
   await other.getByText('🎁 ¡Tienes un Pase de Navidad!').waitFor({ timeout: 15000 }).catch(() => {});
@@ -117,39 +121,44 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('regalo: el enlace se quita de la barra de direcciones', !other.url().includes('pase='));
   await other.goto(martinaPanel, { waitUntil: 'networkidle' });
   await other.getByRole('button', { name: /^Pase 3,99/ }).click();
-  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).waitFor({ timeout: 15000 }).catch(() => {});
-  check('regalo: su sala en prueba ofrece usar el pase', await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).isVisible());
-  await other.getByRole('button', { name: 'Usar mi pase en esta sala' }).click();
+  await other.getByRole('button', { name: 'Usar mi pase en este portal' }).waitFor({ timeout: 15000 }).catch(() => {});
+  check('regalo: su sala en prueba ofrece usar el pase', await other.getByRole('button', { name: 'Usar mi pase en este portal' }).isVisible());
+  await other.getByRole('button', { name: 'Usar mi pase en este portal' }).click();
   await other.waitForSelector('#reply', { timeout: 15000 }).catch(() => {});
   check('regalo: con un toque, desbloqueada', (await other.locator('#reply').count()) === 1);
-  await other.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await other.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await other.fill('#child', 'Sofia');
   await other.locator('form').getByRole('checkbox').check();
-  await ensureChar(other); await other.getByRole('button', { name: /Crear la sala/ }).click();
-  await other.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(other); await other.getByRole('button', { name: /Abrir el portal/ }).click();
+  await other.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   check('regalo: su siguiente sala nace sin límite', await other.getByText(/Con tu Pase de Navidad/).isVisible());
 
   // Comprar el Pase desde la portada, antes de crear nada (p. ej. unos abuelos que lo regalan)
   const ctxD = await b.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (comprador directo) E2E' });
   const buyer = await ctxD.newPage();
   buyer.on('pageerror', (e) => errs.push(e.message));
-  await buyer.goto(BASE + '/', { waitUntil: 'networkidle' });
-  check('portada: enlace al Pase junto al botón principal', await buyer.getByRole('link', { name: /Ver el Pase de Navidad · 3,99/ }).isVisible());
+  await buyer.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
+  check('zona de mayores: enlace a los precios con el del Pase', await buyer.getByRole('link', { name: /Pase de Navidad 3,99/ }).isVisible());
+  await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });
   check('portada: sección "Elige cómo empezar" con las dos opciones', await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).isVisible() && await buyer.getByRole('heading', { name: 'Prueba gratis' }).isVisible() && await buyer.getByRole('heading', { name: 'Pase de Navidad' }).isVisible());
-  check('portada: explica las ventajas del Pase', await buyer.getByText('Incluye un pase para regalar a otra familia').isVisible() && await buyer.getByText(/hasta el 20 de enero/).first().isVisible());
+  check('portada: explica las ventajas del Pase', await buyer.getByText(/hasta el 20 de enero/).first().isVisible() && (await buyer.getByText(/para regalar/).count()) === 0);
   await buyer.getByRole('button', { name: /Conseguir el Pase/ }).click();
   check('portada: sin la casilla legal no se abre el pago', await buyer.getByText('Marca la casilla para continuar.').isVisible());
   await buyer.getByText(/Quiero que el pase se active ya/).click();
   await Promise.all([buyer.waitForURL(/\/pase\/listo/, { timeout: 20000 }), buyer.getByRole('button', { name: /Conseguir el Pase/ }).click()]);
-  check('comprar desde la portada: muestra el pase y el regalo', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible() && await buyer.getByRole('link', { name: 'Regalar por WhatsApp' }).isVisible());
-  await buyer.getByRole('link', { name: 'Crear una sala' }).click();
+  const paidSession = new URL(buyer.url()).searchParams.get('session_id');
+  check('comprar desde la portada: muestra el pase', await buyer.getByText('¡Ya tienes tu Pase de Navidad!').isVisible());
+  await buyer.getByRole('link', { name: 'Abrir un portal' }).click();
   await buyer.locator('#child').waitFor({ timeout: 15000 });
-  check('con el pase ya comprado, la portada deja de ofrecerlo', (await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).count()) === 0);
+  await buyer.goto(BASE + '/precios', { waitUntil: 'networkidle' });
+  check('con el pase ya comprado, la página de precios deja de ofrecerlo', (await buyer.getByRole('heading', { name: 'Elige cómo empezar' }).count()) === 0);
+  await buyer.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await buyer.fill('#child', 'Julia');
   await buyer.locator('form').getByRole('checkbox').check();
-  await ensureChar(buyer); await buyer.getByRole('button', { name: /Crear la sala/ }).click();
-  await buyer.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
+  await ensureChar(buyer); await buyer.getByRole('button', { name: /Abrir el portal/ }).click();
+  await buyer.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal creada tras comprar nace sin límite', await buyer.getByText(/Con tu Pase de Navidad/).isVisible());
+  const julia = (await buyer.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
 
   // Webhook de Stripe: firma obligatoria e idempotente
   const hook = async (body, sig) => (await fetch(BASE + '/api/stripe/webhook', { method: 'POST', headers: { 'stripe-signature': sig, 'content-type': 'application/json' }, body })).status;
@@ -160,6 +169,21 @@ const local = (u) => u.replace(/^https?:\/\/[^/]+/, BASE);
   check('webhook: rechaza una firma antigua (más de 5 min)', (await hook(evt, `t=${t - 900},v1=${crypto.createHmac('sha256', 'whsec_e2e_test_secret_123456').update(`${t - 900}.${evt}`).digest('hex')}`)) === 400);
   const s1 = await hook(evt, good), s2 = await hook(evt, good);
   check('webhook: acepta la firma válida y es idempotente', s1 === 200 && s2 === 200, `${s1}/${s2}`);
+
+  // Reembolso: se devuelve el dinero en Stripe y el pase deja de valer (las salas vuelven a la prueba ya terminada)
+  const sign = (b) => { const ts = Math.floor(Date.now() / 1000); return `t=${ts},v1=${crypto.createHmac('sha256', 'whsec_e2e_test_secret_123456').update(`${ts}.${b}`).digest('hex')}`; };
+  const pi = `pi_fake_${paidSession.slice('cs_fake_'.length)}`;
+  const partial = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: pi, refunded: false, amount: 399, amount_refunded: 100 } } });
+  check('reembolso parcial: el webhook responde bien y el pase sigue valiendo', (await hook(partial, sign(partial))) === 200);
+  await buyer.goto(BASE + julia, { waitUntil: 'networkidle' });
+  check('reembolso parcial: el portal sigue sin límite', (await buyer.locator('#reply').count()) === 1);
+  const refund = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: pi, refunded: true, amount: 399, amount_refunded: 399 } } });
+  check('reembolso total: el webhook responde bien (y es idempotente)', (await hook(refund, sign(refund))) === 200 && (await hook(refund, sign(refund))) === 200);
+  await buyer.goto(BASE + julia, { waitUntil: 'networkidle' });
+  await buyer.getByText('La prueba gratis ha terminado').waitFor({ timeout: 15000 }).catch(() => {});
+  check('reembolso total: el portal vuelve a quedar bloqueado', (await buyer.getByText('La prueba gratis ha terminado').count()) === 1 && (await buyer.locator('#reply').count()) === 0);
+  const unknown = JSON.stringify({ type: 'charge.refunded', data: { object: { payment_intent: 'pi_desconocido', refunded: true } } });
+  check('reembolso de un pago sin pase: se ignora sin error', (await hook(unknown, sign(unknown))) === 200);
 
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);

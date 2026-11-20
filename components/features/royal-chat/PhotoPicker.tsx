@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { IconCamera } from './icons';
+import { InAppCamera } from './InAppCamera';
 
 interface Props {
   onPick: (file: File) => void;
@@ -13,11 +14,12 @@ interface Props {
 }
 
 /**
- * Botón de foto con dos caminos: hacer una foto con la cámara (en el móvil abre la cámara
- * directamente) o elegir una imagen ya guardada. En ordenador ambos abren el selector de archivos.
+ * Botón de foto con dos caminos: hacer una foto con la cámara (dentro de la web, para que Android
+ * no cierre Chrome por falta de memoria; si no se puede, la cámara del móvil) o elegir una imagen guardada.
  */
 export function PhotoPicker({ onPick, disabled, className, iconClassName = 'size-6', label = 'Enviar una foto' }: Props) {
   const [open, setOpen] = useState(false);
+  const [camera, setCamera] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -51,13 +53,29 @@ export function PhotoPicker({ onPick, disabled, className, iconClassName = 'size
       </button>
       {open && (
         <div role="menu" className="absolute bottom-full right-0 z-30 mb-2 w-52 animate-pop overflow-hidden rounded-2xl border border-black/10 bg-[#fbf5e6] text-[#2b1b0e] shadow-2xl">
-          <button type="button" role="menuitem" onClick={() => cameraRef.current?.click()} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-[15px] font-semibold active:bg-black/5">
+          <button type="button" role="menuitem" onClick={() => {
+              setOpen(false);
+              setCamera(true);
+            }} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-[15px] font-semibold active:bg-black/5">
             <span aria-hidden className="text-xl">📷</span> Hacer una foto
           </button>
           <button type="button" role="menuitem" onClick={() => galleryRef.current?.click()} className="flex min-h-12 w-full items-center gap-3 border-t border-black/10 px-4 text-left text-[15px] font-semibold active:bg-black/5">
             <span aria-hidden className="text-xl">🖼️</span> Elegir una foto
           </button>
         </div>
+      )}
+      {camera && (
+        <InAppCamera
+          onShot={(file) => {
+            setCamera(false);
+            onPick(file);
+          }}
+          onClose={() => setCamera(false)}
+          onSystemCamera={() => {
+            setCamera(false);
+            cameraRef.current?.click();
+          }}
+        />
       )}
     </div>
   );

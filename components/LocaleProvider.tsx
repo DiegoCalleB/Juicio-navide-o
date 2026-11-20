@@ -5,7 +5,7 @@ import { DEFAULT_LOCALE, regionalize, type Locale } from '@/lib/i18n';
 
 const LocaleContext = createContext<Locale>(DEFAULT_LOCALE);
 
-/** Idioma de esta parte de la app. Se puede anidar: una sala fuerza el suyo sea cual sea el móvil. */
+/** Idioma de esta parte de la app. Se puede anidar: un portal fuerza el suyo sea cual sea el móvil. */
 export function LocaleProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
   return <LocaleContext.Provider value={locale}>{children}</LocaleContext.Provider>;
 }

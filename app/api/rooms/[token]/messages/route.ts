@@ -5,14 +5,14 @@ import { findRoomByToken, getMessagesVersion, listMessages, roomAccess } from '@
 export const dynamic = 'force-dynamic';
 
 /**
- * Mensajes de la sala. Sondeo condicional: si el cliente manda la `v` que recibió y
+ * Mensajes del portal. Sondeo condicional: si el cliente manda la `v` que recibió y
  * nada ha cambiado, responde barato ("unchanged") sin listar ni firmar archivos.
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   return guarded('messages', { key: 'poll', max: 120, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
 
     // El acceso va siempre: la prueba termina por tiempo, sin que cambie ningún mensaje.
     const access = roomAccess(found.room);

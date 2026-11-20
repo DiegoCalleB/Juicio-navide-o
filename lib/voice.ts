@@ -12,12 +12,12 @@ import { getElevenLabsKey } from '@/lib/env.server';
  * (El Abuelo Charlie y Lulu se descartaron por eso.)
  */
 const DEFAULT_VOICE_IDS: Record<CharacterId, string> = {
-  papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, anciano contador de historias, cálido (provisional hasta que el cliente elija)
-  melchor: 'GojDwihhnL1f7RrBuXsJ', // Luis – castellano, maduro, cálido (elegido)
-  gaspar: 'ewZshglVwjWcMIuBYCCS', // Antonio Lobo – castellano (Madrid), grave y tranquilo (elegido)
-  baltasar: 'orF2qy9215xjwqqxqsWW', // Rafael – castellano, cuentos y leyendas (elegido)
-  duende_chispa: 'xH6DmlUWSqhSmFog5gxa', // Dani – castellano, joven y enérgico (provisional)
-  raton_perez: 'ODQQw99uvxi7piSglbBJ', // Carlota – castellana, aguda, dulce y alegre, pensada para niños (provisional)
+  papa_noel: 'EGuq18jUC3ilTnuBn2wj', // Ezequiel – castellano, sabio y mágico, con ronquera suave (elegido el 15-nov)
+  melchor: 'QtPMrakdgePQIUwOX7Ut', // Arconte – castellano, grave y elegante (elegido el 15-nov)
+  gaspar: 'DDpfIxnPLRqm8Yhvf5Ou', // «Linea Magica - Rey Gaspar»: diseñada a medida, cálida y bondadosa (15-nov)
+  baltasar: 'LdvLRu0MKMGFvQ4uNHdR', // «Linea Magica - Rey Baltasar»: diseñada a medida, muy grave y aterciopelada (15-nov)
+  duende_chispa: 'GaI7phBFmsSUxElvPx8l', // «Linea Magica - Elfo Chispa»: diseñada a medida, muy aguda y traviesa (15-nov)
+  raton_perez: 'gD1IexrzCvsXPHUuT0s3', // Sara Martín – castellana, joven (elegida el 15-nov)
 };
 
 const BITRATE = 64_000;
@@ -31,7 +31,11 @@ export class VoiceError extends Error {
   }
 }
 
-export function voiceIdFor(character: CharacterId): string {
+/** La elfa (cuando los padres eligen chica) tiene su propia voz. */
+const ELFA_VOICE_ID = 'anxpogu2yu4T91ajAsSp'; // Lía – castellana, joven, dulce y aguda (elegida el 15-nov)
+
+export function voiceIdFor(character: CharacterId, gender?: string | null): string {
+  if (character === 'duende_chispa' && gender === 'f') return process.env.ELEVENLABS_VOICE_DUENDE_CHISPA_F?.trim() || ELFA_VOICE_ID;
   const override = process.env[`ELEVENLABS_VOICE_${character.toUpperCase()}`]?.trim();
   return override || DEFAULT_VOICE_IDS[character];
 }
@@ -40,7 +44,7 @@ export function voiceIdFor(character: CharacterId): string {
 export function voiceLimits(): { dailyChars: number; roomDailyReplies: number } {
   const num = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : d);
   return {
-    dailyChars: num(process.env.VOICE_DAILY_CHAR_LIMIT, 150_000),
+    dailyChars: num(process.env.VOICE_DAILY_CHAR_LIMIT, 20_000), // ~210.000 créditos al mes en el plan Creator: que un día de mucho uso no gaste el mes
     roomDailyReplies: num(process.env.VOICE_ROOM_DAILY_LIMIT, 40),
   };
 }
@@ -54,16 +58,19 @@ export function prepareSpeechText(input: string): string {
     .trim();
 }
 
-async function requestOnce(character: CharacterId, text: string): Promise<Response> {
-  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceIdFor(character)}?output_format=mp3_44100_64`, {
+/** Modelo: eleven_v3 (el más expresivo: risas, susurros, emoción). Se puede cambiar con ELEVENLABS_MODEL. */
+export function voiceModel(): string {
+  return process.env.ELEVENLABS_MODEL?.trim() || 'eleven_v3';
+}
+
+async function requestOnce(voiceId: string, text: string): Promise<Response> {
+  const model = voiceModel();
+  // eleven_v3 solo admite estabilidad 0 / 0,5 / 1 y no usa style ni speaker_boost: se dejan sus valores por defecto.
+  const settings = model.startsWith('eleven_v3') ? undefined : { stability: 0.5, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true };
+  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_64`, {
     method: 'POST',
     headers: { 'xi-api-key': getElevenLabsKey(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      model_id: process.env.ELEVENLABS_MODEL?.trim() || 'eleven_multilingual_v2',
-      language_code: 'es',
-      voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true },
-    }),
+    body: JSON.stringify({ text, model_id: model, language_code: 'es', ...(settings ? { voice_settings: settings } : {}) }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   });
@@ -73,14 +80,16 @@ async function requestOnce(character: CharacterId, text: string): Promise<Respon
 export async function synthesizeKingVoice(
   character: CharacterId,
   rawText: string,
+  /** Texto propio con etiquetas de emoción ([risas], [susurra]…): no se limpia. Solo para frases internas, nunca texto de usuarios. */
+  opts?: { trusted?: boolean; gender?: string | null },
 ): Promise<{ audio: Buffer; seconds: number; spokenChars: number }> {
-  const text = prepareSpeechText(rawText);
+  const text = opts?.trusted ? rawText.trim() : prepareSpeechText(rawText);
   if (!text) throw new VoiceError('unavailable', 'texto vacío tras limpiar');
 
   let res: Response | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      res = await requestOnce(character, text);
+      res = await requestOnce(voiceIdFor(character, opts?.gender), text);
     } catch (err) {
       if (attempt === 1) throw new VoiceError('unavailable', err instanceof Error ? err.message : 'red');
       continue;
@@ -95,4 +104,16 @@ export async function synthesizeKingVoice(
   const audio = Buffer.from(await res.arrayBuffer());
   if (audio.length < 200) throw new VoiceError('unavailable', 'audio vacío');
   return { audio, seconds: Math.max(1, Math.round(((audio.length * 8) / BITRATE) * 10) / 10), spokenChars: text.length };
+}
+
+/**
+ * Primera frase del saludo con el nombre del niño ("¡Hola, Lucía!"). El resto del saludo está grabado
+ * una sola vez por personaje en /public/voces/saludo/. El nombre se limpia: solo letras, espacios y guiones.
+ */
+export function greetingNameLine(character: CharacterId, childName: string): string | null {
+  const name = childName.normalize('NFC').replace(/[^\p{L}\p{M}' -]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  if (!name) return null;
+  if (character === 'papa_noel') return `[risas] ¡Jo, jo, jo! ¡Hola, ${name}!`;
+  if (character === 'duende_chispa') return `[susurra] ¡Psss! ¡Hola, ${name}!`;
+  return `¡Hola, ${name}!`;
 }

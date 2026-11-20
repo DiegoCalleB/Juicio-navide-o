@@ -6,16 +6,16 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const mk = () => b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const childToken = childLink.split('/r/')[1], parentToken = pajeHref.split('/paje/')[1];
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await openChild(child, childLink, {});
-  await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 });
+  await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 });
 
   await child.fill('#royal-draft', 'Quiero un tren, sin querer escribí mal'); await child.keyboard.press('Enter');
   await parent.waitForSelector('text=Quiero un tren, sin querer');

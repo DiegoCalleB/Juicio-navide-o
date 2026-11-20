@@ -88,7 +88,7 @@ export function PassOffer({
         <>
           <p className="opacity-80"><R>En este móvil ya tienes un Pase de Navidad.</R></p>
           <button type="button" onClick={useSaved} disabled={busy} className={`min-h-12 w-full rounded-2xl font-bold disabled:opacity-60 ${btn}`}>
-            {busy ? 'Activando…' : 'Usar mi pase en esta sala'}
+            {busy ? 'Activando…' : 'Usar mi pase en este portal'}
           </button>
         </>
       ) : (
@@ -96,7 +96,6 @@ export function PassOffer({
           <ul className="space-y-1 opacity-85">
             <li><R>✓ {childName ? `${childName} sigue` : 'Seguís'} escribiéndose hasta el 20 de enero</R></li>
             <li>✓ Papá Noel, el elfo y los Reyes, para todos los hermanos</li>
-            <li>✓ Un pase de regalo para otra familia</li>
             <li>✓ Pago único, sin suscripción</li>
           </ul>
           <label className="flex items-start gap-2.5 text-[12px] leading-snug opacity-80">

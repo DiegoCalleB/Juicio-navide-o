@@ -160,7 +160,7 @@ export function SchedulePlanner({ token, character, childName, mode, onClose, on
           ))}
 
           <p className="text-[12px] leading-snug text-[#e8f1ff]/50">
-            {mode === 'voice' ? 'Los normales irán con la voz de ' + character.shortName + '; ' : ''}la sorpresa siempre va por escrito. Si el niño tiene la sala cerrada, lo verá al abrirla; la sorpresa le saldrá a pantalla completa la primera vez.
+            {mode === 'voice' ? 'Los normales irán con la voz de ' + character.shortName + '; ' : ''}la sorpresa siempre va por escrito. Si el niño tiene el portal cerrado, lo verá al abrirlo; la sorpresa le saldrá a pantalla completa la primera vez.
           </p>
           {error && <p role="alert" className="text-[13px] text-[#ff8a8c]">{error}</p>}
         </div>

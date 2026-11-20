@@ -4,8 +4,8 @@
  *
  * Fase 1b:
  *  - El niño puede mandar audios (activo por defecto; NEXT_PUBLIC_ENABLE_CHILD_AUDIO=0 lo apaga).
- *  - El personaje contesta con texto y fotos. Su respuesta con voz sintetizada
- *    (ElevenLabs) queda apagada: NEXT_PUBLIC_ENABLE_VOICE=1 la activa.
+ *  - El personaje contesta con texto, fotos y, desde el 14-nov, también con su voz (ElevenLabs):
+ *    activa por defecto; NEXT_PUBLIC_ENABLE_VOICE=0 la apaga. Sin clave de ElevenLabs, todo va por escrito.
  */
 export const CHILD_AUDIO_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHILD_AUDIO !== '0';
-export const KING_VOICE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_VOICE === '1';
+export const KING_VOICE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_VOICE !== '0';

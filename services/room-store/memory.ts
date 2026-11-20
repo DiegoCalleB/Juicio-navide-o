@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Bucket, MessageRecord, NewMessage, NewPass, NewRoom, PassRecord, RoomRecord, RoomStore } from './types';
 
 type RoomRow = RoomRecord & { creatorHash: string; createdAt: number };
-type PassRow = PassRecord & { tokenHash: string };
+type PassRow = PassRecord & { tokenHash: string; stripePaymentIntent?: string | null };
 
 /** Con índices: las pruebas de carga miden la aplicación, no un barrido lineal del almacén. */
 interface State {
@@ -15,6 +15,8 @@ interface State {
 }
 
 const g = globalThis as unknown as { __roomMemory?: State };
+const gc = globalThis as unknown as { __contactsMem?: import('./types').ContactRecord[] };
+const contactsMem = () => (gc.__contactsMem ??= []);
 const state = (): State => (g.__roomMemory ??= { rooms: new Map(), byHash: new Map(), messages: new Map(), files: new Map(), passes: new Map() });
 
 /** Lee un archivo del almacén en memoria (lo sirve la ruta de desarrollo). */
@@ -37,6 +39,8 @@ export class MemoryRoomStore implements RoomStore {
       familyHash: room.familyHash ?? null,
       familySeed: room.familySeed ?? null,
       familyName: room.familyName ?? null,
+      parentPin: room.parentPin ?? null,
+      pinRecovery: room.pinRecovery ?? null,
       trialEndsAt: room.trialEndsAt ?? null,
       passId: room.passId ?? null,
       creatorHash: room.creatorHash,
@@ -132,6 +136,7 @@ export class MemoryRoomStore implements RoomStore {
       tokenHash: p.tokenHash,
       kind: p.kind,
       stripeSessionId: p.stripeSessionId ?? null,
+      stripePaymentIntent: p.stripePaymentIntent ?? null,
       parentPassId: p.parentPassId ?? null,
       roomsLimit: 10,
       expiresAt: p.expiresAt,
@@ -162,6 +167,28 @@ export class MemoryRoomStore implements RoomStore {
     return n;
   }
 
+  async findPassByPaymentIntent(paymentIntent: string): Promise<PassRecord | null> {
+    return [...state().passes.values()].find((x) => x.stripePaymentIntent === paymentIntent) ?? null;
+  }
+
+  async revokePass(passId: string, nowIso: string): Promise<number> {
+    const st = state();
+    const ids = new Set([passId, ...[...st.passes.values()].filter((x) => x.parentPassId === passId).map((x) => x.id)]);
+    for (const id of ids) {
+      const p = st.passes.get(id);
+      if (p) p.expiresAt = nowIso;
+    }
+    let n = 0;
+    for (const r of st.rooms.values()) {
+      if (r.passId && ids.has(r.passId)) {
+        r.passId = null;
+        r.trialEndsAt = nowIso;
+        n++;
+      }
+    }
+    return n;
+  }
+
   async attachPass(roomId: string, passId: string): Promise<boolean> {
     const row = state().rooms.get(roomId);
     if (!row) return false;
@@ -176,6 +203,43 @@ export class MemoryRoomStore implements RoomStore {
     return [...state().rooms.values()]
       .filter((r) => r.familyHash === hash && Date.parse(r.expiresAt) > Date.now())
       .sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  async upsertContact(c: { scope: string; email: string; marketing: boolean; consentVersion: string }): Promise<void> {
+    const list = contactsMem();
+    const i = list.findIndex((x) => x.scope === c.scope && x.email === c.email);
+    const rec = { scope: c.scope, email: c.email, marketingOptIn: c.marketing, createdAt: i >= 0 ? list[i]!.createdAt : new Date().toISOString() };
+    if (i >= 0) list[i] = rec;
+    else list.push(rec);
+  }
+
+  async deleteContactsByEmail(email: string): Promise<number> {
+    const list = contactsMem();
+    const keep = list.filter((x) => x.email !== email);
+    const n = list.length - keep.length;
+    list.splice(0, list.length, ...keep);
+    return n;
+  }
+
+  async purgeContacts(beforeIso: string): Promise<number> {
+    const list = contactsMem();
+    const keep = list.filter((x) => x.marketingOptIn || x.createdAt >= beforeIso);
+    const n = list.length - keep.length;
+    list.splice(0, list.length, ...keep);
+    return n;
+  }
+
+  async listContacts(): Promise<import('./types').ContactRecord[]> {
+    return [...contactsMem()];
+  }
+
+  async setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void> {
+    for (const r of state().rooms.values()) {
+      if (scope.familyHash ? r.familyHash === scope.familyHash : r.id === scope.roomId) {
+        r.parentPin = pin;
+        r.pinRecovery = recovery;
+      }
+    }
   }
 
   async updateFamilyName(hash: string, name: string | null): Promise<void> {
@@ -265,6 +329,10 @@ export class MemoryRoomStore implements RoomStore {
 
   async uploadFile(bucket: Bucket, path: string, data: Buffer, contentType: string): Promise<void> {
     state().files.set(`${bucket}/${path}`, { data, contentType });
+  }
+
+  async fileExists(bucket: Bucket, path: string): Promise<boolean> {
+    return state().files.has(`${bucket}/${path}`);
   }
 
   async signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {

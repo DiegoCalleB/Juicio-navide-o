@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   }
 
   const found = await findRoomByToken(token);
-  if (!found) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+  if (!found) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
 
   const encoder = new TextEncoder();
   let cleanup: (() => void) | undefined;

@@ -1,6 +1,6 @@
 /**
  * Los peques de la casa, guardados en ESTE móvil (solo navegador) para elegirlos en un desplegable.
- * Sobrevive a quitar una sala de la lista o a que una sala caduque. Solo nombre de pila y si ya lee.
+ * Sobrevive a quitar un portal de la lista o a que un portal caduque. Solo nombre de pila y si ya lee.
  */
 export interface Kid {
   name: string;

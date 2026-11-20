@@ -1,8 +1,7 @@
-import { ELF_PRANK_SCENE } from '@/lib/demoScenes';
 import type { ChatMessage } from './types';
 
 export const DEMO_REYES: ChatMessage[] = [
-  { id: '1', from: 'king', kind: 'text', time: '19:41', text: '¡Hola, Lucía! Soy Melchor ✨\nMis pajes me acaban de traer tu carta desde Madrid.' },
+  { id: '1', from: 'king', kind: 'text', time: '19:41', text: '¡Hola, Lucía! Soy Melchor.\nMis pajes me acaban de traer tu carta desde Madrid.' },
   { id: '2', from: 'king', kind: 'voice', time: '19:41', duration: 18, seed: 4211 },
   { id: '3', from: 'king', kind: 'photo', time: '19:42', caption: 'Así se ve el palacio esta noche. Los camellos ya están preparando el viaje 🐪' },
   { id: '4', from: 'child', kind: 'voice', time: '19:43', duration: 7, seed: 977 },
@@ -24,7 +23,7 @@ export const DEMO_RATON: ChatMessage[] = [
 
 export const DEMO_DUENDE: ChatMessage[] = [
   { id: '1', from: 'king', kind: 'text', time: '07:58', text: '¡Ji, ji, ji! ¡Buenos días, Lucía! Soy Chispa, el elfo travieso 😈' },
-  { id: '2', from: 'king', kind: 'photo', time: '07:58', src: ELF_PRANK_SCENE, caption: '¡Mira la trastada que he hecho esta noche! 🧻' },
+  { id: '2', from: 'king', kind: 'photo', time: '07:58', src: '/elfo/trastadas/10.jpg', caption: '¡Mira la trastada que he hecho esta noche! 🧻' },
   { id: '3', from: 'child', kind: 'text', time: '07:59', text: '¡¡Has llenado el árbol de papel higiénico!! 😂' },
   { id: '4', from: 'king', kind: 'text', time: '07:59', text: 'Shhh… que no se entere Papá Noel. ¡Esta noche tengo otra preparada!' },
 ];

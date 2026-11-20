@@ -5,9 +5,9 @@ import { isMemoryStore } from '@/services/room-store';
 
 /**
  * Monetización (decidida el 12-nov):
- *  - Prueba gratis: 1 sala, texto y fotos durante 3 días.
- *  - Pase de Navidad: pago único (3,99 € hasta el 1-dic, después 4,99 €), salas ilimitadas
- *    (tope suave de 10), válido hasta el 20 de enero, y 1 pase para regalar.
+ *  - Prueba gratis: 1 portal, texto y fotos durante 3 días.
+ *  - Pase de Navidad: pago único (3,99 €; 2,99 € en Black Friday; se cambia con PASS_PRICE_CENTS), salas ilimitadas
+ *    (tope suave de 10), válido hasta el 20 de enero.
  * Todo está apagado mientras no haya STRIPE_SECRET_KEY: la app sigue siendo gratis y sin límites.
  */
 
@@ -35,7 +35,7 @@ export function trialMs(): number {
 
 /** Cobros activos: hay clave de Stripe (o el simulador de pruebas). */
 export function paymentsEnabled(): boolean {
-  return isStripeFake() || (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_');
+  return isStripeFake() || /^(sk|rk)_/.test(process.env.STRIPE_SECRET_KEY ?? '');
 }
 
 /** Hora que usa la facturación (la real, salvo FAKE_NOW en pruebas). */
@@ -88,11 +88,11 @@ export function passExpiresAt(now: Date = billingNow()): Date {
  * Tokens del pase derivados de la sesión de Stripe con un secreto del servidor: así el webhook
  * y la página de "pago completado" llegan al mismo pase sin guardarlo en claro.
  */
-export function derivePassTokens(stripeSessionId: string): { pass: string; gift: string } {
+export function derivePassTokens(stripeSessionId: string): { pass: string } {
   const secret = process.env.PASS_SECRET || process.env.FINGERPRINT_SALT;
   if (!secret || secret.length < 16) throw new Error('Falta PASS_SECRET (o FINGERPRINT_SALT) para los pases.');
   const mk = (kind: string) => createHmac('sha256', secret).update(`${kind}:${stripeSessionId}`).digest('base64url');
-  return { pass: mk('pass'), gift: mk('gift') };
+  return { pass: mk('pass') };
 }
 
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];

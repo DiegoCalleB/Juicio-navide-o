@@ -17,22 +17,23 @@ export default async function PrivacidadPage() {
       <LegalSection title="Qué datos guardamos">
         <ul className="list-disc space-y-1 pl-5">
           <li>El nombre de pila del niño (nunca apellidos) y el personaje elegido.</li>
-          <li>Los mensajes escritos, los audios del niño y las fotos (y, solo si algún día se activa, las respuestas con voz del personaje).</li>
+          <li>Los mensajes escritos, los audios del niño, las fotos y las notas de voz del personaje (también el saludo inicial con el nombre del niño).</li>
           <li>Si los padres lo ponen, un apodo de la familia (no hace falta apellido), que solo se ve dentro de su página de familia.</li>
           <li>Si los padres lo indican, si el niño ya lee (para mostrarle el texto en mayúsculas y dar consejos a los padres).</li>
           <li>{r('Un identificador técnico anónimo (hash) para limitar abusos y el número de pruebas gratis por móvil. No es reversible.')}</li>
-          <li>{r('Si compráis el Pase de Navidad: un identificador del pago de Stripe, el importe y la fecha de caducidad del pase. No guardamos vuestro nombre, correo ni tarjeta.')}</li>
+          <li>{r('Si compráis el Pase de Navidad: un identificador del pago de Stripe, el importe y la fecha de caducidad del pase. No guardamos vuestro nombre ni tarjeta. El correo que pongáis en el pago solo se usa para enviaros el pase y no lo guardamos.')}</li>
+          <li>Si los padres lo piden, su correo (para enviarles el enlace guardado) y, solo si marcan la casilla aparte, el «sí» a recibir novedades y ofertas con su fecha. El correo nunca se une al nombre del niño.</li>
         </ul>
-        <p>No pedimos cuentas, correos, teléfonos, direcciones ni ubicación, y no usamos publicidad ni cookies de seguimiento. En el propio navegador guardamos solo lo necesario para que funcione: tus salas, tu pase, la preferencia de mayúsculas, el idioma que elijas y el enlace de tu familia.</p>
+        <p>No pedimos cuentas, teléfonos, direcciones ni ubicación, y el correo es siempre opcional. Sin consentimiento de novedades, el correo se borra pasada la temporada; con él, hasta que te des de baja (enlace en cada correo) o nos lo pidas, con derecho de acceso, rectificación y supresión. Base legal: tu petición (enlace) y tu consentimiento (novedades), que puedes retirar cuando quieras. Los correos los envía Resend. Además, no usamos publicidad ni cookies de seguimiento. En el propio navegador guardamos solo lo necesario para que funcione: tus portales, tu pase, la preferencia de mayúsculas, el idioma que elijas y el enlace de tu familia.</p>
         <p>{r('La app no graba vídeo ni usa la cámara del niño. Si los padres graban su reacción con la opción “Con este móvil”, el vídeo se crea en el propio móvil de los padres y nunca pasa por nuestros servidores.')}</p>
       </LegalSection>
 
       <LegalSection title="Servicios que intervienen">
-        <p>Alojamos los datos en Supabase y el servicio en Railway. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Si se activa la voz del personaje, el texto de la respuesta se envía a ElevenLabs para convertirlo en audio; no se envían nombres ni datos del niño más allá de lo que los padres escriban en ese mensaje.</p>
+        <p>Alojamos los datos en Supabase y el servicio en Railway. El correo lo envía Resend. Los pagos los gestiona Stripe, que trata los datos del pago (correo, tarjeta) como responsable según su propia política; nosotros no los vemos. Para la voz del personaje usamos ElevenLabs, un servicio que convierte texto en audio: le enviamos el texto de los mensajes que los padres eligen mandar con voz y, para el saludo inicial, solo el nombre de pila del niño. No le enviamos ningún otro dato. Los audios se guardan con el resto del portal y se borran con ella. Si los padres usan «Ayúdame a escribirlo», la idea que escriben se envía a Google (servicio Gemini) para proponer mensajes; nunca le enviamos el nombre del niño ni otros datos del portal.</p>
       </LegalSection>
 
       <LegalSection title="Quién puede verlo">
-        <p>Solo quien tenga el enlace del niño o el enlace de los padres. Los enlaces son largos y aleatorios. El enlace de familia, además, permite reconstruir los de todas las salas de la familia sin que los guardemos: lo guardan los padres y no debe compartirse con los peques; si crees que alguien más tiene el del niño, cámbialo desde el panel (el anterior deja de funcionar). Las fotos y los audios se guardan en un almacén privado y se sirven con enlaces temporales. Los audios del niño solo pueden escucharlos los padres.</p>
+        <p>Solo quien tenga el enlace del niño o el enlace de los padres. Los enlaces son largos y aleatorios. El enlace de familia, además, permite reconstruir los de todos los portales de la familia sin que los guardemos: lo guardan los padres y no debe compartirse con los peques; si crees que alguien más tiene el del niño, cámbialo desde el panel (el anterior deja de funcionar). Las fotos y los audios se guardan en un almacén privado y se sirven con enlaces temporales. Los audios del niño solo pueden escucharlos los padres.</p>
       </LegalSection>
 
       <LegalSection title="Cuánto tiempo lo guardamos">

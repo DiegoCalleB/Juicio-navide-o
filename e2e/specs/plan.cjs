@@ -13,11 +13,11 @@ const pad = (n) => String(n).padStart(2, '0');
   const errs = [];
   for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía');
   await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const parentToken = pajeHref.split('/paje/')[1];
@@ -28,7 +28,7 @@ const pad = (n) => String(n).padStart(2, '0');
   const toggle = parent.getByRole('button', { name: /Preparativos/ });
   check('sala nueva: los preparativos están abiertos', (await toggle.getAttribute('aria-expanded')) === 'true');
   await openChild(child, childLink, {});
-  await parent.getByText('Lucía ha abierto el mensaje').first().waitFor({ timeout: 10000 });
+  await parent.getByText('Lucía abrió el mensaje').first().waitFor({ timeout: 10000 });
   check('al abrir el niño, los preparativos se pliegan solos', (await toggle.getAttribute('aria-expanded')) === 'false');
   check('plegados: "Empezar la sorpresa" no se ve', !(await parent.getByRole('button', { name: /Empezar la sorpresa/ }).isVisible()));
   await toggle.click();
@@ -69,7 +69,7 @@ const pad = (n) => String(n).padStart(2, '0');
   check('el panel lista el mensaje programado con su hora', await parent.getByText(`Se entregará a las ${hhmm}`).first().waitFor({ timeout: 8000 }).then(() => true, () => false));
   check('el niño NO lo ve todavía', (await child.getByText('Ya estoy cargando el trineo').count()) === 0);
 
-  // sorpresa programada por API para la misma hora (para ver que llega con la sala abierta)
+  // sorpresa programada por API para la misma hora (para ver que llega con el portal abierta)
   const post = (path, body) => fetch(`${BASE}/api/rooms/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const iso = (ms) => new Date(Date.now() + ms).toISOString();
   const past = await post(`${parentToken}/reply`, { text: 'hola', delayMinutes: 0, scheduledAt: iso(-5 * 60_000) });
@@ -94,7 +94,7 @@ const pad = (n) => String(n).padStart(2, '0');
   const delBad = await fetch(`${BASE}/api/rooms/${parentToken}/pending/no-es-un-uuid`, { method: 'DELETE' });
   check('id no válido → 400', delBad.status === 400);
 
-  // sorpresa programada: llega mientras el niño NO tiene la sala abierta
+  // sorpresa programada: llega mientras el niño NO tiene el portal abierta
   const sur = await post(`${parentToken}/reply`, { text: 'Feliz Navidad, sorpresa programada', delayMinutes: 0, surprise: true, scheduledAt: iso(100_000) });
   check('sorpresa programada → 201', sur.status === 201);
 
@@ -113,7 +113,7 @@ const pad = (n) => String(n).padStart(2, '0');
   const late = await (await mk()).newPage();
   await late.goto(childLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'domcontentloaded' });
   await late.getByRole('button', { name: /Abrir mensaje de/ }).click({ timeout: 20000 });
-  check('sorpresa que llegó con la sala cerrada: se enseña al abrir', await late.getByRole('dialog', { name: /Mensaje de Papá Noel/ }).getByText('sorpresa programada').waitFor({ timeout: 10000 }).then(() => true, () => false));
+  check('sorpresa que llegó con el portal cerrada: se enseña al abrir', await late.getByRole('dialog', { name: /Mensaje de Papá Noel/ }).getByText('sorpresa programada').waitFor({ timeout: 10000 }).then(() => true, () => false));
   await late.reload({ waitUntil: 'domcontentloaded' });
   await late.getByRole('button', { name: /Abrir mensaje de/ }).click({ timeout: 3000 }).catch(() => {});
   await late.waitForTimeout(1500);

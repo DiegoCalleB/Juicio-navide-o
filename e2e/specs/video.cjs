@@ -7,10 +7,10 @@ async function setup(browser, { perm }) {
   const mk = async (permissions) => (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, permissions, acceptDownloads: true })).newPage();
   const parent = await mk(perm ? ['camera', 'microphone'] : []), child = await mk([]);
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) { p.on('pageerror', e => errs.push(n + ':' + e.message)); p.on('console', m => { if (m.type() === 'error' && !/favicon|404|getUserMedia|NotAllowed|Permission/i.test(m.text())) errs.push(n + ':' + m.text().slice(0, 140)); }); }
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista');
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto');
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });

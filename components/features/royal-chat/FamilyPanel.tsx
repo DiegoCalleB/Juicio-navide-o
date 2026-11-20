@@ -10,6 +10,9 @@ import { saveRoom } from '@/lib/myRooms';
 import type { FamilyView } from '@/services/rooms';
 import { InstallApp } from '@/components/features/InstallApp';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { EmailLink } from './EmailLink';
+import { PinSettings } from './PinSettings';
+import { useAutoLock } from './useAutoLock';
 import { RoyalAvatar } from './RoyalAvatar';
 
 function timeLeft(iso: string): string {
@@ -20,7 +23,7 @@ function timeLeft(iso: string): string {
 }
 
 function accessLabel(a: FamilyView['rooms'][number]['access']): { text: string; tone: string } {
-  if (a.plan === 'pass') return { text: '✨ Con Pase de Navidad', tone: 'text-[#f6d77a]' };
+  if (a.plan === 'pass') return { text: 'Con Pase de Navidad', tone: 'text-[#f6d77a]' };
   if (a.plan === 'trial' && a.trialEndsAt) {
     return a.locked
       ? { text: 'Prueba terminada', tone: 'text-[#ff8a8c]' }
@@ -29,8 +32,11 @@ function accessLabel(a: FamilyView['rooms'][number]['access']): { text: string; 
   return { text: 'Sin límite', tone: 'text-[#7ee2a8]' };
 }
 
-/** Todas las salas de la familia, reconstruidas desde el enlace de familia. */
-export function FamilyPanel({ familyToken, family, origin, billing }: { familyToken: string; family: FamilyView; origin: string; billing: BillingInfo }) {
+/** Todos los portales de la familia, reconstruidas desde el enlace de familia. */
+export function FamilyPanel({ familyToken, family, origin, billing, hasPin = false }: { familyToken: string; family: FamilyView; origin: string; billing: BillingInfo; hasPin?: boolean }) {
+  // El PIN se pone y se quita con el enlace de padres de cualquiera de los portales (el de familia solo lo pide).
+  const panelToken = family.rooms[0]?.parentToken ?? '';
+  useAutoLock(hasPin, familyToken);
   const locale = useLocale();
   const familyLink = `${origin}/familia/${familyToken}`;
   const [name, setName] = useState(family.name ?? '');
@@ -39,7 +45,7 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
   const [copied, setCopied] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
 
-  // Este móvil recuerda la familia y todas sus salas (así "Tus salas" se recupera en un móvil nuevo).
+  // Este móvil recuerda la familia y todos sus portales (así "Tus portales" se recupera en un móvil nuevo).
   useEffect(() => {
     saveFamily(familyToken);
     saveKids(family.rooms.map((r) => ({ name: r.childName, reading: r.readingLevel })));
@@ -91,14 +97,14 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
 
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-[#0a1220] text-[#e8f1ff]">
-      <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8">
-        <header className="text-center">
+      <div className="mx-auto w-full max-w-md space-y-4 px-4 lg:grid lg:max-w-4xl lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0 lg:px-8 lg:pt-14 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8">
+        <header className="text-center lg:col-span-2 lg:mb-2">
           <p className="text-[11px] font-bold uppercase tracking-[.25em] text-[#5eead4]">🔒 Zona secreta de los padres</p>
           <h1 className="mt-2 font-serif text-3xl">{title}</h1>
-          <p className="mt-1 text-[13.5px] opacity-70"><R>Aquí están todas vuestras salas. Los peques no ven esta pantalla.</R></p>
+          <p className="mt-1 text-[13.5px] opacity-70"><R>Aquí están todos vuestros portales. Los peques no ven esta pantalla.</R></p>
         </header>
 
-        <ul className="space-y-3" aria-label="Salas de la familia">
+        <ul className={`space-y-3 lg:col-span-2 lg:grid lg:gap-4 lg:space-y-0 ${family.rooms.length > 1 ? 'lg:grid-cols-2' : 'lg:mx-auto lg:w-full lg:max-w-md'}`} aria-label="Portales de la familia">
           {family.rooms.map((room) => {
             const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale });
             const acc = accessLabel(room.access);
@@ -127,20 +133,20 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
         </ul>
 
         {billing.enabled && trialRoom && (offerOpen ? (
-          <PassOffer billing={billing} roomToken={trialRoom.parentToken} title="Pase de Navidad para toda la familia" tone="panel" />
+          <div className="lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-md"><PassOffer billing={billing} roomToken={trialRoom.parentToken} title="Pase de Navidad para toda la familia" tone="panel" /></div>
         ) : (
-          <button type="button" onClick={() => setOfferOpen(true)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#5eead4]/40 bg-[#5eead4]/[.06] px-4 text-[14px] font-semibold text-[#5eead4] active:scale-[0.99]">
-            ✨ Pase de Navidad para toda la familia · {billing.price}
+          <button type="button" onClick={() => setOfferOpen(true)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl lg:col-span-2 border border-[#5eead4]/40 bg-[#5eead4]/[.06] px-4 text-[14px] font-semibold text-[#5eead4] active:scale-[0.99]">
+            Pase de Navidad para toda la familia · {billing.price}
           </button>
         ))}
 
-        <Link href="/#crear" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl border border-[#f6d77a]/50 px-4 text-center font-bold text-[#f6d77a] active:scale-[0.98]">
-          + Preparar otra sala
+        <Link href="/crear" onClick={startAnother} className="flex min-h-12 items-center justify-center rounded-2xl lg:col-span-2 border border-[#f6d77a]/50 px-4 text-center font-bold text-[#f6d77a] active:scale-[0.98]">
+          + Abrir otro portal
         </Link>
 
         <section role="note" className="space-y-2.5 rounded-2xl border-2 border-[#f6d77a]/60 bg-[#f6d77a]/[.08] p-4 text-[13.5px] leading-snug">
           <p className="text-[15px] font-extrabold text-[#f6d77a]">⭐ Guarda este enlace</p>
-          <p className="opacity-85"><R>Con él recuperáis todas las salas desde cualquier móvil, aunque borréis el navegador. Mandáoslo por WhatsApp o por correo y no lo compartáis con los peques.</R></p>
+          <p className="opacity-85"><R>Con él recuperáis todos los portales desde cualquier móvil, aunque borréis el navegador. Mandáoslo por WhatsApp o por correo y no lo compartáis con los peques.</R></p>
           <div className="flex gap-2">
             <button type="button" onClick={() => copy('family', familyLink)} className="min-h-10 flex-1 rounded-xl bg-white/10 font-semibold active:scale-[0.98]">
               {copied === 'family' ? '¡Copiado!' : 'Copiar enlace'}
@@ -154,7 +160,11 @@ export function FamilyPanel({ familyToken, family, origin, billing }: { familyTo
           </a>
         </section>
 
-        <InstallApp what="tus salas" tone="panel" />
+        {panelToken && <PinSettings token={panelToken} hasPin={hasPin} intro="Si tu peque coge tu móvil, no podrá ver vuestros portales ni lo que escribes. El PIN vale para todas." />}
+
+        <EmailLink token={familyToken} />
+
+        <InstallApp what="tus portales" tone="panel" />
 
         <section aria-label="Apodo de la familia" className="space-y-1.5 rounded-2xl border border-white/10 bg-white/[.03] p-3.5 text-[13px]">
           <label htmlFor="family-name" className="font-semibold">Apodo de la familia <span className="font-normal opacity-60">(opcional)</span></label>

@@ -1,18 +1,39 @@
-import type { Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { redirect } from 'next/navigation';
+import { BRAND, heroFor } from '@/lib/brand';
 import { RoyalLanding } from '@/components/features/royal-chat/RoyalLanding';
 import { isCharacterId } from '@/lib/characters';
 import { billingInfo } from '@/lib/billing';
 import { siteNow } from '@/lib/clock';
+import { currentAge } from '@/lib/ageServer';
 import { getRequestLocale } from '@/lib/i18n.server';
+import { trackEntry } from '@/lib/metrics';
 
 /** Dinámica: el precio de lanzamiento cambia por fecha y los pagos se activan por variable de entorno. */
 export const dynamic = 'force-dynamic';
 
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string }> }) {
-  // /?personaje=duende_chispa (enlaces de campañas y de la página de trastadas) deja elegido a ese personaje.
-  const { personaje } = await searchParams;
-  const initialCharacter = personaje && isCharacterId(personaje) ? personaje : undefined;
-  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} initialCharacter={initialCharacter} />;
+/** El título de la pestaña y la vista previa siguen a la portada de temporada (mismo gancho que el titular). */
+export async function generateMetadata(): Promise<Metadata> {
+  const hero = heroFor(siteNow());
+  const title = `${BRAND} · ${hero.tagline}`;
+  return {
+    title: { absolute: title },
+    description: hero.subtitle,
+    openGraph: { type: 'website', siteName: BRAND, locale: 'es_ES', title, description: hero.subtitle },
+    twitter: { card: 'summary_large_image', title, description: hero.subtitle },
+  };
+}
+
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ personaje?: string; pase?: string; src?: string }> }) {
+  // Enlaces antiguos /?personaje=duende_chispa (campañas, trastadas): van directos a crear el portal con ese personaje.
+  const { personaje, pase, src } = await searchParams;
+  // Enlaces de pase (/?pase=…): el pase se activa en la zona de mayores, nunca en la portada pública.
+  if (pase && /^[A-Za-z0-9_-]{20,80}$/.test(pase)) redirect(`/crear?pase=${pase}`);
+  if (personaje && isCharacterId(personaje)) redirect(`/crear?personaje=${personaje}`);
+  const age = await currentAge();
+  await trackEntry('landing', src);
+  if (age === null) await trackEntry('landing_nueva', src);
+  return <RoyalLanding billing={billingInfo()} locale={await getRequestLocale()} now={siteNow()} age={age} />;
 }

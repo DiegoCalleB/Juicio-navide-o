@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, openChild, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra ? '  → ' + extra : '')); };
@@ -17,16 +17,17 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
     p.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errs.push(n + ':console:' + m.text().slice(0, 2500)); });
   }
 
-  // ── 1. Selección de personajes y creación de la sala
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  // ── 1. Selección de personajes y creación del portal
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.screenshot({ path: S + '/p1-landing.png' });
-  check('selector: Papá Noel y los 3 Reyes visibles', await parent.getByText('Papá Noel').first().isVisible() && await parent.getByText('Baltasar').first().isVisible());
   await parent.fill('#child', 'Lucía');
+  await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('selector: Papá Noel y los 3 Reyes visibles', await parent.getByText('Papá Noel').first().isVisible() && await parent.getByText('Baltasar').first().isVisible());
   // Ningún personaje viene marcado: hay que elegir (y se ven todas las opciones)
   check('ningún personaje viene marcado', !(await parent.getByRole('radio', { name: /Papá Noel/ }).isChecked()));
-  await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   check('se generan enlaces de niño y padres', /\/paje\/[\w-]{43}$/.test(pajeHref) && /\/r\/[\w-]{43}$/.test(childLink), pajeHref.slice(-12));
@@ -50,7 +51,8 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
   await parent.waitForSelector('text=quiero una bici roja', { timeout: 8000 });
   const latency = Date.now() - t0;
   check('mensaje del niño llega a los padres en < 2 s', latency < 2000, latency + ' ms');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('niño recibe el aviso "Papá Noel está ocupado"', true)).catch(() => check('niño recibe el aviso "Papá Noel está ocupado"', false));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   await parent.waitForTimeout(500);
   await parent.screenshot({ path: S + '/p2-parent-got-message.png' });
 
@@ -87,6 +89,7 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok, extra }
 
   // ── 6. Entrega diferida
   await parent.fill('#reply', 'Mensaje con retraso de dos minutos');
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   await parent.getByRole('radio', { name: '2 min' }).click();
   await parent.getByRole('button', { name: /Enviar como Papá Noel/ }).click();
   await parent.waitForSelector('text=Se entregará a las', { timeout: 8000 });
