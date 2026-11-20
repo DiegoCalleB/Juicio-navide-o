@@ -32,6 +32,7 @@ const TOKEN = process.env.METRICS_TOKEN || 'clave-de-pruebas-1234';
   };
   const ig = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/Instagram\s+(\d+)/i); return m ? Number(m[1]) : 0; };
 
+  const tt = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/TikTok\s+(\d+)/i); return m ? Number(m[1]) : 0; };
   const v0 = await num('Han entrado');
   const ig0 = await ig();
 
@@ -44,6 +45,21 @@ const TOKEN = process.env.METRICS_TOKEN || 'clave-de-pruebas-1234';
   check('una visita nueva suma a «Han entrado» (Hoy)', v1 === v0 + 1, `${v0} → ${v1}`);
   const ig1 = await ig();
   check('el origen ?src=ig aparece como Instagram', ig1 === ig0 + 1, `${ig0} → ${ig1}`);
+
+  // TikTok: el navegador interno de la app cuenta como TikTok aunque el enlace no lleve ?src=, y ?src=tt_<vídeo> se agrupa en TikTok
+  const tt0 = await tt();
+  const ttCtx = await b.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36 musical_ly_2023 BytedanceWebview/d8a21c6', extraHTTPHeaders: { 'x-forwarded-for': `10.8.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}` } });
+  const ttp = await ttCtx.newPage();
+  await ttp.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await ttp.waitForTimeout(1500);
+  const tt1 = await tt();
+  check('el navegador interno de TikTok cuenta como TikTok sin ?src=', tt1 === tt0 + 1, `${tt0} → ${tt1}`);
+  await ttp.goto(BASE + '/?src=tt_c19', { waitUntil: 'networkidle' });
+  await ttp.waitForTimeout(1500);
+  const tt2 = await tt();
+  check('?src=tt_c19 suma a TikTok (agrupado por red)', tt2 === tt1 + 1, `${tt1} → ${tt2}`);
+  await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' });
+  check('el desglose por vídeo muestra c19', /c19:\s*\d+/.test(await p.locator('body').innerText()));
 
   const mm = async () => { await p.goto(BASE + '/metricas?dias=7', { waitUntil: 'networkidle' }); const t = (await p.locator('body').innerText()).replace(/\n+/g, ' '); const m = t.match(/Han contestado a Chispa\s+(\d+)/i); return m ? [Number(m[1])] : [NaN]; };
   const [a0] = await mm();

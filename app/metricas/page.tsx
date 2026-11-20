@@ -50,15 +50,20 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
     ['Han comprado el Pase', sumBiz(biz.pases)],
   ];
 
-  const bySrc = new Map<string, { total: number; hoy: number }>();
+  // Una fila por red (Instagram, TikTok…) con su total; debajo, el desglose por enlace o vídeo (tt_c19, fb_d3…).
+  const NETS = ['fb', 'ig', 'tt', 'yt', 'wa', 'li', 'x', 'inf'];
+  const netOf = (src: string) => { const n = src.split('_')[0] ?? src; return src.includes('_') && NETS.includes(n) ? n : src; };
+  const byNet = new Map<string, { total: number; hoy: number; sub: Map<string, number> }>();
   for (const r of rows) {
     if (r.event !== 'landing') continue;
-    const s = bySrc.get(r.src) ?? { total: 0, hoy: 0 };
+    const n = netOf(r.src);
+    const s = byNet.get(n) ?? { total: 0, hoy: 0, sub: new Map<string, number>() };
     s.total += r.total;
     if (r.day === today) s.hoy += r.total;
-    bySrc.set(r.src, s);
+    if (r.src !== n) s.sub.set(r.src, (s.sub.get(r.src) ?? 0) + r.total);
+    byNet.set(n, s);
   }
-  const srcRows = [...bySrc.entries()].sort((a, b) => b[1].total - a[1].total);
+  const srcRows = [...byNet.entries()].sort((a, b) => b[1].total - a[1].total);
 
   const maxDay = Math.max(1, ...list.map((d) => sum('landing', 'uniq', d)));
   const site = getSiteUrl();
@@ -105,9 +110,16 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
           ) : (
             <ul className="space-y-1.5">
               {srcRows.map(([s, v]) => (
-                <li key={s} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[.03] px-4 py-3">
-                  <span className="text-[16px]">{SRC_NAMES[s] ?? s}</span>
-                  <span className="text-[22px] font-bold tabular-nums">{v.total}<span className="ml-2 text-[13px] font-normal text-white/50">({v.hoy})</span></span>
+                <li key={s} className="rounded-xl border border-white/10 bg-white/[.03] px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[16px]">{SRC_NAMES[s] ?? (s === 'inf' ? 'Colaboraciones' : s)}</span>
+                    <span className="text-[22px] font-bold tabular-nums">{v.total}<span className="ml-2 text-[13px] font-normal text-white/50">({v.hoy})</span></span>
+                  </div>
+                  {v.sub.size > 0 && (
+                    <p className="mt-1 text-[12.5px] leading-relaxed text-white/50">
+                      {[...v.sub.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => `${k.slice(s.length + 1)}: ${n}`).join(' · ')}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

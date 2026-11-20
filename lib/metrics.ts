@@ -51,10 +51,18 @@ const SOURCES: [RegExp, string][] = [
   [/^t\.co$|twitter\.com|(^|\.)x\.com$/, 'x'],
 ];
 
-/** Origen de la visita: ?src= (enlaces propios) o, si no, el sitio del que viene. */
-export function sourceOf(srcParam: string | null | undefined, referer: string | null | undefined): string {
+/** Navegadores internos de las redes: dicen de dónde viene la visita aunque el enlace no lleve ?src= ni Referer. */
+const APPS: [RegExp, string][] = [
+  [/musical_ly|bytedancewebview|tiktok|trill_/i, 'tt'],
+  [/instagram/i, 'ig'],
+  [/fban|fbav|fb_iab|fbios/i, 'fb'],
+];
+
+/** Origen de la visita: ?src= (enlaces propios), la app de la red (navegador interno) o el sitio del que viene. */
+export function sourceOf(srcParam: string | null | undefined, referer: string | null | undefined, ua?: string | null): string {
   const p = (srcParam ?? '').toLowerCase();
   if (/^[a-z0-9_]{1,20}$/.test(p)) return p;
+  if (ua) for (const [re, name] of APPS) if (re.test(ua)) return name;
   if (referer) {
     try {
       const host = new URL(referer).hostname;
@@ -99,7 +107,7 @@ export async function track(event: MetricEvent, opts: { src?: string | null } = 
     const day = madridDay();
     const ip = clientIp(h);
     const visitor = createHash('sha256').update(`${getServerEnv().FINGERPRINT_SALT}|m|${day}|${ip}|${ua}`).digest('hex').slice(0, 32);
-    const src = opts.src === undefined || opts.src === null ? sourceOf(null, h.get('referer')) : opts.src;
+    const src = opts.src === undefined || opts.src === null ? sourceOf(null, h.get('referer'), ua) : opts.src;
     after(() => bump(day, event, src, visitor).catch((e) => console.error('[metrics]', e)));
   } catch (e) {
     console.error('[metrics]', e);
@@ -110,7 +118,7 @@ export async function track(event: MetricEvent, opts: { src?: string | null } = 
 export async function trackEntry(event: MetricEvent, srcParam?: string | null): Promise<void> {
   try {
     const h = await headers();
-    await track(event, { src: sourceOf(srcParam, h.get('referer')) });
+    await track(event, { src: sourceOf(srcParam, h.get('referer'), h.get('user-agent')) });
   } catch { /* nunca rompe */ }
 }
 
