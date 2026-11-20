@@ -24,7 +24,7 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 - **Redes sociales** (vídeos, textos, bios, comentarios): se publica **la magia, no el truco**. Se enseña el
   resultado («mirad lo que ha hecho Chispa esta noche»), nunca cómo se prepara ni quién lo hace. Las instrucciones
   para los padres viven solo en la parte de la web detrás de la puerta de adultos. Sin niños en pantalla.
-  Se publica por la noche, cuando los peques duermen.
+  Pueden publicarse a cualquier hora (decisión del dueño: ya no hay que esperar a que los peques duerman).
 - **Antes de dar algo por terminado** (texto, imagen, vídeo, error, correo, vista previa): pregúntate
   «¿podría un niño de 6 años leerlo o verlo y sospechar algo?». Si la respuesta no es un «no» rotundo, se cambia.
 
