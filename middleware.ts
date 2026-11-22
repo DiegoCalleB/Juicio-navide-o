@@ -57,5 +57,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Páginas de mayores (puerta) y API (comprobación de origen contra CSRF).
-  matcher: ['/api/:path*', '/crear', '/precios', '/ideas-elfo/:path*', '/familia/:path*', '/paje/:path*', '/pase/:path*', '/privacidad', '/terminos', '/demo/:path*'],
+  matcher: ['/api/:path*', '/crear', '/precios', '/prueba', '/prueba/:path*', '/ideas-elfo/:path*', '/familia/:path*', '/paje/:path*', '/pase/:path*', '/privacidad', '/terminos', '/demo/:path*'],
 };

@@ -32,6 +32,7 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
   await track('mayores_cuenta', { src: 'web' });
   const billing = billingInfo();
   const items: { href: string; title: string; text: string }[] = [
+    { href: '/prueba', title: 'Cómo funciona', text: 'Qué recibe tu peque, en 3 pasos, y por qué es privado.' },
     { href: '/crear', title: 'Abrir un portal', text: 'Abre el portal para que tu peque hable con sus seres mágicos esta Navidad.' },
     { href: '/ideas-elfo', title: 'Ideas de trastadas del elfo', text: 'Las 24 noches, paso a paso.' },
     { href: '/ideas-elfo/sin-tiempo', title: 'Trastadas exprés', text: 'Para los días sin tiempo.' },

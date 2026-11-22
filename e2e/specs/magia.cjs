@@ -114,7 +114,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('sitemap: solo el mundo mágico (sin ideas, crear, precios…)', !/ideas-elfo|crear|precios|mayores|privacidad|terminos/.test(sm));
 
   // ── La zona de mayores no se abre sin la puerta
-  const adultPaths = ['/crear', '/precios', '/ideas-elfo', '/ideas-elfo/10', '/ideas-elfo/sin-tiempo', '/privacidad', '/terminos', panelLink, ...(familyLink ? [familyLink.replace(/^https?:\/\/[^/]+/, '')] : [])];
+  const adultPaths = ['/crear', '/precios', '/prueba', '/ideas-elfo', '/ideas-elfo/10', '/ideas-elfo/sin-tiempo', '/privacidad', '/terminos', panelLink, ...(familyLink ? [familyLink.replace(/^https?:\/\/[^/]+/, '')] : [])];
   let allGated = true; const leaks = [];
   for (const p of adultPaths) {
     await kid.goto(BASE + p, { waitUntil: 'domcontentloaded' });

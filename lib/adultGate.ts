@@ -17,7 +17,7 @@ export const GATE_ANSWER_SECONDS = 5;
 const ANSWER_GRACE_MS = 3_000;
 
 /** Rutas que solo se ven tras la puerta. */
-export const ADULT_PATHS = ['/crear', '/precios', '/ideas-elfo', '/familia', '/paje', '/pase', '/privacidad', '/terminos', '/demo'];
+export const ADULT_PATHS = ['/crear', '/precios', '/prueba', '/ideas-elfo', '/familia', '/paje', '/pase', '/privacidad', '/terminos', '/demo'];
 
 export function isAdultPath(pathname: string): boolean {
   if (/\/manifest\.webmanifest$/.test(pathname)) return false; // el navegador lo pide sin pasar por la puerta

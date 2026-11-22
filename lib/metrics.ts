@@ -26,6 +26,7 @@ export const EVENTS = [
   'mayores_cuenta', // entra a la zona de mayores
   'crear_vista', // ve «Abre el portal»
   'precios_vista', // ve los precios
+  'prueba_vista', // ve «Pruébalo gratis» (qué recibe el peque, por qué es privado)
   'diario_vista', // diario de Chispa
   'polo_norte_vista', // rincón del Polo Norte
   'portal_nino', // un peque abre su portal
