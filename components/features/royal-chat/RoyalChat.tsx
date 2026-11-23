@@ -321,7 +321,7 @@ function Bubble({ message, character, onOpenPhoto, followUps }: { message: ChatM
       <div className="flex animate-pop justify-start">
         <div className="relative mr-auto max-w-[82%] rounded-2xl rounded-bl-md bg-[#fbf5e6] px-3 py-2 text-[#2b1b0e] shadow-md ring-1 ring-[#f6d77a]/60">
           <p className="whitespace-pre-line text-[16.5px] leading-snug">{message.text}</p>
-          <span className="mt-0.5 flex justify-end text-[10.5px] text-[#5b3a1e]/55">{message.time}</span>
+          <span className="mt-0.5 flex justify-end text-[11px] text-[#5b3a1e]/55">{message.time}</span>
         </div>
       </div>
     );
@@ -350,7 +350,7 @@ function Bubble({ message, character, onOpenPhoto, followUps }: { message: ChatM
             {message.caption && <figcaption className="px-2 pb-1 pt-1.5 text-[14px] leading-snug">{message.caption}</figcaption>}
           </figure>
         )}
-        <span className={`mt-0.5 flex items-center justify-end gap-1 text-[10.5px] ${mine ? 'text-[#3a2208]/60' : 'text-[#5b3a1e]/55'}`}>
+        <span className={`mt-0.5 flex items-center justify-end gap-1 text-[11px] ${mine ? 'text-[#3a2208]/60' : 'text-[#5b3a1e]/55'}`}>
           {message.time}
           {mine && (
             <span className="flex" style={{ color: character.theme.robe }} aria-label="Enviado">

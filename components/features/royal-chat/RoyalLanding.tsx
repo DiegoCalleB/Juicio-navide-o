@@ -19,34 +19,34 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
   const demoGroup = demoCharacter === 'duende_chispa' ? 'duende' : demoCharacter === 'melchor' ? 'reyes' : demoCharacter === 'raton_perez' ? 'raton' : 'noel';
   const demo = resolveCharacter(CHARACTERS[demoCharacter], { alias: 'Chispa', gender: 'm', locale });
   return (
-    <div className="fixed inset-0 z-40 overflow-y-auto bg-[#120822]">
+    <div className="fixed inset-0 z-40 overflow-y-auto bg-royal-night">
       <div aria-hidden className="royal-sky pointer-events-none fixed inset-0" />
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4 lg:max-w-6xl lg:px-10 lg:pt-6">
         {age === 'ok' && (
           <div className="mb-3 flex justify-end lg:mb-0">
-            <Link href="/mayores" className="inline-flex min-h-10 items-center px-1 text-[13.5px] text-[#fff6dc]/65 underline-offset-2 hover:underline">Mi cuenta</Link>
+            <Link href="/mayores" className="inline-flex min-h-10 items-center px-1 text-[13.5px] text-royal-cream/65 underline-offset-2 hover:underline">Mi cuenta</Link>
           </div>
         )}
         <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:py-8">
         <header className="mb-6 text-center lg:mb-0 lg:text-left">
-          <p className="font-serif text-[20px] leading-none text-[#f6d77a]">{BRAND}</p>
-          <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/75">{hero.tagline}</p>
-          <h1 className="mt-4 font-serif text-[30px] leading-[1.12] text-[#fff6dc] lg:mt-8 lg:text-[56px] lg:leading-[1.06]">{hero.title}</h1>
+          <p className="font-serif text-[20px] leading-none text-royal-gold">{BRAND}</p>
+          <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-royal-gold/75">{hero.tagline}</p>
+          <h1 className="mt-4 text-balance font-serif text-[30px] leading-[1.12] text-royal-cream lg:mt-8 lg:text-[56px] lg:leading-[1.06]">{hero.title}</h1>
           {hero.countdown && (
-            <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full lg:mx-0 lg:mt-5 border border-[#7ee2a8]/50 bg-[#7ee2a8]/10 px-3 py-1 text-[12.5px] font-bold text-[#7ee2a8]">
+            <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full lg:mx-0 lg:mt-5 border border-royal-mint/50 bg-royal-mint/10 px-3 py-1 text-[12.5px] font-bold text-royal-mint">
               {hero.countdown}
             </p>
           )}
-          <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#fff6dc]/75 lg:mx-0 lg:mt-5 lg:max-w-lg lg:text-[19px]">
+          <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-royal-cream/75 lg:mx-0 lg:mt-5 lg:max-w-lg lg:text-[19px]">
             {r(hero.subtitle)}
           </p>
-          <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
+          <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-royal-gold to-royal-gold-deep font-bold text-royal-ink shadow-lg motion-safe:transition hover:brightness-105 motion-safe:active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
             Lee el diario de Chispa
           </Link>
           <ul aria-label="Rincones del Polo Norte" className="mt-3 flex flex-wrap justify-center gap-2 lg:justify-start">
             {([['chistes', 'Chistes del elfo'], ['adivinanzas', 'Adivinanzas'], ['renos', 'Los renos'], ['mapa', 'El mapa']] as const).map(([id, label]) => (
               <li key={id}>
-                <Link href={`/polo-norte#${id}`} className="inline-flex min-h-9 items-center rounded-full border border-[#f6d77a]/35 px-3.5 text-[13px] font-semibold text-[#f6d77a]/90">{label}</Link>
+                <Link href={`/polo-norte#${id}`} className="inline-flex min-h-9 items-center rounded-full border border-royal-gold/35 px-3.5 text-[13px] font-semibold text-royal-gold/90">{label}</Link>
               </li>
             ))}
           </ul>
@@ -54,18 +54,18 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
         </header>
 
         <section aria-labelledby="demo-title" className="mb-8 lg:mx-auto lg:mb-0 lg:w-full lg:max-w-[26rem]">
-          <h2 id="demo-title" className="mb-2.5 text-center text-[12px] font-semibold uppercase tracking-widest text-[#fff6dc]/55">
+          <h2 id="demo-title" className="mb-2.5 text-center text-[12px] font-semibold uppercase tracking-widest text-royal-cream/55">
             Un mensaje {demo.deName}
           </h2>
           <DemoChat embedded character={demo} childName="Lucía" initial={demoFor(demoGroup)} />
         </section>
         </div>
 
-        <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
+        <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-royal-cream/45">
           <LocaleSwitch />
           {age === 'ok' && (
             <nav aria-label="Más" className="flex justify-center">
-              <Link href="/terminos" className="inline-flex min-h-10 items-center text-[13px] text-[#fff6dc]/60 underline-offset-2 hover:underline">Condiciones de uso</Link>
+              <Link href="/terminos" className="inline-flex min-h-10 items-center text-[13px] text-royal-cream/60 underline-offset-2 hover:underline">Condiciones de uso</Link>
             </nav>
           )}
           <p>Con cariño, desde el Polo Norte.</p>

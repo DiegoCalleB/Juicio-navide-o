@@ -35,17 +35,17 @@ export function ChispaEdadTarjeta() {
   };
 
   return (
-    <section aria-label="Chispa pregunta" className="mt-4 flex items-center gap-3 rounded-2xl border border-[#f6d77a]/25 bg-white/[.04] p-3 text-left lg:max-w-md">
+    <section aria-label="Chispa pregunta" className="mt-4 flex items-center gap-3 rounded-2xl border border-royal-gold/25 bg-white/[.04] p-3 text-left lg:max-w-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/elfo/chispa.jpg" width={56} height={56} alt="Chispa, el elfo" className="size-14 shrink-0 rounded-full border border-[#f6d77a]/50 object-cover" />
+      <img src="/elfo/chispa.jpg" width={56} height={56} alt="Chispa, el elfo" className="size-14 shrink-0 rounded-full border border-royal-gold/50 object-cover" />
       {minor ? (
-        <div className="min-w-0 text-[14px] leading-snug text-[#fff6dc]/85" data-testid="chispa-tarjeta-despedida">
+        <div className="min-w-0 text-[14px] leading-snug text-royal-cream/85" data-testid="chispa-tarjeta-despedida">
           ¡Qué bien! ¿Quieres que te cuente un chiste?{' '}
-          <Link href="/polo-norte#chistes" className="font-bold text-[#7ee2a8] underline underline-offset-2">¡Sí!</Link>
+          <Link href="/polo-norte#chistes" className="font-bold text-royal-mint underline underline-offset-2">¡Sí!</Link>
         </div>
       ) : (
         <form onSubmit={submit} className="min-w-0 flex-1">
-          <label htmlFor="edad-portada" className="block text-[14px] font-semibold leading-snug text-[#fff6dc]">
+          <label htmlFor="edad-portada" className="block text-[14px] font-semibold leading-snug text-royal-cream">
             ¡Hola! Soy Chispa. ¿Cuántos años tienes?
           </label>
           <div className="mt-1.5 flex gap-2">
@@ -56,13 +56,13 @@ export function ChispaEdadTarjeta() {
               inputMode="numeric"
               pattern="[0-9]*"
               autoComplete="off"
-              className="min-h-10 w-20 rounded-xl border border-white/20 bg-[#16112a] px-3 text-center text-lg tabular-nums text-[#f3ecff] focus:border-[#f6d77a] focus:outline-none"
+              className="min-h-10 w-20 rounded-xl border border-royal-gold/70 bg-royal-plum px-3 text-center text-lg tabular-nums text-royal-lilac focus:border-royal-gold focus:outline-none"
             />
-            <button type="submit" disabled={!age || busy} className="min-h-10 rounded-xl bg-[#f6d77a] px-4 text-[14px] font-bold text-[#24123f] disabled:opacity-40 active:scale-95">
+            <button type="submit" disabled={!age || busy} className="min-h-10 rounded-xl bg-royal-gold px-4 text-[14px] font-bold text-royal-deep disabled:opacity-40 motion-safe:active:scale-95">
               {busy ? '…' : 'Contarle'}
             </button>
           </div>
-          {msg && <p role="alert" className="mt-1 text-[12.5px] text-[#ffb4b5]">{msg}</p>}
+          {msg && <p role="alert" className="mt-1 text-[12.5px] text-royal-rose">{msg}</p>}
         </form>
       )}
     </section>
