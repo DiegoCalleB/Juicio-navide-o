@@ -7,7 +7,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   p.on('pageerror', (e) => errs.push(e.message));
   await p.goto(BASE + '/prueba?src=tt', { waitUntil: 'networkidle', timeout: 120000 });
-  check('con la puerta pasada se ve la página', await p.getByRole('heading', { name: /Chispa le escribe a tu peque/ }).isVisible());
+  check('con la puerta pasada se ve la página', await p.getByRole('heading', { name: /le escribe a tu peque/ }).isVisible());
   check('explica los 3 pasos', (await p.locator('ol li').count()) === 3 && await p.getByText('Abres su portal').isVisible() && await p.getByText('Le das su enlace').isVisible());
   check('dice por qué es privado (5 puntos)', (await p.locator('section[aria-labelledby="seguro"] li').count()) === 5);
   check('enseña lo que recibe el peque (vídeo del chat)', (await p.locator('video[src="/prueba/chat-chispa.mp4"]').count()) === 1);
@@ -15,7 +15,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await p.screenshot({ path: require('../_lib.cjs').OUT + '/prueba-top.png' }); await p.locator('[data-scroll-root]').evaluate((e) => e.scrollTo(0, 1300)); await p.screenshot({ path: require('../_lib.cjs').OUT + '/prueba-mid.png' });
   const txt = await p.locator('body').innerText();
   check('no pide tarjeta para la prueba', /sin tarjeta/i.test(txt));
-  check('no dice que alguien contesta en nombre del personaje', !/contest\w* en secreto|los padres (escriben|contestan)|t[úu] (escribes|contestas)/i.test(txt));
+  check('dice, detrás de la puerta, que los mensajes los escribe el adulto (lo que hace único al servicio)', /los mensajes los escribes tú/i.test(txt) && /100 % personalizado/i.test(txt));
   // Un peque (sin puerta pasada) no la ve: lo mandan a la pregunta de Chispa; el vídeo tampoco se sirve
   const kb = await launch([], { adult: false });
   const k = await (await kb.newContext({ viewport: { width: 390, height: 844 } })).newPage();

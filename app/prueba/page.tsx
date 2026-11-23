@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Pruébalo gratis · Chispa para tu p
 const PASOS = [
   { n: '1', t: 'Abres su portal', d: 'En un minuto: solo el nombre de pila de tu peque y quién quieres que le escriba.' },
   { n: '2', t: 'Le das su enlace', d: 'Un enlace privado, solo suyo. Chispa le saluda por su nombre.' },
-  { n: '3', t: 'Chispa le escribe y le contesta', d: 'Mensajes, fotos y, si quieres, con voz, hasta el 20 de enero.' },
+  { n: '3', t: 'Escribes lo que le cuenta Papá Noel', d: 'Con su nombre, sus gustos y sus anécdotas. Tú eliges cuándo llega y, si quieres, con la voz del personaje.' },
 ];
 
 const CONFIANZA = [
@@ -24,7 +24,7 @@ const CONFIANZA = [
 ];
 
 const PREGUNTAS = [
-  ['¿Quién puede escribirle a mi peque?', 'Solo entra quien tenga su enlace privado, y ese enlace te lo damos a ti. No hay cuentas ni forma de buscar a nadie.'],
+  ['¿Quién escribe los mensajes?', 'Tú. Los mensajes los escribes tú desde tu panel, con tu estilo, y los dice el personaje. Solo entra al chat quien tenga su enlace privado: no hay cuentas ni forma de buscar a nadie.'],
   ['¿Qué datos guardáis?', 'El nombre de pila, el personaje elegido y los mensajes de la conversación. Nada más. Todo se borra solo a los 45 días o pasadas las fiestas.'],
   ['¿Hace falta tarjeta para probarlo?', 'No. La prueba es de 3 días y no se paga nada. Solo si quieres seguir después, eliges el Pase.'],
   ['¿Es una suscripción?', 'No. Es un pago único y no hay nada que cancelar.'],
@@ -50,8 +50,8 @@ export default async function PruebaPage({ searchParams }: { searchParams: Promi
         </nav>
 
         <header className="text-center">
-          <h1 className="font-serif text-[30px] leading-tight text-[#fff6dc] lg:text-[44px]">Chispa le escribe a tu peque esta Navidad</h1>
-          <p className="mx-auto mt-3 max-w-sm text-[15.5px] leading-snug text-[#fff6dc]/80">Un chat mágico, privado y sin cuentas. Pruébalo 3 días gratis.</p>
+          <h1 className="font-serif text-[30px] leading-tight text-[#fff6dc] lg:text-[44px]">Papá Noel le escribe a tu peque esta Navidad</h1>
+          <p className="mx-auto mt-3 max-w-sm text-[15.5px] leading-snug text-[#fff6dc]/80">Un chat mágico, privado y 100 % personalizado: tú escribes lo que dice. Pruébalo 3 días gratis.</p>
           <div className="mx-auto mt-5 max-w-sm">{cta}</div>
         </header>
 
@@ -63,6 +63,18 @@ export default async function PruebaPage({ searchParams }: { searchParams: Promi
             <h2 id="mira" className="font-serif text-[22px] text-[#f6d77a]">Esto es lo que recibe tu peque</h2>
             <p className="mt-2 text-[14.5px] leading-snug text-[#fff6dc]/80">Un chat con Chispa en su móvil o tablet: le saluda por su nombre, le escribe y le contesta. Sin llamadas, sin vídeos, sin desconocidos.</p>
           </div>
+        </section>
+
+        <section aria-labelledby="personal" className="mt-10 rounded-3xl border-2 border-[#f6d77a]/60 bg-[#f6d77a]/[.07] p-5">
+          <h2 id="personal" className="text-center font-serif text-[24px] text-[#f6d77a]">100 % personalizado</h2>
+          <p className="mt-2 text-center text-[15px] leading-snug text-[#fff6dc]/90">
+            Nadie conoce a tu peque como tú. Por eso <strong>los mensajes los escribes tú</strong>, a tu manera, y los dice Papá Noel, los Reyes o el elfo travieso: su nombre, su perro, su cole, lo que ha hecho esta semana…
+          </p>
+          <ul className="mt-3 space-y-1.5 text-[13.5px] leading-snug text-[#fff6dc]/80">
+            <li>✓ Tú decides qué dice, cuándo llega y si lleva voz.</li>
+            <li>✓ Si vas con prisa, tienes mensajes ya preparados que puedes cambiar.</li>
+            <li>✓ Lo que tu peque cuenta te llega a ti y contestas cuando quieras.</li>
+          </ul>
         </section>
 
         <section aria-labelledby="pasos" className="mt-10">
