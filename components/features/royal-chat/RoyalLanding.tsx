@@ -5,6 +5,7 @@ import { regionalize, type Locale } from '@/lib/i18n';
 import type { AgeKind } from '@/lib/adultGate';
 import { ChispaEdadTarjeta } from './ChispaEdadTarjeta';
 import { DemoChat } from './DemoChat';
+import { DiarioEnPortada } from './DiarioEnPortada';
 import { LocaleSwitch } from './LocaleSwitch';
 import type { BillingInfo } from './PassOffer';
 import { demoFor } from './demoData';
@@ -60,6 +61,8 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
           <DemoChat embedded character={demo} childName="Lucía" initial={demoFor(demoGroup)} />
         </section>
         </div>
+
+        <DiarioEnPortada now={now} />
 
         <footer className="mt-6 space-y-3 border-t border-white/10 pt-5 text-center text-[12.5px] text-[#fff6dc]/45">
           <LocaleSwitch />

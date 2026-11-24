@@ -26,3 +26,11 @@ export function diaryFor(now: Date): { mode: 'sample' | 'live' | 'all'; entries:
   if (m === 12 || m === 1) return { mode: 'all', entries: all.slice().reverse() };
   return { mode: 'sample', entries: SAMPLE_DAYS.map((day) => all.find((e) => e.day === day)!).filter(Boolean) };
 }
+
+/** Calendario del diario para la portada: las 24 noches, abiertas las que ya cuenta Chispa y cerradas las demás (sin adelantar nada). */
+export function diaryCalendar(now: Date): { mode: 'sample' | 'live' | 'all'; entries: DiaryEntry[]; days: { day: number; open: boolean }[] } {
+  const { mode, entries } = diaryFor(now);
+  const total = elfNights().length;
+  const open = new Set(mode === 'sample' ? [] : entries.map((e) => e.day));
+  return { mode, entries, days: Array.from({ length: total }, (_, i) => ({ day: i + 1, open: open.has(i + 1) })) };
+}
