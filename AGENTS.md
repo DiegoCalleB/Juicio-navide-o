@@ -69,3 +69,21 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
 - Los secretos (Railway, Stripe, claves de API) los pone el usuario; nunca pedirlos ni verlos en el chat.
 - Nada que parezca «hecho con IA» a la vista: sin avisos de IA ni ✨ decorativos en la interfaz.
 - Métricas (`lib/metrics.ts`, `/metricas`): solo contadores propios sin cookies ni terceros; nunca guardar IP, edad ni datos de niños. El panel va con `METRICS_TOKEN` y no se enlaza ni indexa.
+
+## Marketing: el listón (decisión del dueño)
+
+**Objetivo:** que la estrategia de marketing digital de Línea Mágica sea de nivel sobresaliente (matrícula de honor): rigurosa,
+medible y bien documentada, y que sirva también como caso de estudio para el máster de marketing digital con IA del dueño.
+Es una exigencia de calidad, no una promesa de resultados: nunca se inventan cifras ni se prometen ventas.
+
+Toda propuesta de marketing (planes, calendarios, vídeos, anuncios, textos) debe traer, además de las piezas:
+
+1. **Público y mensaje:** a quién habla (padres, 25-45, España), qué problema resuelve y una frase única de valor.
+2. **Embudo con métricas reales:** de «han entrado» a «han comprado», con las cifras del panel `/metricas`, por red y por vídeo (`?src=`).
+3. **Hipótesis y experimentos:** qué se prueba (gancho, nombre, regalo, hora, formato), cómo se mide y qué decisión se toma con el resultado.
+4. **Calendario y recursos:** quién hace qué, cuánto tiempo y cuánto cuesta (créditos de generación, anuncios).
+5. **Riesgos y límites:** plataformas (restricciones de anuncios, enlaces), legal (RGPD, menores) y la REGLA DE ORO.
+6. **Registro de aprendizaje:** al cerrar cada semana, anotar qué funcionó, qué no y qué se repite, con datos.
+
+Reglas que no se saltan por el marketing: la magia ante todo (sin explicar el truco en público), sin niños reales en pantalla,
+sin datos personales ni de niños, y honestidad con los padres (lo que se promete en el anuncio existe en el producto).
