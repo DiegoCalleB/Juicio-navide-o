@@ -132,7 +132,7 @@ export function RoyalChat({
             }}
             className="relative shrink-0 rounded-full active:scale-95"
           >
-            <RoyalAvatar character={character} size={42} />
+            <RoyalAvatar character={character} size={46} />
             <span aria-hidden className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-[#3a0d12] bg-[#4cd98a] shadow-[0_0_8px_#4cd98a]" style={{ borderColor: theme.headerTo }} />
             {tapped > 0 && (
               <span key={tapped} aria-hidden className="anim-tap-line pointer-events-none absolute left-full top-1 z-20 ml-2 whitespace-nowrap rounded-2xl rounded-bl-sm bg-[#fbf5e6] px-3 py-1.5 text-[14px] font-bold text-[#2b1b0e] shadow-lg">
@@ -170,7 +170,7 @@ export function RoyalChat({
 
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-6 max-w-[86%] text-center text-[15px] leading-relaxed text-[#fff6dc]/85">
-              <p className="anim-float text-4xl" aria-hidden>{character.introEmoji}</p>
+              <div className="anim-float mx-auto w-fit"><RoyalAvatar character={character} size={96} /></div>
               <p className="mt-2 font-serif text-xl text-[#f6d77a]">¡Hola, {childName}!</p>
               <p className="mt-2">{character.selfIntro}. Me alegra mucho que me escribas.</p>
               <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Escríbeme, mándame un dibujo o mantén pulsado el botón dorado para hablarme.` : `Escríbeme o mándame una foto o un dibujo.`}</p>

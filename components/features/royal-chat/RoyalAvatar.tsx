@@ -8,8 +8,37 @@ const GOLD = (
   </linearGradient>
 );
 
-/** Avatares propios en SVG (sin assets externos): corona para los Reyes, gorro y barba para Papá Noel. */
+const PORTRAITS = new Set(['papa_noel', 'melchor', 'gaspar', 'baltasar', 'raton_perez', 'duende_chispa']);
+
+/**
+ * Retrato de cada ser mágico (fieltro, public/icons/characters). Aro dorado y un brillo suave, más grande y cuidado
+ * cuanto más grande se pinta. Si algún personaje no tuviera retrato, se dibuja el vector de siempre.
+ */
 export function RoyalAvatar({ character, size = 40 }: { character: CharacterProfile; size?: number }) {
+  if (!PORTRAITS.has(character.id)) return <RoyalAvatarVector character={character} size={size} />;
+  const big = size >= 64;
+  const ring = size >= 100 ? 4 : size >= 64 ? 3 : 2;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/icons/characters/${character.id}-${big ? 512 : 192}.png`}
+      width={size}
+      height={size}
+      alt={`Avatar de ${character.name}`}
+      decoding="async"
+      className="shrink-0 rounded-full bg-[#1a0830] object-cover"
+      style={{
+        width: size,
+        height: size,
+        border: `${ring}px solid #f2c94c`,
+        boxShadow: size >= 100 ? '0 0 0 3px rgba(246,215,122,.25), 0 8px 28px rgba(0,0,0,.5), 0 0 34px rgba(246,215,122,.35)' : '0 1px 6px rgba(0,0,0,.45), 0 0 0 1px rgba(255,241,184,.35) inset',
+      }}
+    />
+  );
+}
+
+/** Avatares propios en SVG (respaldo) (sin assets externos): corona para los Reyes, gorro y barba para Papá Noel. */
+function RoyalAvatarVector({ character, size = 40 }: { character: CharacterProfile; size?: number }) {
   const gid = `bg-${character.id}`;
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label={`Avatar de ${character.name}`} className="shrink-0">
