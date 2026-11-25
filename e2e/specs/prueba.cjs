@@ -10,7 +10,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   check('con la puerta pasada se ve la página', await p.getByRole('heading', { name: /le escribe a tu peque/ }).isVisible());
   check('explica los 3 pasos', (await p.locator('ol li').count()) === 3 && await p.getByText('Abres su portal').isVisible() && await p.getByText('Le das su enlace').isVisible());
   check('dice por qué es privado (5 puntos)', (await p.locator('section[aria-labelledby="seguro"] li').count()) === 5);
-  check('enseña lo que recibe el peque (vídeo del chat)', (await p.locator('video[src="/prueba/chat-chispa.mp4"]').count()) === 1);
+  check('enseña lo que recibe el peque (vídeo de la respuesta de Papá Noel)', (await p.locator('video[src="/prueba/carta-lucia.mp4"]').count()) === 1);
   check('hay botón «Pruébalo gratis 3 días» que lleva a crear el portal', (await p.getByRole('link', { name: 'Pruébalo gratis 3 días' }).first().getAttribute('href')) === '/crear');
   await p.screenshot({ path: require('../_lib.cjs').OUT + '/prueba-top.png' }); await p.locator('[data-scroll-root]').evaluate((e) => e.scrollTo(0, 1300)); await p.screenshot({ path: require('../_lib.cjs').OUT + '/prueba-mid.png' });
   const txt = await p.locator('body').innerText();
@@ -21,7 +21,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const k = await (await kb.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   await k.goto(BASE + '/prueba', { waitUntil: 'networkidle' });
   check('sin la puerta, /prueba lleva a la puerta de mayores', /\/mayores/.test(k.url()), k.url());
-  const v = await fetch(BASE + '/prueba/chat-chispa.mp4', { redirect: 'manual' });
+  const v = await fetch(BASE + '/prueba/carta-lucia.mp4', { redirect: 'manual' });
   check('sin la puerta, el vídeo no se sirve', v.status >= 300 && v.status < 400, String(v.status));
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);

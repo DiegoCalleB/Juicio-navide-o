@@ -30,7 +30,11 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
         )}
         <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:py-8">
         <header className="mb-6 text-center lg:mb-0 lg:text-left">
-          <p className="font-serif text-[20px] leading-none text-[#f6d77a]">{BRAND}</p>
+          <div className="flex items-center justify-center gap-2.5 lg:justify-start">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/logo-128.png" width={44} height={44} alt="" className="size-11 shrink-0 rounded-full shadow-[0_2px_14px_rgba(246,215,122,.25)]" />
+            <p className="font-serif text-[22px] leading-none text-[#f6d77a]">{BRAND}</p>
+          </div>
           <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.22em] text-[#f6d77a]/75">{hero.tagline}</p>
           <h1 className="mt-4 font-serif text-[30px] leading-[1.12] text-[#fff6dc] lg:mt-8 lg:text-[56px] lg:leading-[1.06]">{hero.title}</h1>
           {hero.countdown && (

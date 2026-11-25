@@ -21,11 +21,22 @@ async function face(phase: string): Promise<string | null> {
   }
 }
 
+/** Logo de la marca (public/brand). Si faltara, la vista previa sale sin él. */
+async function logo(): Promise<string | null> {
+  try {
+    const buf = await readFile(path.join(process.cwd(), 'public', 'brand', 'logo-128.png'));
+    return `data:image/png;base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
 /** Vista previa al compartir el enlace (WhatsApp, redes). Sin emojis: el motor no los dibuja. */
 export default async function OgImage() {
   const host = new URL(getSiteUrl()).host;
   const hero = heroFor(siteNow());
   const img = await face(hero.phase);
+  const mark = await logo();
   return new ImageResponse(
     (
       <div
@@ -40,8 +51,14 @@ export default async function OgImage() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', justifyContent: 'center', paddingRight: img ? 40 : 0 }}>
-          <div style={{ display: 'flex', fontSize: 26, letterSpacing: 6, color: '#f6d77a', textTransform: 'uppercase' }}>
-            {`Línea Mágica · ${hero.tagline}`}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {mark && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={mark} width={84} height={84} alt="" style={{ borderRadius: 42, marginRight: 22 }} />
+            )}
+            <div style={{ display: 'flex', fontSize: 26, letterSpacing: 6, color: '#f6d77a', textTransform: 'uppercase' }}>
+              {`Línea Mágica · ${hero.tagline}`}
+            </div>
           </div>
           <div style={{ display: 'flex', fontSize: img ? 58 : 72, fontWeight: 800, lineHeight: 1.1, marginTop: 24 }}>{hero.title}</div>
           <div style={{ display: 'flex', fontSize: img ? 27 : 34, marginTop: 24, color: '#d9cfe8', maxWidth: 980 }}>{hero.subtitle}</div>

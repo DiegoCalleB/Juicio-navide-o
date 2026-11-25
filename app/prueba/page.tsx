@@ -7,7 +7,7 @@ import { trackEntry } from '@/lib/metrics';
 export const dynamic = 'force-dynamic';
 export const viewport: Viewport = { themeColor: '#1d0b3a' };
 // Zona de mayores (detrás de la puerta): explica qué recibe el peque y por qué es privado. Nunca en el mundo público.
-export const metadata: Metadata = { title: 'Pruébalo gratis · Chispa para tu peque', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'Pruébalo gratis · Papá Noel para tu peque', robots: { index: false, follow: false } };
 
 const PASOS = [
   { n: '1', t: 'Abres su portal', d: 'En un minuto: solo el nombre de pila de tu peque y quién quieres que le escriba.' },
@@ -45,7 +45,11 @@ export default async function PruebaPage({ searchParams }: { searchParams: Promi
       <div className="relative mx-auto w-full max-w-md px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-5 lg:max-w-3xl lg:pt-10">
         <nav className="mb-6 flex items-center justify-between">
           <Link href="/" className="min-h-10 rounded-full border border-white/15 px-3 py-2 text-[13px] font-semibold text-[#fff6dc]/80 active:scale-95">← Inicio</Link>
-          <p className="font-serif text-[17px] text-[#f6d77a]">{BRAND}</p>
+          <p className="flex items-center gap-2 font-serif text-[17px] text-[#f6d77a]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/logo-128.png" width={32} height={32} alt="" className="size-8 rounded-full" />
+            {BRAND}
+          </p>
           <span className="w-16" />
         </nav>
 
@@ -57,11 +61,11 @@ export default async function PruebaPage({ searchParams }: { searchParams: Promi
 
         <section aria-labelledby="mira" className="mt-9 grid gap-5 lg:grid-cols-2 lg:items-center">
           <div className="mx-auto w-full max-w-[260px] overflow-hidden rounded-3xl border-2 border-[#f6d77a]/60 shadow-xl">
-            <video src="/prueba/chat-chispa.mp4" poster="/prueba/chat-chispa.jpg" controls playsInline preload="metadata" className="block w-full" aria-label="Lo que recibe tu peque: el chat con Chispa" />
+            <video src="/prueba/carta-lucia.mp4" poster="/prueba/carta-lucia.jpg" controls playsInline preload="metadata" className="block w-full" aria-label="Lo que recibe tu peque: la respuesta de Papá Noel en su móvil" />
           </div>
           <div>
             <h2 id="mira" className="font-serif text-[22px] text-[#f6d77a]">Esto es lo que recibe tu peque</h2>
-            <p className="mt-2 text-[14.5px] leading-snug text-[#fff6dc]/80">Un chat con Chispa en su móvil o tablet: le saluda por su nombre, le escribe y le contesta. Sin llamadas, sin vídeos, sin desconocidos.</p>
+            <p className="mt-2 text-[14.5px] leading-snug text-[#fff6dc]/80">Un chat con Papá Noel en su móvil o tablet: le saluda por su nombre, le escribe y le habla con su voz. Sin llamadas, sin vídeos, sin desconocidos.</p>
           </div>
         </section>
 
