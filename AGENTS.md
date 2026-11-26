@@ -36,13 +36,14 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
   cara: «¡Hola! Soy Chispa. ¿Cuántos años tienes?» (un peque no le miente al elfo). Menos de 18: Chispa le ofrece un
   chiste, y los enlaces para los mayores no aparecen nunca en ese dispositivo (30 días); la API de la cuenta responde 403
   y no puede volver a contestar con otra edad. 18 o más: no se le lleva a ningún sitio; la portada se vuelve a pintar con
-  los dos enlaces discretos («Mi cuenta» y «Condiciones de uso») y «Mi cuenta» va directo a la cuenta de cabeza.
+  los dos enlaces discretos («Mi cuenta» y «Condiciones de uso») y «Mi cuenta» entra directo a la cuenta.
   Quien entra directo a `/mayores` sin contestar ve la misma pregunta de Chispa ahí. Solo se guarda una cookie firmada
   («mayor»/«menor»), nunca la edad. Código: `app/api/mayores/edad`, `lib/ageServer.ts`, `ChispaEdadTarjeta.tsx` (portada),
   `components/features/gate/EdadChispa.tsx` (`/mayores`). Nunca «mayores» ni «padres» en esos textos.
-- **Puerta de adultos:** `/mayores` pide una cuenta de cabeza con 5 s (comprobada en el servidor con un token
-  firmado; 3 fallos seguidos bloquean el dispositivo y 9 la conexión, con bloqueos cada vez más largos: 15 min, 1 h, 24 h). La sesión es una cookie firmada que caduca a los 30 min sin uso y al
-  cerrar el navegador. Código: `lib/adultGate.ts`, `lib/gateLock.ts`, `middleware.ts`, `app/api/mayores/*`, `app/mayores/page.tsx`.
+- **Puerta de adultos:** `/mayores` no pide nada más que la pregunta de Chispa: quien ya ha contestado una edad de 18 o más entra
+  directo (sin cuentas de cabeza ni esperas; decisión del dueño: «solo preguntar la edad»). La sesión es una cookie firmada que caduca
+  a los 30 min sin uso y al cerrar el navegador; quien dijo ser menor no entra en ese dispositivo. Código: `lib/adultGate.ts`,
+  `middleware.ts`, `app/api/mayores/{edad,entrar,salir}`, `app/mayores/page.tsx`.
 - **Disuadir a los peques:** lo más vistoso de la portada es mágico (el diario de Chispa, el chat de ejemplo, los
   rincones del Polo Norte) y el acceso de los mayores son dos enlaces normales pero aburridos («Mi cuenta» arriba a la
   derecha y «Condiciones de uso» abajo, 13-15 px, nunca dorados ni grandes) que solo se pintan si Chispa ya ha

@@ -76,7 +76,7 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   check('portada: al decir que es mayor aparecen «Mi cuenta» y «Condiciones de uso», normales y aburridos', (await parentLinks.count()) === 2 && sizes.every((x) => x >= 13 && x <= 15) && (await k1.getByRole('link', { name: /mam[aá]s|pap[aá]s|mayores|adultos/i }).count()) === 0, sizes.join('/'));
   check('portada: no se le lleva a ninguna parte (sigue en la portada) y la pregunta desaparece', new URL(k1.url()).pathname === '/' && (await k1.getByLabel(/Cuántos años tienes/).count()) === 0);
   await Promise.all([k1.waitForURL(/\/mayores/), k1.getByRole('link', { name: 'Mi cuenta' }).click()]);
-  check('«Mi cuenta» lleva directo a la cuenta de cabeza (ya no vuelve a preguntar la edad)', await k1.getByTestId('gate-question').waitFor({ timeout: 15000 }).then(() => true, () => false) && (await k1.getByRole('heading', { name: /Cuántos años tienes/ }).count()) === 0);
+  check('«Mi cuenta» lleva directo a la cuenta (sin cuentas de cabeza ni volver a preguntar la edad)', await k1.getByRole('link', { name: /Abrir un portal/ }).waitFor({ timeout: 15000 }).then(() => true, () => false) && (await k1.getByRole('heading', { name: /Cuántos años tienes/ }).count()) === 0);
   await bk.close();
 
   check('portada: ni precios ni «Mis salas»', (await kid.getByText(/€|Ya tengo portales|Tus portales/).count()) === 0);
@@ -140,98 +140,48 @@ const delata = (txt) => DELATAN.filter((r) => r.test(txt)).map(String);
   await kid.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   check('queda bloqueado en ese dispositivo: al volver, sigue la despedida y no hay cuenta', (await kid.getByTestId('chispa-despedida').count()) === 1 && (await kid.getByTestId('gate-question').count()) === 0);
   const kidApi = kid.context().request;
-  const qk = (await (await kidApi.get(BASE + '/api/mayores/pregunta')).json());
-  check('sin contestar como mayor, ni se piden preguntas por la API (403)', qk.ok === false && qk.error?.code === 'AGE');
+  const ent = await kidApi.get(BASE + '/api/mayores/entrar?next=/crear', { maxRedirects: 0 });
+  check('quien dijo ser menor no entra por la API (vuelve a la pregunta, sin sesión)', ent.status() >= 300 && ent.status() < 400 && !/lm_mayores=[^;]/.test(ent.headers()['set-cookie'] ?? ''), String(ent.status()));
   const retry = await (await kidApi.post(BASE + '/api/mayores/edad', { data: { age: '40' } })).json();
   await kid.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   check('no puede volver a contestar con otra edad', retry.data?.adult === false && (await kid.getByTestId('chispa-despedida').count()) === 1);
   const inv = await (await (await b.newContext({ extraHTTPHeaders: HDR })).request.post(BASE + '/api/mayores/edad', { data: { age: 'abc' } })).status();
   check('una edad que no es un número no se admite (400)', inv === 400, String(inv));
 
-  // Un peque que miente a Chispa sigue teniendo delante la cuenta de cabeza
-  const bl = await launch([], { adult: false });
-  const liar = await (await bl.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (mentiroso) E2E', extraHTTPHeaders: HDR })).newPage();
+  // Sin contestar a Chispa, la entrada no abre nada
+  const anon = (await b.newContext({ extraHTTPHeaders: HDR })).request;
+  const entA = await anon.get(BASE + '/api/mayores/entrar?next=/crear', { maxRedirects: 0 });
+  check('sin haber contestado a Chispa, la entrada no da sesión', !/lm_mayores=[^;]/.test(entA.headers()['set-cookie'] ?? ''));
+
+  // Una persona mayor: contesta a Chispa y entra directo, sin cuentas ni esperas
+  const b2 = await launch([], { adult: false });
+  const p2 = await (await b2.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   const passAge = async (page, age = '40') => {
     await hydrated(page, '#edad');
     await page.fill('#edad', age);
     await page.getByRole('button', { name: 'Seguir' }).click();
-    await page.locator('#gate-answer').waitFor({ timeout: 10000 });
-    await hydrated(page, '#gate-answer');
   };
-  await liar.goto(BASE + '/crear', { waitUntil: 'networkidle' });
-  await passAge(liar);
-  await liar.screenshot({ path: S + '/mg2-puerta.png' });
-  const q = await liar.getByTestId('gate-question').innerText();
-  check('si dice ser mayor, la puerta pide una cuenta de cabeza', /^\d+ [×−+] \d+ = \?$/.test(q.trim()), q);
-  // Con tan pocos segundos, la pregunta puede refrescarse justo al escribir y vaciar el campo: se reintenta hasta contar
-  // exactamente 3 envíos reales (los reintentos no deben sumar fallos de más y bloquear la conexión entera).
-  let posts = 0;
-  liar.on('request', (r) => { if (r.url().endsWith('/api/mayores') && r.method() === 'POST') posts++; });
-  for (let t = 0; t < 14 && posts < 3; t++) {
-    if ((await liar.locator('#gate-answer').count()) === 0) break;
-    await liar.fill('#gate-answer', '1').catch(() => {});
-    await liar.getByRole('button', { name: 'Entrar' }).click({ timeout: 2000 }).catch(() => {});
-    await liar.waitForTimeout(500);
-  }
-  check('3 fallos bloquean la puerta', await liar.getByText(/Demasiados intentos/).isVisible());
-  check('bloqueada, no se puede volver a intentar', (await liar.locator('#gate-answer').count()) === 0);
-  await bl.close();
-
-  // Un adulto de verdad (otro navegador): contesta y entra
-  const b2 = await launch([], { adult: false });
-  const p2 = await (await b2.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p2.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await passAge(p2);
-  const solve = async (page) => {
-    const [x, op, y] = (await page.getByTestId('gate-question').innerText()).replace('= ?', '').trim().split(' ');
-    return String(op === '×' ? Number(x) * Number(y) : op === '−' ? Number(x) - Number(y) : Number(x) + Number(y));
-  };
-  // Respuesta con el token caducado o manipulado: no entra
-  const tampered = await p2.evaluate(async () => (await fetch('/api/mayores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: 'x.1.y', answer: '42' }) })).status);
-  check('un token falso no abre la puerta', tampered === 400, String(tampered));
-  await p2.fill('#gate-answer', await solve(p2));
-  await Promise.all([p2.waitForURL(/\/crear$/, { timeout: 15000 }), p2.getByRole('button', { name: 'Entrar' }).click()]);
-  check('con la respuesta correcta, entra donde iba (/crear)', await p2.locator('#child').isVisible());
+  await p2.waitForURL(/\/crear$/, { timeout: 15000 });
+  check('al decir que es mayor, entra directo donde iba (/crear), sin cuenta de cabeza', await p2.locator('#child').isVisible() && (await p2.locator('#gate-answer').count()) === 0);
   await p2.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   check('dentro, la zona de mayores muestra su menú', await p2.getByRole('link', { name: /Abrir un portal/ }).isVisible() && await p2.getByRole('link', { name: 'Privacidad' }).isVisible());
   await p2.screenshot({ path: S + '/mg3-zona.png' });
   await Promise.all([p2.waitForURL(BASE + '/', { timeout: 15000 }), p2.getByRole('button', { name: 'Cerrar la zona de mayores' }).click()]);
   await p2.goto(BASE + '/precios', { waitUntil: 'domcontentloaded' });
-  check('«Cerrar la zona de mayores» la cierra al momento', /\/mayores\?next=/.test(p2.url()));
+  await p2.waitForURL(/\/precios$/, { timeout: 15000 }).catch(() => {});
+  check('tras cerrar la zona, con la edad ya contestada, se vuelve a entrar sin más', /\/precios$/.test(p2.url()));
 
   // No redirige a otra web
   const p3 = await (await b2.newContext({ userAgent: 'Mozilla/5.0 (otro adulto) E2E', extraHTTPHeaders: HDR })).newPage();
   await p3.goto(BASE + '/mayores?next=//evil.example.com', { waitUntil: 'networkidle' });
   await passAge(p3);
-  await p3.fill('#gate-answer', await solve(p3));
-  await p3.getByRole('button', { name: 'Entrar' }).click();
-  await p3.waitForURL(/localhost/, { timeout: 15000 }).catch(() => {});
-  await p3.waitForTimeout(800);
-  check('la puerta nunca manda a otra web', new URL(p3.url()).host === new URL(BASE).host, p3.url());
+  await p3.waitForTimeout(2500);
+  check('la entrada nunca manda a otra web', new URL(p3.url()).host === new URL(BASE).host, p3.url());
+  const other = (await b2.newContext({ userAgent: 'Mozilla/5.0 (otra casa) E2E', extraHTTPHeaders: HDR })).request;
+  await other.post(BASE + '/api/mayores/edad', { data: { age: '40' } });
 
-  // Bloqueo por red: cambiar de navegador no sirve para seguir probando (9 fallos desde la misma conexión)
-  const solveApi = async (api) => {
-    const q = (await (await api.get(BASE + '/api/mayores/pregunta')).json()).data;
-    const [x, op, y] = q.question.split(' ');
-    return { token: q.token, right: String(op === '×' ? +x * +y : op === '−' ? +x - +y : +x + +y) };
-  };
-  const apiOf = async (ua, headers = HDR) => {
-    const api = (await b2.newContext({ userAgent: ua, extraHTTPHeaders: headers })).request;
-    await api.post(BASE + '/api/mayores/edad', { data: { age: '40' } });
-    return api;
-  };
-  let last = null;
-  for (let i = 0; i < 12; i++) { const n1 = await apiOf(`Mozilla/5.0 (cambio ${i}) E2E`); const { token } = await solveApi(n1); last = await n1.post(BASE + '/api/mayores', { data: { token, answer: '1' } }); if (last.status() === 429) break; }
-  check('los fallos de una misma conexión acaban bloqueándola (también al cambiar de navegador)', last.status() === 429);
-  const n2 = await apiOf('Mozilla/5.0 (cambio 2) E2E');
-  const { token: t2, right } = await solveApi(n2);
-  const blocked = await n2.post(BASE + '/api/mayores', { data: { token: t2, answer: right } });
-  const bj = await blocked.json();
-  check('con la red bloqueada, ni la respuesta correcta abre la puerta (y avisa del tiempo)', blocked.status() === 429 && /15 minutos/.test(bj.error?.message ?? ''), bj.error?.message);
-  // Otra conexión distinta no se ve afectada
-  const other = await apiOf('Mozilla/5.0 (otra casa) E2E', { 'x-forwarded-for': `10.${r255()}.${r255()}.${r255()}` });
-  const o = await solveApi(other);
-  check('otra conexión distinta entra con normalidad', (await other.post(BASE + '/api/mayores', { data: { token: o.token, answer: o.right } })).status() === 200);
 
   // CSRF: una web ajena no puede hacer que el navegador de un visitante cambie datos
   const evil = await other.post(BASE + '/api/mayores/edad', { data: { age: '30' }, headers: { origin: 'https://sitio-ajeno.example' } });

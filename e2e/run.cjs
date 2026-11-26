@@ -30,7 +30,6 @@ const env = {
   ROOMS_STORE: 'memory',
   SECURITY_ALERT_EMAIL: 'alertas@ejemplo.com',
   MAIL_FAKE: '1', // el correo va a un buzón de pruebas, nunca a Resend
-  ADULT_GATE_SECONDS: '30', // en producción son 5 s; el servidor de pruebas va más lento que una persona
   CRON_SECRET: 'testsecret-testsecret-1234',
   METRICS_TOKEN: 'clave-de-pruebas-1234',
   FINGERPRINT_SALT: process.env.FINGERPRINT_SALT || 'e2e-salt-e2e-salt-e2e-salt',

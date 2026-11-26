@@ -2,9 +2,9 @@
  * Puerta de la zona de mayores (ver la REGLA DE ORO en AGENTS.md).
  *
  * Todo lo que explica cómo funciona la magia (crear el portal, precios, instrucciones de las trastadas,
- * paneles de los padres, textos legales) está detrás de esta puerta. Para entrar hay que resolver de
- * cabeza una cuenta sencilla para un adulto, en poco tiempo (como las «parental gates» de las apps
- * infantiles). La respuesta se comprueba en el servidor y la sesión caduca tras 30 min sin uso.
+ * paneles de los padres, textos legales) está detrás de esta puerta. Para entrar basta con que Chispa
+ * haya oído una edad de mayor (cookie firmada, nunca se guarda la edad); quien dice ser menor no entra.
+ * La sesión caduca tras 30 min sin uso.
  *
  * Funciona en el middleware (edge) y en el servidor: solo Web Crypto, sin módulos de Node.
  */
@@ -12,9 +12,6 @@
 export const GATE_COOKIE = 'lm_mayores';
 /** Sin usar la zona de mayores durante este tiempo, la puerta se vuelve a cerrar. */
 export const GATE_IDLE_MS = 30 * 60_000;
-/** Tiempo para contestar la cuenta (el servidor da unos segundos de margen por la red). */
-export const GATE_ANSWER_SECONDS = 5;
-const ANSWER_GRACE_MS = 3_000;
 
 /** Rutas que solo se ven tras la puerta. */
 export const ADULT_PATHS = ['/crear', '/precios', '/prueba', '/ideas-elfo', '/familia', '/paje', '/pase', '/privacidad', '/terminos', '/demo'];
@@ -22,12 +19,6 @@ export const ADULT_PATHS = ['/crear', '/precios', '/prueba', '/ideas-elfo', '/fa
 export function isAdultPath(pathname: string): boolean {
   if (/\/manifest\.webmanifest$/.test(pathname)) return false; // el navegador lo pide sin pasar por la puerta
   return ADULT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-/** Segundos para contestar. Solo las pruebas automáticas (almacén en memoria) pueden alargarlos; en producción, siempre 5. */
-export function answerSeconds(): number {
-  const t = Number(process.env.ADULT_GATE_SECONDS);
-  return process.env.ROOMS_STORE === 'memory' && t >= 1 && t <= 120 ? t : GATE_ANSWER_SECONDS;
 }
 
 /** Solo las pruebas automáticas (almacén en memoria) pueden apagar la puerta. En producción, siempre activa. */
@@ -97,58 +88,6 @@ export const sessionCookie = (value: string) => ({
   path: '/',
   // Sin maxAge: se borra al cerrar el navegador. Además, el servidor la da por caducada a los 30 min sin uso.
 });
-
-// ── Pregunta ──────────────────────────────────────────────────────────────
-
-export interface Challenge {
-  question: string;
-  token: string;
-  seconds: number;
-}
-
-function rand(min: number, max: number): number {
-  const a = new Uint32Array(1);
-  crypto.getRandomValues(a);
-  return min + (a[0]! % (max - min + 1));
-}
-
-/** Una cuenta que un adulto resuelve de cabeza en unos segundos y un niño pequeño no. */
-export async function newChallenge(now = Date.now()): Promise<Challenge> {
-  let question: string;
-  let answer: number;
-  const kind = rand(0, 2);
-  // Cuentas que un adulto resuelve a la primera y un peque pequeño no: sin llevadas ni «me llevo» (los datos reales
-  // mostraron que 10 de cada 18 personas fallaban con cuentas más duras).
-  if (kind === 0) {
-    const a = rand(11, 15), b = rand(2, 3);
-    question = `${a} × ${b}`;
-    answer = a * b;
-  } else if (kind === 1) {
-    const u1 = rand(3, 9), u2 = rand(1, u1 - 1);
-    const a = rand(4, 9) * 10 + u1, b = rand(1, 3) * 10 + u2;
-    question = `${a} − ${b}`;
-    answer = a - b;
-  } else {
-    const u1 = rand(1, 5), u2 = rand(1, 9 - u1);
-    const a = rand(2, 5) * 10 + u1, b = rand(1, 3) * 10 + u2;
-    question = `${a} + ${b}`;
-    answer = a + b;
-  }
-  const seconds = answerSeconds();
-  const exp = now + seconds * 1000 + ANSWER_GRACE_MS;
-  const nonce = b64url(crypto.getRandomValues(new Uint8Array(9)).buffer);
-  const token = `${nonce}.${exp}.${await sign(`challenge|${nonce}|${exp}|${answer}`)}`;
-  return { question, token, seconds };
-}
-
-export async function checkAnswer(token: string, answer: string, now = Date.now()): Promise<'ok' | 'wrong' | 'expired'> {
-  const [nonce, expStr, sig] = token.split('.');
-  if (!nonce || !expStr || !sig) return 'wrong';
-  if (now > Number(expStr)) return 'expired';
-  const n = answer.trim().replace(/\s+/g, '');
-  if (!/^-?\d{1,4}$/.test(n)) return 'wrong';
-  return same(sig, await sign(`challenge|${nonce}|${expStr}|${Number(n)}`)) ? 'ok' : 'wrong';
-}
 
 /** Solo se permite volver a rutas internas (nunca a otra web). */
 export function safeNext(next: string | null | undefined): string {
