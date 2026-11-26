@@ -117,16 +117,20 @@ export async function newChallenge(now = Date.now()): Promise<Challenge> {
   let question: string;
   let answer: number;
   const kind = rand(0, 2);
+  // Cuentas que un adulto resuelve a la primera y un peque pequeño no: sin llevadas ni «me llevo» (los datos reales
+  // mostraron que 10 de cada 18 personas fallaban con cuentas más duras).
   if (kind === 0) {
-    const a = rand(12, 19), b = rand(2, 4);
+    const a = rand(11, 15), b = rand(2, 3);
     question = `${a} × ${b}`;
     answer = a * b;
   } else if (kind === 1) {
-    const a = rand(31, 79), b = rand(11, 29);
+    const u1 = rand(3, 9), u2 = rand(1, u1 - 1);
+    const a = rand(4, 9) * 10 + u1, b = rand(1, 3) * 10 + u2;
     question = `${a} − ${b}`;
     answer = a - b;
   } else {
-    const a = rand(21, 59), b = rand(14, 38);
+    const u1 = rand(1, 5), u2 = rand(1, 9 - u1);
+    const a = rand(2, 5) * 10 + u1, b = rand(1, 3) * 10 + u2;
     question = `${a} + ${b}`;
     answer = a + b;
   }
