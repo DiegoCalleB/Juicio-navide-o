@@ -26,9 +26,12 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   // Portada corta: el botón para los mayores se ve sin bajar y lleva a crear el portal paso a paso
   const vh = await page.evaluate(() => innerHeight);
   const total = await scrollContainer.evaluate(el => el.scrollHeight);
-  check('portada corta (como mucho tres pantallas de móvil, con el diario de Chispa deslizable)', total <= vh * 3, total + ' px vs ' + vh);
+  check('portada corta (como mucho tres pantallas y pico de móvil, con el diario de Chispa deslizable y los pasos para crear el portal)', total <= vh * 3.4, total + ' px vs ' + vh);
   check('portada: el diario de Chispa está dentro de la portada, con sus noches', await page.getByRole('heading', { name: 'Mi diario de travesuras' }).isVisible() && (await page.locator('ol[aria-label="Las noches de diciembre"] li').count()) >= 24);
   await scrollContainer.evaluate(el => el.scrollTo(0, 0));
+  const crearCta = page.getByRole('link', { name: 'Crear el portal de mi peque' }).first();
+  const crearBox = await crearCta.boundingBox();
+  check('quien ya es mayor ve «Crear el portal de mi peque» sin bajar, con la prueba gratis a la vista', crearBox && crearBox.y + crearBox.height <= vh && await page.getByText('Pruébalo 3 días gratis, sin tarjeta.').isVisible(), crearBox && Math.round(crearBox.y) + 'px');
   const cta = page.getByRole('link', { name: 'Lee el diario de Chispa' });
   const ctaBox = await cta.boundingBox();
   check('el botón del diario de Chispa se ve sin bajar', ctaBox && ctaBox.y + ctaBox.height <= vh, ctaBox && Math.round(ctaBox.y) + 'px');

@@ -43,11 +43,21 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
             </p>
           )}
           <p className="mx-auto mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#fff6dc]/75 lg:mx-0 lg:mt-5 lg:max-w-lg lg:text-[19px]">
-            {r(hero.subtitle)}
+            {r(age === 'ok' ? 'Abre el portal de tu peque en un minuto: Papá Noel, los Reyes Magos, Chispa o el Ratoncito Pérez le escriben por su nombre, en directo, al móvil de casa.' : hero.subtitle)}
           </p>
-          <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
-            Lee el diario de Chispa
-          </Link>
+          {age === 'ok' ? (
+            <>
+              <Link href="/crear" className="mt-5 flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[17px] font-extrabold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10">
+                Crear el portal de mi peque
+              </Link>
+              <p className="mt-2 text-[13.5px] text-[#fff6dc]/70">Pruébalo 3 días gratis, sin tarjeta.</p>
+              <Link href="/diario-de-chispa" className="mt-3 inline-flex min-h-10 items-center text-[14px] font-semibold text-[#f6d77a]/90 underline underline-offset-2">Lee el diario de Chispa</Link>
+            </>
+          ) : (
+            <Link href="/diario-de-chispa" className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg transition hover:brightness-105 active:scale-[0.99] lg:mt-8 lg:inline-flex lg:min-h-14 lg:px-10 lg:text-[17px]">
+              Lee el diario de Chispa
+            </Link>
+          )}
           <ul aria-label="Rincones del Polo Norte" className="mt-3 flex flex-wrap justify-center gap-2 lg:justify-start">
             {([['chistes', 'Chistes del elfo'], ['adivinanzas', 'Adivinanzas'], ['renos', 'Los renos'], ['mapa', 'El mapa']] as const).map(([id, label]) => (
               <li key={id}>
@@ -65,6 +75,31 @@ export function RoyalLanding({ locale, now, age = null }: { billing?: BillingInf
           <DemoChat embedded character={demo} childName="Lucía" initial={demoFor(demoGroup)} />
         </section>
         </div>
+
+        {age === 'ok' && (
+          <section aria-labelledby="pasos-title" className="mb-8">
+            <h2 id="pasos-title" className="mb-3 text-center font-serif text-[24px] text-[#f6d77a]">Así de fácil</h2>
+            <ol className="mx-auto grid max-w-md gap-2.5 lg:max-w-4xl lg:grid-cols-3">
+              {([
+                ['1', 'Abres su portal', 'Solo el nombre de pila de tu peque y quién quieres que le escriba. Un minuto.'],
+                ['2', 'Le das su enlace', 'Un enlace privado, solo suyo. Chispa o Papá Noel le saludan por su nombre.'],
+                ['3', 'Tú pones lo que le cuentan', 'Con su nombre, sus gustos y sus anécdotas. Tú eliges cuándo llega y si lleva voz.'],
+              ] as const).map(([n, t, d]) => (
+                <li key={n} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-4">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#f6d77a] text-[17px] font-extrabold text-[#2a0f4a]">{n}</span>
+                  <span>
+                    <span className="block text-[16px] font-bold text-[#fff6dc]">{t}</span>
+                    <span className="mt-0.5 block text-[13.5px] leading-snug text-[#fff6dc]/75">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <Link href="/crear" className="mx-auto mt-4 flex min-h-14 max-w-md items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] text-[17px] font-extrabold text-[#2a0f4a] shadow-lg active:scale-[0.99]">
+              Crear el portal de mi peque
+            </Link>
+            <p className="mt-2 text-center text-[13px] text-[#fff6dc]/60">Privado y sin cuentas. <Link href="/prueba" className="underline underline-offset-2">Ver cómo funciona</Link></p>
+          </section>
+        )}
 
         <DiarioEnPortada now={now} />
 

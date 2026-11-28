@@ -36,7 +36,7 @@ fantasía intacta. Si hay duda entre «más claro para los padres» y «más seg
   cara: «¡Hola! Soy Chispa. ¿Cuántos años tienes?» (un peque no le miente al elfo). Menos de 18: Chispa le ofrece un
   chiste, y los enlaces para los mayores no aparecen nunca en ese dispositivo (30 días); la API de la cuenta responde 403
   y no puede volver a contestar con otra edad. 18 o más: no se le lleva a ningún sitio; la portada se vuelve a pintar con
-  los dos enlaces discretos («Mi cuenta» y «Condiciones de uso») y «Mi cuenta» entra directo a la cuenta.
+  los dos enlaces discretos («Mi cuenta» y «Condiciones de uso»), «Mi cuenta» entra directo a la cuenta y la portada pasa a enseñar para qué sirve (pasos «Así de fácil» y el botón «Crear el portal de mi peque», decisión del dueño: funcionalidad a la vista y guiada para quien ya dijo ser mayor). Quien aún no ha contestado solo ve magia.
   Quien entra directo a `/mayores` sin contestar ve la misma pregunta de Chispa ahí. Solo se guarda una cookie firmada
   («mayor»/«menor»), nunca la edad. Código: `app/api/mayores/edad`, `lib/ageServer.ts`, `ChispaEdadTarjeta.tsx` (portada),
   `components/features/gate/EdadChispa.tsx` (`/mayores`). Nunca «mayores» ni «padres» en esos textos.

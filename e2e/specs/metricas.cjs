@@ -71,7 +71,7 @@ const TOKEN = process.env.METRICS_TOKEN || 'clave-de-pruebas-1234';
 
   // 3. Nada de esto deja cookies de seguimiento
   const names = (await kid.cookies()).map((c) => c.name).sort();
-  check('solo existe la cookie de edad (sin cookies de seguimiento)', names.every((n) => n === 'lm_edad'), names.join(','));
+  check('solo existen las cookies de edad y de sesión de la cuenta (sin cookies de seguimiento)', names.every((n) => n === 'lm_edad' || n === 'lm_mayores'), names.join(','));
 
   // 4. Sin METRICS_TOKEN el endpoint de entrada existe solo con clave; un peque no ve nada raro
   check('sin errores de JS', errs.length === 0, errs.join(' | '));

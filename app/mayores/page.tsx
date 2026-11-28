@@ -18,6 +18,9 @@ export default async function MayoresPage({ searchParams }: { searchParams: Prom
   const { next } = await searchParams;
   const open = !gateEnabled() || (await sessionValid((await cookies()).get(GATE_COOKIE)?.value));
 
+  // Con la sesión abierta y un destino pedido (venía de /crear, /precios…), se le lleva allí sin parar en el menú.
+  if (open && next && safeNext(next) !== '/mayores') redirect(safeNext(next));
+
   if (!open) {
     // Chispa pregunta la edad; quien dice ser menor se queda ahí. Quien dice ser mayor entra directo.
     const age = await ageStatus((await cookies()).get(AGE_COOKIE)?.value);
