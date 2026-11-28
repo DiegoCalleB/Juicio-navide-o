@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   const age = await ageStatus(req.cookies.get(AGE_COOKIE)?.value);
-  const dest = new URL(age === 'ok' ? safeNext(req.nextUrl.searchParams.get('next')) : '/mayores', req.nextUrl.origin);
-  const r = NextResponse.redirect(dest);
+  // Redirección relativa: detrás del proxy de Railway, nextUrl.origin es la dirección interna (localhost), no la web.
+  const dest = age === 'ok' ? safeNext(req.nextUrl.searchParams.get('next')) : '/mayores';
+  const r = new NextResponse(null, { status: 307, headers: { Location: dest } });
   r.headers.set('Cache-Control', 'private, no-store');
   r.headers.set('Referrer-Policy', 'no-referrer');
   if (age === 'ok') {
