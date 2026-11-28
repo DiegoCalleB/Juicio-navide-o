@@ -1,6 +1,6 @@
 /**
- * Pase de Navidad guardado en ESTE móvil (solo navegador). Con él, las salas nuevas nacen sin límite
- * y una sala en prueba se desbloquea con un toque. Es un enlace secreto: no sale del móvil.
+ * Pase de Navidad guardado en ESTE móvil (solo navegador). Con él, los portales nuevos nacen sin límite
+ * y un portal en prueba se desbloquea con un toque. Es un enlace secreto: no sale del móvil.
  */
 const KEY = 'magic-pass';
 const RETURN_KEY = 'magic-checkout-return';

@@ -11,7 +11,7 @@ import { findRoomByToken } from '@/services/rooms';
 export const dynamic = 'force-dynamic';
 
 const bodySchema = z.object({
-  /** Token de padres de la sala a desbloquear (opcional: también se puede comprar el pase sin sala). */
+  /** Token de padres del portal a desbloquear (opcional: también se puede comprar el pase sin sala). */
   roomToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   /** Renuncia expresa al desistimiento (contenido digital que se activa al momento). */
   waiver: z.literal(true),
@@ -19,7 +19,7 @@ const bodySchema = z.object({
 
 /**
  * Crea la sesión de Stripe Checkout del Pase de Navidad. Solo desde el panel de los padres o la portada,
- * nunca desde la pantalla del niño. A Stripe solo se le pasa el id interno de la sala, nunca un enlace secreto.
+ * nunca desde la pantalla del niño. A Stripe solo se le pasa el id interno del portal, nunca un enlace secreto.
  */
 export async function POST(req: NextRequest) {
   return guarded('checkout', { key: 'checkout', max: 10, windowMs: 60_000 }, async () => {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     let locale = await getRequestLocale();
     if (parsed.data.roomToken) {
       const found = await findRoomByToken(parsed.data.roomToken);
-      if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+      if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
       roomId = found.room.id;
       locale = found.room.locale;
     }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const session = await createCheckoutSession({
       amountCents: price.cents,
       successUrl: `${origin}/pase/listo?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/`,
+      cancelUrl: parsed.data.roomToken ? `${origin}/paje/${parsed.data.roomToken}` : `${origin}/precios`,
       locale,
       blackFriday: price.blackFriday,
       metadata: { ...(roomId ? { room_id: roomId } : {}), waiver: 'accepted', price_cents: String(price.cents) },

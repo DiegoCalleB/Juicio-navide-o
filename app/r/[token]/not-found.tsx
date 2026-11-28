@@ -2,8 +2,8 @@ import { StateScreen } from '@/components/features/royal-chat/StateScreen';
 
 export default function ChildLinkNotFound() {
   return (
-    <StateScreen title="Este enlace no funciona" action={{ href: '/', label: 'Ir al inicio' }}>
-      <p>Puede que esté mal copiado o que la conversación ya haya terminado. Pídele a un adulto de tu familia que te envíe el enlace otra vez.</p>
+    <StateScreen title="Se ha perdido el camino" action={{ href: '/', label: 'Volver' }}>
+      <p>La nieve ha tapado el sendero hasta mí. Pídele a tu familia que te enseñe el camino otra vez.</p>
     </StateScreen>
   );
 }

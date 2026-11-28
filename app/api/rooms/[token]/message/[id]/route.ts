@@ -11,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ to
   const { token, id } = await params;
   return guarded('message-edit', { key: 'message-edit', max: 60, windowMs: 60_000, scope: token }, async () => {
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'parent') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
     if (!z.string().uuid().safeParse(id).success) return fail('VALIDATION', 'Mensaje no válido.', 400);
     const parsed = messageEditSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return fail('VALIDATION', 'Escribe el mensaje corregido (hasta 300 caracteres).', 400);

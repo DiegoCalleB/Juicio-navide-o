@@ -17,7 +17,7 @@ interface Props {
 
 type Reading = 'yes' | 'learning' | 'no';
 
-/** Editar la sala (nombre y personaje) y borrarla por completo. Lo ven solo los padres. */
+/** Editar el portal (nombre y personaje) y borrarla por completo. Lo ven solo los padres. */
 export function RoomAdmin({ token, childName, characterId, characterAlias = null, characterGender = null, readingLevel = 'yes' }: Props) {
   const locale = useLocale();
   const [reading, setReading] = useState<Reading>(readingLevel);
@@ -76,7 +76,7 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
   return (
     <div className="space-y-4 rounded-2xl border border-white/15 bg-white/[.04] p-3.5 text-[13px] leading-relaxed">
       <div className="space-y-2">
-        <p className="font-semibold text-[#e8f1ff]">Editar la sala</p>
+        <p className="font-semibold text-[#e8f1ff]">Editar el portal</p>
         <label className="block">
           <span className="text-[12px] text-[#e8f1ff]/70">Nombre del peque</span>
           <input
@@ -162,11 +162,11 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
       </div>
 
       <div className="space-y-2 border-t border-white/10 pt-3">
-        <p className="font-semibold text-[#ff8a8c]">Borrar la sala</p>
+        <p className="font-semibold text-[#ff8a8c]">Borrar el portal</p>
         <p className="text-[#e8f1ff]/70"><R>Se borran los mensajes, los audios y las fotos, para los dos móviles. No se puede deshacer.</R></p>
         {askDelete ? (
-          <div role="alertdialog" aria-label="Confirmar borrado de la sala" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#ff8a8c]/10 p-2.5">
-            <span className="flex-1 font-semibold text-[#ff8a8c]">¿Borrar la sala de {childName} para siempre?</span>
+          <div role="alertdialog" aria-label="Confirmar borrado del portal" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#ff8a8c]/10 p-2.5">
+            <span className="flex-1 font-semibold text-[#ff8a8c]">¿Borrar el portal de {childName} para siempre?</span>
             <button type="button" onClick={erase} disabled={busy} className="rounded-lg bg-[#ff8a8c] px-3 py-1.5 font-bold text-[#2a0a0c] disabled:opacity-50">
               {busy ? 'Borrando…' : 'Sí, borrar'}
             </button>
@@ -176,7 +176,7 @@ export function RoomAdmin({ token, childName, characterId, characterAlias = null
           </div>
         ) : (
           <button type="button" onClick={() => setAskDelete(true)} className="min-h-11 w-full rounded-xl border border-[#ff8a8c]/50 font-bold text-[#ff8a8c]">
-            Borrar esta sala
+            Borrar este portal
           </button>
         )}
       </div>

@@ -23,16 +23,30 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await page.waitForTimeout(600);
   const afterReply = await scrollContainer.evaluate(el => el.scrollTop);
   check('al llegar la respuesta, la portada no salta (el chat se desplaza por dentro)', Math.abs(afterReply - afterSend) < 4, afterSend + ' → ' + afterReply);
-  await scrollContainer.evaluate(el => el.scrollTo(0, 620));
-  await page.waitForTimeout(300);
+  // Portada corta: el botón para los mayores se ve sin bajar y lleva a crear el portal paso a paso
+  const vh = await page.evaluate(() => innerHeight);
+  const total = await scrollContainer.evaluate(el => el.scrollHeight);
+  check('portada corta (como mucho tres pantallas y pico de móvil, con el diario de Chispa deslizable y los pasos para crear el portal)', total <= vh * 3.4, total + ' px vs ' + vh);
+  check('portada: el diario de Chispa está dentro de la portada, con sus noches', await page.getByRole('heading', { name: 'Mi diario de travesuras' }).isVisible() && (await page.locator('ol[aria-label="Las noches de diciembre"] li').count()) >= 24);
+  await scrollContainer.evaluate(el => el.scrollTo(0, 0));
+  const crearCta = page.getByRole('link', { name: 'Crear el portal de mi peque' }).first();
+  const crearBox = await crearCta.boundingBox();
+  check('quien ya es mayor ve «Crear el portal de mi peque» sin bajar, con la prueba gratis a la vista', crearBox && crearBox.y + crearBox.height <= vh && await page.getByText('Pruébalo 3 días gratis, sin tarjeta.').isVisible(), crearBox && Math.round(crearBox.y) + 'px');
+  const cta = page.getByRole('link', { name: 'Lee el diario de Chispa' });
+  const ctaBox = await cta.boundingBox();
+  check('el botón del diario de Chispa se ve sin bajar', ctaBox && ctaBox.y + ctaBox.height <= vh, ctaBox && Math.round(ctaBox.y) + 'px');
+  await Promise.all([page.waitForURL(/diario-de-chispa$/), cta.click()]);
+  check('el botón lleva al diario de Chispa', await page.getByRole('heading', { name: /diario de travesuras/i }).waitFor({ timeout: 15000 }).then(() => true, () => false));
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  await page.locator('#child').waitFor({ timeout: 15000 });
+  check('crear: el paso 1 (el nombre del peque)', await page.getByText('Paso 1 de 2').isVisible());
   await page.screenshot({ path: S + '/l2-landing-form.png' });
-  check('el formulario de la sala sigue funcionando', await page.locator('#child').isVisible());
 
   // Panel: momentos + wake lock
   await page.evaluate(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });
   await page.fill('#child', 'Lucía'); await page.getByRole('checkbox').check();
-  await ensureChar(page); await page.getByRole('button', { name: /Crear la sala/ }).click();
-  await page.waitForSelector('text=La sala está lista');
+  await ensureChar(page); await page.getByRole('button', { name: /Abrir el portal/ }).click();
+  await page.waitForSelector('text=El portal está abierto');
   const pajeHref = await page.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const panel = await ctx.newPage();
   await panel.addInitScript(() => { window.__wl = 0; Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl++; return { release: async () => {} }; } } }); });

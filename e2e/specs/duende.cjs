@@ -1,4 +1,4 @@
-const { OUT: S, FIX, BASE, launch, ensureFixtures, ensureChar } = require('../_lib.cjs');
+const { OUT: S, FIX, BASE, launch, ensureFixtures, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 const pad = (n) => String(n).padStart(2, '0');
@@ -9,19 +9,20 @@ const pad = (n) => String(n).padStart(2, '0');
   const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('el selector ofrece al elfo travieso', (await parent.getByRole('radio', { name: /Elfo Chispa/ }).count()) === 1);
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía');
+  await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('el selector ofrece al elfo travieso', (await parent.getByRole('radio', { name: /Elfo Chispa/ }).count()) === 1);
   check('sin elegir al elfo, no se piden nombre ni género', (await parent.locator('#elf-alias').count()) === 0);
   await parent.locator('label', { hasText: 'Elfo Chispa' }).click();
   check('al elegirlo, cada familia puede ponerle nombre y elegir chico o chica', await parent.locator('#elf-alias').isVisible() && await parent.getByRole('radio', { name: 'Es una elfa' }).isVisible());
   await parent.fill('#elf-alias', 'Chispita');
   await parent.getByRole('radio', { name: 'Es una elfa' }).click();
-  await parent.getByRole('checkbox').check();
   await parent.screenshot({ path: S + '/du1-selector.png' });
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal usa el nombre elegido', await parent.getByText(/Chispita/).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   const parentToken = pajeHref.split('/paje/')[1], childToken = childLink.split('/r/')[1];
@@ -42,8 +43,8 @@ const pad = (n) => String(n).padStart(2, '0');
   check('sala vacía: "Soy Chispita, la elfa traviesa"', await child.getByText('Soy Chispita, la elfa traviesa').isVisible());
   await child.screenshot({ path: S + '/du2-child.png' });
   await child.fill('#royal-draft', '¡Te encontré detrás del sofá!'); await child.keyboard.press('Enter');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('acuse en primera persona y en femenino ("escondida")', true)).catch(() => check('acuse del elfo', false));
-  check('el acuse concuerda con el género', (await child.locator('body').innerText()).includes('escondida'));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   check('el niño no ve ayudantes, otros personajes ni marcas sin rellenar', (await child.locator('body').innerText()).match(/Quesito|Cascabel|Zafiro|ayudante|Ratoncito|Melchor|\{(elf|o|el|un|del|Elfo)\}/i) === null);
 
   // Ideas de travesuras: los padres eligen idea, escriben ellos y programan
@@ -56,12 +57,20 @@ const pad = (n) => String(n).padStart(2, '0');
   await parent.getByRole('button', { name: 'Ver una sugerencia de mensaje' }).click();
   const sug = await parent.inputValue('#reply');
   check('la sugerencia es opcional, editable y con el nombre del niño', sug.includes('Lucía') && !/\{/.test(sug), sug.slice(0, 70));
+  // Sin tiempo: trastadas exprés que rellenan el mensaje al momento (en femenino y con su nombre)
+  await parent.getByRole('button', { name: '⚡ Sin tiempo' }).click();
+  const quick = parent.getByRole('dialog', { name: 'Ideas de travesuras' });
+  check('pestaña "Sin tiempo" con 15 trastadas exprés', (await quick.getByRole('button', { name: 'Usar su mensaje' }).count()) === 15 && (await quick.getByRole('tab', { name: '⚡ Sin tiempo' }).getAttribute('aria-selected')) === 'true');
+  await quick.getByRole('button', { name: 'Usar su mensaje' }).first().click();
+  const q1 = await parent.inputValue('#reply');
+  check('la trastada exprés rellena el mensaje (femenino, con el nombre)', /cansada/.test(q1) && /dormida/.test(q1) && q1.includes('Lucía') && !/\{/.test(q1), q1.slice(0, 80));
   await parent.fill('#reply', 'Hoy Chispita se ha escondido en el frutero. ¡A ver si la encuentras!');
   await parent.screenshot({ path: S + '/du3-idea.png' });
 
   // Programar el mensaje (con foto) para mañana a las 8:00
   await parent.getByTestId('photo-input').setInputFiles(FIX + '/foto-padres.png');
   await parent.getByText('Foto lista').waitFor({ timeout: 10000 });
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   await parent.getByRole('radio', { name: 'Otro día' }).click();
   await parent.getByRole('button', { name: 'Mañana a las 8:00' }).click();
   check('el selector de fecha acepta "Mañana a las 8:00"', (await parent.inputValue('#when-custom')).endsWith('T08:00'));
@@ -77,6 +86,7 @@ const pad = (n) => String(n).padStart(2, '0');
 
   // texto programado para otro día
   await parent.fill('#reply', 'Mensaje de texto para mañana');
+  await (async () => { const o = parent.getByRole('button', { name: /Opciones de envío/ }); if ((await o.getAttribute('aria-expanded')) !== 'true') await o.click(); })();
   check('tras programar, el selector vuelve a "Ahora"', (await parent.getByRole('radio', { name: 'Ahora' }).getAttribute('aria-checked')) === 'true');
   await parent.getByRole('radio', { name: 'Otro día' }).click();
   await parent.getByRole('button', { name: 'Mañana a las 8:00' }).click();
@@ -89,13 +99,13 @@ const pad = (n) => String(n).padStart(2, '0');
   const form = new FormData(); form.append('image', new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4])], { type: 'image/jpeg' }), 'x.jpg'); form.append('scheduledAt', new Date(Date.now() - 600_000).toISOString());
   check('foto con fecha pasada → 400', (await fetch(`${BASE}/api/rooms/${parentToken}/photo`, { method: 'POST', body: form })).status === 400);
 
-  // Cambiar el género y el nombre desde la sala
+  // Cambiar el género y el nombre desdel portal
   await parent.getByRole('button', { name: /Preparativos/ }).click().catch(() => {});
   if ((await parent.getByLabel('Nombre de vuestro elfo').count()) === 0) await parent.getByRole('button', { name: /Preparativos/ }).click();
   await parent.getByLabel('Nombre de vuestro elfo').fill('Trasto');
   await parent.getByRole('radio', { name: 'Es un elfo' }).click();
   await parent.getByRole('button', { name: 'Guardar cambios' }).click();
-  check('al editar la sala, cambia nombre y género', await parent.getByText('Contestas como Elfo Trasto a Lucía').waitFor({ timeout: 15000 }).then(() => true, () => false));
+  check('al editar el portal, cambia nombre y género', await parent.getByText('Contestas como Elfo Trasto a Lucía').waitFor({ timeout: 15000 }).then(() => true, () => false));
 
   // "Idea de travesura" automática con la fecha en campaña
   const p2 = await (await mk()).newPage();

@@ -8,7 +8,7 @@ interface Options {
   onRefresh: () => Promise<void>;
   /** El otro lado está escribiendo. */
   onTyping: () => void;
-  /** Solo los padres: el niño entra/sale de la sala o abre el mensaje de entrada. */
+  /** Solo los padres: el niño entra/sale del portal o abre el mensaje de entrada. */
   onPresence?: (p: { online: boolean; openedAt?: string }) => void;
 }
 

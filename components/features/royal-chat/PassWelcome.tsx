@@ -32,7 +32,10 @@ export function PassWelcome() {
   return state === 'ok' ? (
     <div role="status" className="mb-6 rounded-2xl border border-[#f6d77a]/50 bg-[#f6d77a]/10 p-4 text-center text-[14px] text-[#fff6dc]">
       <p className="text-lg font-bold text-[#f6d77a]">🎁 ¡Tienes un Pase de Navidad!</p>
-      <p className="mt-1 opacity-85"><R>Ya está guardado en este móvil. Crea tu sala abajo: no tendrá límite hasta el 20 de enero.</R></p>
+      <p className="mt-1 opacity-85"><R>Ya está guardado en este móvil. Abre tu portal: no tendrá límite hasta el 20 de enero.</R></p>
+      {typeof window !== 'undefined' && window.location.pathname !== '/crear' && (
+        <a href="/crear" className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-[#f6d77a] px-4 font-bold text-[#2a0f4a]">Abrir el portal</a>
+      )}
     </div>
   ) : (
     <div role="status" className="mb-6 rounded-2xl border border-[#ff8a8c]/40 bg-[#ff8a8c]/10 p-4 text-center text-[13px] text-[#fff6dc]/85">

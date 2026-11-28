@@ -14,6 +14,10 @@ export interface CheckoutSession {
   paid: boolean;
   amountTotal: number | null;
   metadata: Record<string, string>;
+  /** Pago de Stripe (pi_…), para poder retirar el pase si se devuelve el dinero. */
+  paymentIntent: string | null;
+  /** Correo que el comprador puso en Stripe. Solo se usa para mandarle su pase; no se guarda. */
+  email: string | null;
 }
 
 interface StripeSessionJson {
@@ -23,6 +27,8 @@ interface StripeSessionJson {
   status: string;
   amount_total: number | null;
   metadata: Record<string, string> | null;
+  payment_intent?: string | { id?: string } | null;
+  customer_details?: { email?: string | null } | null;
 }
 
 const g = globalThis as unknown as { __fakeStripe?: Map<string, CheckoutSession> };
@@ -34,11 +40,13 @@ const toSession = (s: StripeSessionJson): CheckoutSession => ({
   paid: s.payment_status === 'paid' || s.payment_status === 'no_payment_required',
   amountTotal: s.amount_total,
   metadata: s.metadata ?? {},
+  paymentIntent: (typeof s.payment_intent === 'string' ? s.payment_intent : s.payment_intent?.id) || null,
+  email: s.customer_details?.email?.trim().toLowerCase().slice(0, 120) || null,
 });
 
 function secretKey(): string {
   const k = process.env.STRIPE_SECRET_KEY;
-  if (!k || !k.startsWith('sk_')) throw new Error('Falta STRIPE_SECRET_KEY.');
+  if (!k || !/^(sk|rk)_/.test(k)) throw new Error('Falta STRIPE_SECRET_KEY.');
   return k;
 }
 
@@ -69,7 +77,7 @@ export async function createCheckoutSession(opts: {
 }): Promise<CheckoutSession> {
   if (isStripeFake()) {
     const id = `cs_fake_${randomBytes(12).toString('hex')}`;
-    const s: CheckoutSession = { id, url: opts.successUrl.replace('{CHECKOUT_SESSION_ID}', id), paid: true, amountTotal: opts.amountCents, metadata: opts.metadata };
+    const s: CheckoutSession = { id, url: opts.successUrl.replace('{CHECKOUT_SESSION_ID}', id), paid: true, amountTotal: opts.amountCents, metadata: opts.metadata, paymentIntent: `pi_fake_${id.slice(8)}`, email: 'pago-de-prueba@example.com' };
     fakeSessions().set(id, s);
     return s;
   }
@@ -84,7 +92,7 @@ export async function createCheckoutSession(opts: {
   f.set('line_items[0][price_data][product_data][name]', `Pase de Navidad · Línea Mágica${opts.blackFriday ? ' · Oferta Black Friday' : ''}`);
   f.set(
     'line_items[0][price_data][product_data][description]',
-    'Salas sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos. Incluye un pase para regalar.',
+    'Portales sin límite hasta el 20 de enero con Papá Noel, el elfo y los Reyes, para todos los hermanos.',
   );
   // Códigos promocionales creados en el panel de Stripe (p. ej. AMIGOS al 100 %).
   f.set('allow_promotion_codes', 'true');

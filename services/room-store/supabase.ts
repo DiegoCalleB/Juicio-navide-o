@@ -79,12 +79,14 @@ interface RoomRow {
   family_hash: string | null;
   family_seed: string | null;
   family_name: string | null;
+  parent_pin: string | null;
+  pin_recovery: string | null;
   expires_at: string;
   child_token_hash: string;
   parent_token_hash: string;
 }
 const ROOM_COLUMNS =
-  'id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, locale, family_hash, family_seed, family_name, expires_at, child_token_hash, parent_token_hash';
+  'id, child_name, character_id, character_alias, character_gender, child_link_version, reading_level, trial_ends_at, pass_id, locale, family_hash, family_seed, family_name, parent_pin, pin_recovery, expires_at, child_token_hash, parent_token_hash';
 const toRoom = (d: RoomRow): RoomRecord => ({
   id: d.id,
   childName: d.child_name,
@@ -99,6 +101,8 @@ const toRoom = (d: RoomRow): RoomRecord => ({
   familyHash: d.family_hash,
   familySeed: d.family_seed,
   familyName: d.family_name,
+  parentPin: d.parent_pin ?? null,
+  pinRecovery: d.pin_recovery ?? null,
   expiresAt: d.expires_at,
   childTokenHash: d.child_token_hash,
   parentTokenHash: d.parent_token_hash,
@@ -122,6 +126,8 @@ export class SupabaseRoomStore implements RoomStore {
       family_hash: room.familyHash ?? null,
       family_seed: room.familySeed ?? null,
       family_name: room.familyName ?? null,
+      parent_pin: room.parentPin ?? null,
+      pin_recovery: room.pinRecovery ?? null,
     });
     if (isRateLimit(error)) throw new RoomError('RATE_LIMITED');
     if (error) throw new Error(`insertRoom: ${error.message}`);
@@ -149,6 +155,40 @@ export class SupabaseRoomStore implements RoomStore {
       .returns<RoomRow[]>();
     if (error) throw new Error(`listRoomsByFamilyHash: ${error.message}`);
     return (data ?? []).map(toRoom);
+  }
+
+  async upsertContact(c: { scope: string; email: string; marketing: boolean; consentVersion: string }): Promise<void> {
+    const { error } = await getAdminClient()
+      .from('parent_contacts')
+      .upsert(
+        { scope: c.scope, email: c.email, marketing_opt_in: c.marketing, consent_at: c.marketing ? new Date().toISOString() : null, consent_version: c.marketing ? c.consentVersion : null },
+        { onConflict: 'scope,email' },
+      );
+    if (error) throw new Error(`upsertContact: ${error.message}`);
+  }
+
+  async deleteContactsByEmail(email: string): Promise<number> {
+    const { data, error } = await getAdminClient().from('parent_contacts').delete().eq('email', email).select('id');
+    if (error) throw new Error(`deleteContactsByEmail: ${error.message}`);
+    return data?.length ?? 0;
+  }
+
+  async purgeContacts(beforeIso: string): Promise<number> {
+    const { data, error } = await getAdminClient().from('parent_contacts').delete().eq('marketing_opt_in', false).lt('created_at', beforeIso).select('id');
+    if (error) throw new Error(`purgeContacts: ${error.message}`);
+    return data?.length ?? 0;
+  }
+
+  async listContacts(): Promise<import('./types').ContactRecord[]> {
+    const { data, error } = await getAdminClient().from('parent_contacts').select('scope,email,marketing_opt_in,created_at').order('created_at', { ascending: false }).limit(5000);
+    if (error) throw new Error(`listContacts: ${error.message}`);
+    return (data ?? []).map((r) => ({ scope: r.scope as string, email: r.email as string, marketingOptIn: !!r.marketing_opt_in, createdAt: r.created_at as string }));
+  }
+
+  async setPin(scope: { roomId: string; familyHash: string | null }, pin: string | null, recovery: string | null): Promise<void> {
+    const q = getAdminClient().from('rooms').update({ parent_pin: pin, pin_recovery: recovery });
+    const { error } = await (scope.familyHash ? q.eq('family_hash', scope.familyHash) : q.eq('id', scope.roomId));
+    if (error) throw new Error(`setPin: ${error.message}`);
   }
 
   async updateFamilyName(hash: string, name: string | null): Promise<void> {
@@ -280,7 +320,7 @@ export class SupabaseRoomStore implements RoomStore {
     if (patch.characterAlias !== undefined) update.character_alias = patch.characterAlias;
     if (patch.characterGender !== undefined) update.character_gender = patch.characterGender;
     const { data, error } = await getAdminClient().from('rooms').update(update).eq('id', roomId).select('id');
-    if (error) throw new Error('No se pudo editar la sala.');
+    if (error) throw new Error('No se pudo editar el portal.');
     return (data?.length ?? 0) > 0;
   }
 
@@ -297,7 +337,7 @@ export class SupabaseRoomStore implements RoomStore {
 
   async deleteRoom(roomId: string): Promise<void> {
     const { error } = await getAdminClient().from('rooms').delete().eq('id', roomId);
-    if (error) throw new Error('No se pudo borrar la sala.');
+    if (error) throw new Error('No se pudo borrar el portal.');
   }
 
   async deletePendingMessage(roomId: string, messageId: string, nowIso: string): Promise<boolean> {
@@ -339,6 +379,15 @@ export class SupabaseRoomStore implements RoomStore {
   async uploadFile(bucket: Bucket, path: string, data: Buffer, contentType: string): Promise<void> {
     const { error } = await getAdminClient().storage.from(bucket).upload(path, data, { contentType, upsert: false });
     if (error) throw new Error(`upload: ${error.message}`);
+  }
+
+  async fileExists(bucket: Bucket, path: string): Promise<boolean> {
+    const slash = path.lastIndexOf('/');
+    const folder = slash >= 0 ? path.slice(0, slash) : '';
+    const name = path.slice(slash + 1);
+    const { data, error } = await getAdminClient().storage.from(bucket).list(folder, { search: name, limit: 5 });
+    if (error) return false;
+    return (data ?? []).some((f) => f.name === name);
   }
 
   async signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {
@@ -387,6 +436,7 @@ export class SupabaseRoomStore implements RoomStore {
         token_hash: p.tokenHash,
         kind: p.kind,
         stripe_session_id: p.stripeSessionId ?? null,
+        stripe_payment_intent: p.stripePaymentIntent ?? null,
         parent_pass_id: p.parentPassId ?? null,
         amount_cents: p.amountCents ?? null,
         expires_at: p.expiresAt,
@@ -417,6 +467,24 @@ export class SupabaseRoomStore implements RoomStore {
   async findPassByStripeSession(sessionId: string): Promise<PassRecord | null> {
     const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_session_id', sessionId).maybeSingle<PassRow>();
     return data ? toPass(data) : null;
+  }
+
+  async findPassByPaymentIntent(paymentIntent: string): Promise<PassRecord | null> {
+    const { data } = await getAdminClient().from('passes').select(PASS_COLUMNS).eq('stripe_payment_intent', paymentIntent).maybeSingle<PassRow>();
+    return data ? toPass(data) : null;
+  }
+
+  async revokePass(passId: string, nowIso: string): Promise<number> {
+    const db = getAdminClient();
+    const { data: gifts, error: e0 } = await db.from('passes').select('id').eq('parent_pass_id', passId);
+    if (e0) throw new Error(`revokePass: ${e0.message}`);
+    const ids = [passId, ...(gifts ?? []).map((g) => g.id as string)];
+    const { error: e1 } = await db.from('passes').update({ expires_at: nowIso }).in('id', ids);
+    if (e1) throw new Error(`revokePass: ${e1.message}`);
+    // Sin pase y con la prueba ya vencida: quedan bloqueadas (sin esto, una sala sin prueba pasaría a «gratis»).
+    const { data: rooms, error: e2 } = await db.from('rooms').update({ pass_id: null, trial_ends_at: nowIso }).in('pass_id', ids).select('id');
+    if (e2) throw new Error(`revokePass: ${e2.message}`);
+    return rooms?.length ?? 0;
   }
 
   async findGiftOf(passId: string): Promise<PassRecord | null> {

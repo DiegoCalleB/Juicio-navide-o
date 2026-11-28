@@ -111,9 +111,9 @@ export function RoyalChat({
   };
 
   return (
-    <div className={embedded ? 'relative flex justify-center' : 'fixed inset-0 z-40 flex justify-center bg-black'}>
+    <div className={embedded ? 'relative flex justify-center' : 'fixed inset-0 z-40 flex justify-center bg-black lg:items-center lg:bg-[radial-gradient(ellipse_at_top,#2a0f4a,#060210)]'}>
       <div
-        className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh'}`}
+        className={`relative flex w-full max-w-md flex-col overflow-hidden text-[#2b1b0e] ${embedded ? 'h-[560px] rounded-[28px] border border-white/15 shadow-2xl' : 'h-dvh lg:h-[min(calc(100dvh-3rem),52rem)] lg:max-w-lg lg:rounded-[32px] lg:border lg:border-white/15 lg:shadow-[0_30px_90px_rgba(0,0,0,.6)]'}`}
         style={{ background: theme.bg }}
       >
         <MagicScene sky={theme.sky} />
@@ -132,7 +132,7 @@ export function RoyalChat({
             }}
             className="relative shrink-0 rounded-full active:scale-95"
           >
-            <RoyalAvatar character={character} size={42} />
+            <RoyalAvatar character={character} size={46} />
             <span aria-hidden className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-[#3a0d12] bg-[#4cd98a] shadow-[0_0_8px_#4cd98a]" style={{ borderColor: theme.headerTo }} />
             {tapped > 0 && (
               <span key={tapped} aria-hidden className="anim-tap-line pointer-events-none absolute left-full top-1 z-20 ml-2 whitespace-nowrap rounded-2xl rounded-bl-sm bg-[#fbf5e6] px-3 py-1.5 text-[14px] font-bold text-[#2b1b0e] shadow-lg">
@@ -170,7 +170,7 @@ export function RoyalChat({
 
           {messages.length === 0 && !busy && (
             <div className="mx-auto mt-6 max-w-[86%] text-center text-[15px] leading-relaxed text-[#fff6dc]/85">
-              <p className="anim-float text-4xl" aria-hidden>{character.introEmoji}</p>
+              <div className="anim-float mx-auto w-fit"><RoyalAvatar character={character} size={96} /></div>
               <p className="mt-2 font-serif text-xl text-[#f6d77a]">¡Hola, {childName}!</p>
               <p className="mt-2">{character.selfIntro}. Me alegra mucho que me escribas.</p>
               <p className="mt-2 text-[#fff6dc]/70">{CHILD_AUDIO_ENABLED ? `Escríbeme, mándame un dibujo o mantén pulsado el botón dorado para hablarme.` : `Escríbeme o mándame una foto o un dibujo.`}</p>
@@ -207,7 +207,7 @@ export function RoyalChat({
 
         {reconnecting && (
           <p role="status" className="relative z-10 mx-3 mb-1 flex items-center justify-center gap-2 rounded-xl bg-[#f6d77a]/15 px-3 py-1.5 text-center text-[12.5px] text-[#f6d77a]">
-            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… ¡enseguida vuelve! ✨
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#f6d77a]" /> Se ha cortado la línea mágica… ¡enseguida vuelve!
           </p>
         )}
         {banner && (

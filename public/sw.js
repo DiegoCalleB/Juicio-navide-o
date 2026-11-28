@@ -1,7 +1,7 @@
 /* Línea Mágica · service worker mínimo.
  * Solo sirve una página "sin conexión" cuando falla la red al navegar. NO guarda nada más:
  * ni salas, ni mensajes, ni enlaces secretos (nada de /r, /paje, /familia o /api pasa por la caché). */
-const CACHE = 'lm-offline-v1';
+const CACHE = 'lm-offline-v2';
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (event) => {

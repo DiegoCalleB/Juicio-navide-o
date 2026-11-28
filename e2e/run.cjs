@@ -20,7 +20,7 @@ const filters = args.filter((a) => !a.startsWith('--'));
 const PORT = Number(process.env.E2E_PORT || 3800);
 const BASE = `http://localhost:${PORT}`;
 
-const SPECS = ['landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'locale', 'media', 'plan', 'phase1', ...(withVoice ? ['voice'] : [])];
+const SPECS = ['magia', 'landing', 'audio', 'surprise', 'video', 'polish', 'presence', 'caps', 'erase', 'edit', 'raton', 'duende', 'rooms', 'link', 'family', 'ideas', 'pwa', 'pin', 'desktop', 'locale', 'media', 'plan', 'assistant', 'phase1', 'metricas', 'correo', 'prueba', ...(withVoice ? ['voice'] : [])];
 const selected = nowArg ? ['blackfriday'] : withBilling ? ['billing'] : SPECS.filter((s) => filters.length === 0 || filters.some((f) => s.includes(f)));
 
 const env = {
@@ -28,7 +28,10 @@ const env = {
   // Fecha fija para que la portada de temporada y los precios sean predecibles (18-dic: Papá Noel, precio normal).
   FAKE_NOW: nowArg || '2026-12-18T12:00:00+01:00',
   ROOMS_STORE: 'memory',
+  SECURITY_ALERT_EMAIL: 'alertas@ejemplo.com',
+  MAIL_FAKE: '1', // el correo va a un buzón de pruebas, nunca a Resend
   CRON_SECRET: 'testsecret-testsecret-1234',
+  METRICS_TOKEN: 'clave-de-pruebas-1234',
   FINGERPRINT_SALT: process.env.FINGERPRINT_SALT || 'e2e-salt-e2e-salt-e2e-salt',
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'e2e-anon-key-e2e-anon-key',
@@ -37,7 +40,11 @@ const env = {
   NEXT_DIST_DIR: '.next-e2e',
   ...(nowArg ? { STRIPE_FAKE: '1', FAKE_NOW: nowArg, STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
   ...(withBilling ? { STRIPE_FAKE: '1', TRIAL_TEST_SECONDS: '45', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
-  ...(withVoice ? { NEXT_PUBLIC_ENABLE_VOICE: '1', VOICE_ROOM_DAILY_LIMIT: '2', NODE_USE_ENV_PROXY: '1' } : {}),
+  // Sin --voice, la voz va apagada (no gasta créditos). Con --voice: voz real, en modo prueba gratis (Stripe simulado).
+  NEXT_PUBLIC_ENABLE_VOICE: withVoice ? '1' : '0',
+  // Ayudante de mensajes con Gemini simulado (sin red, sin gasto).
+  GEMINI_FAKE: '1',
+  ...(withVoice ? { VOICE_ROOM_DAILY_LIMIT: '5', NODE_USE_ENV_PROXY: '1', STRIPE_FAKE: '1', STRIPE_WEBHOOK_SECRET: 'whsec_e2e_test_secret_123456' } : {}),
 };
 
 async function waitReady() {

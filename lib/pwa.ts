@@ -5,13 +5,13 @@ interface ManifestInput {
   name: string;
   shortName: string;
   description: string;
-  /** Ruta de inicio (y alcance) de la app instalada: la sala, el panel o la familia. */
+  /** Ruta de inicio (y alcance) de la app instalada: el portal, el panel o la familia. */
   path: string;
   icons: { src: string; sizes: string; purpose?: 'any' | 'maskable' }[];
   themeColor?: string;
 }
 
-/** Manifiesto de una sala/panel/familia concreta: al instalarla, la app abre ESA pantalla (no la portada). Nunca se cachea. */
+/** Manifiesto de un portal/panel/familia concreta: al instalarla, la app abre ESA pantalla (no la portada). Nunca se cachea. */
 export function manifestResponse(m: ManifestInput): NextResponse {
   const body = {
     id: m.path,

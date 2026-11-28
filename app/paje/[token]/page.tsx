@@ -3,10 +3,12 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { LocaleProvider } from '@/components/LocaleProvider';
 import { PajePanel } from '@/components/features/royal-chat/PajePanel';
+import { PinGate } from '@/components/features/royal-chat/PinGate';
 import { CHARACTERS, resolveCharacter } from '@/lib/characters';
 import { originFromHeaders } from '@/lib/site';
 import { deriveChildToken } from '@/lib/tokens';
 import { billingInfo } from '@/lib/billing';
+import { assistantEnabled } from '@/lib/assistant';
 import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +20,10 @@ export const viewport: Viewport = { themeColor: '#0a1220' };
 
 export default async function PajePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const found = await findRoomByToken(token);
+  const found = await findRoomByToken(token, { allowLocked: true });
   if (!found || found.role !== 'parent') notFound();
+  // Con PIN: sin desbloquear no se envía NINGÚN dato del portal (ni el nombre del peque).
+  if (found.locked) return <PinGate token={token} />;
   const childLink = `${originFromHeaders(await headers())}/r/${deriveChildToken(token, found.room.childLinkVersion)}`;
   const character = resolveCharacter(CHARACTERS[found.room.character], { alias: found.room.characterAlias, gender: found.room.characterGender, locale: found.room.locale });
   return (
@@ -32,7 +36,9 @@ export default async function PajePage({ params }: { params: Promise<{ token: st
       characterAlias={found.room.characterAlias}
       characterGender={found.room.characterGender}
       readingLevel={found.room.readingLevel}
+      hasPin={found.room.hasPin}
       billing={billingInfo()}
+      assistant={assistantEnabled()}
     />
     </LocaleProvider>
   );

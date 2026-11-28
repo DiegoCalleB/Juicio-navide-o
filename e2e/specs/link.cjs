@@ -6,16 +6,16 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   const b = await launch();
   const mk = async () => (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   const parent = await mk(), child = await mk();
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía'); await parent.getByRole('checkbox').check();
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista');
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto');
   check('al crear hay botón "Enviármelo por correo"', (await parent.getByRole('link', { name: /Enviármelo por correo/ }).count()) > 0);
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const oldLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
   await openChild(child, oldLink, {});
-  check('el enlace antiguo funciona', (await child.getByText(/Este enlace (ya )?no funciona/).count()) === 0);
+  check('el enlace antiguo funciona', (await child.getByText(/Se ha perdido el camino/).count()) === 0);
 
   await pinSetup(parent);
   check('el panel ofrece guardar el enlace por correo', await parent.getByRole('button', { name: /Enviármelo por correo/ }).isVisible());
@@ -29,8 +29,8 @@ const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS '
   check('el panel muestra un enlace distinto', newLink && newLink.trim().split('/r/')[1] !== oldLink.split('/r/')[1], newLink.trim() + ' vs ' + oldLink);
 
   await child.goto(oldLink.replace(/^https?:\/\/[^/]+/, BASE), { waitUntil: 'domcontentloaded' });
-  await child.getByText(/Este enlace (ya )?no funciona/).waitFor({ timeout: 15000 }).catch(() => {});
-  check('el enlace antiguo ya no funciona', (await child.getByText(/Este enlace (ya )?no funciona/).count()) > 0);
+  await child.getByText(/Se ha perdido el camino/).waitFor({ timeout: 15000 }).catch(() => {});
+  check('el enlace antiguo ya no funciona', (await child.getByText(/Se ha perdido el camino/).count()) > 0);
   await openChild(child, newLink.trim(), {});
   await child.waitForSelector('[role=log], textarea, input', { timeout: 15000 }).catch(() => {});
   check('el enlace nuevo funciona', (await child.getByText(/ya no funciona/).count()) === 0);

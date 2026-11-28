@@ -5,7 +5,7 @@ import { findRoomByToken } from '@/services/rooms';
 
 export const dynamic = 'force-dynamic';
 
-/** Al instalar la sala en el móvil del niño, la app se llama como el personaje, lleva su cara y abre su chat. */
+/** Al instalar el portal en el móvil del niño, la app se llama como el personaje, lleva su cara y abre su chat. */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const found = await findRoomByToken(token);

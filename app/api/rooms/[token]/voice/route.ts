@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     if (length > MAX_VOICE_BYTES + 64 * 1024) return fail('TOO_LARGE', 'La nota de voz es demasiado larga.', 413);
 
     const found = await findRoomByToken(token);
-    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found || found.role !== 'child') return fail('NOT_FOUND', 'Enlace no encontrado', 404);
 
     const form = await req.formData();
     const file = form.get('audio');

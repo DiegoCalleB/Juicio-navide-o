@@ -1,4 +1,4 @@
-const { OUT: S, BASE, launch, openChild, ensureChar } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, openChild, ensureChar , nextStep } = require('../_lib.cjs');
 const { childLinkOf, familyLinkOf } = require('../_lib.cjs');
 const results = []; const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 (async () => {
@@ -7,15 +7,16 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   const parent = await (await mk()).newPage(), child = await (await mk()).newPage();
   const errs = []; for (const [n, p] of [['parent', parent], ['child', child]]) p.on('pageerror', (e) => errs.push(n + ':' + e.message));
 
-  await parent.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
-  check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
+  await parent.goto(BASE + '/crear', { waitUntil: 'networkidle', timeout: 120000 });
   await parent.fill('#child', 'Lucía');
-  await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.getByRole('checkbox').check();
+  await nextStep(parent);
+  check('el selector ofrece al Ratoncito Pérez', await parent.getByRole('radio', { name: /Ratoncito Pérez/ }).count() === 1);
+  await parent.locator('label', { hasText: 'Ratoncito Pérez' }).click();
   await parent.screenshot({ path: S + '/rp1-selector.png' });
-  await ensureChar(parent); await parent.getByRole('button', { name: /Crear la sala/ }).click();
-  await parent.waitForSelector('text=La sala está lista', { timeout: 30000 });
-  check('la sala se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
+  await ensureChar(parent); await parent.getByRole('button', { name: /Abrir el portal/ }).click();
+  await parent.waitForSelector('text=El portal está abierto', { timeout: 30000 });
+  check('el portal se crea y los textos hablan del Ratoncito', await parent.getByText('con Ratoncito Pérez', { exact: false }).first().isVisible());
   const pajeHref = await parent.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href');
   const childLink = (await childLinkOf(parent));
   await parent.goto(BASE + pajeHref.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
@@ -34,7 +35,8 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await child.screenshot({ path: S + '/rp3-chat.png' });
   await child.fill('#royal-draft', '¡Se me ha caído un diente!'); await child.keyboard.press('Enter');
   await parent.waitForSelector('text=Se me ha caído un diente');
-  await child.waitForSelector('text=He recibido tu mensaje', { timeout: 8000 }).then(() => check('acuse automático en la voz del propio Ratoncito', true)).catch(() => check('acuse automático del Ratoncito', false));
+  await child.waitForTimeout(2500);
+  check('el niño no recibe ningún mensaje automático (solo lo que contestan los padres)', (await child.locator('body').innerText()).search(/he recibido tu mensaje/i) === -1);
   check('el niño nunca ve "Papá Noel" ni "Polo Norte"', (await child.locator('body').innerText()).match(/Papá Noel|Polo Norte|duende|Quesito|ayudante/i) === null);
   await parent.getByRole('tab', { name: 'Primer saludo' }).click();
   await parent.getByRole('button', { name: /Quic, quic! ¿Lucía\?/ }).first().click();
@@ -57,7 +59,7 @@ const results = []; const check = (n, ok, x = '') => { results.push(!!ok); conso
   await demo.goto(BASE + '/demo/mensajeria?p=raton_perez', { waitUntil: 'networkidle' });
   check('demo del Ratoncito disponible', await demo.getByText(/se te ha caído un diente/).first().isVisible());
   const room = await fetch(`${BASE}/api/rooms/${pajeHref.split('/paje/')[1]}/messages`);
-  check('API de la sala funciona con el personaje nuevo', room.status === 200);
+  check('API del portal funciona con el personaje nuevo', room.status === 200);
   check('sin errores de página', errs.length === 0, errs.slice(0, 2).join(' | '));
   console.log(`\nRESUMEN: ${results.filter(Boolean).length}/${results.length} pruebas OK`);
   await b.close(); process.exit(results.every(Boolean) ? 0 : 1);

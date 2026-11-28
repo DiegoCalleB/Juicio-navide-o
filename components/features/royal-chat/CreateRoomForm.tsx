@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { loadFamily, saveFamily } from '@/lib/myFamily';
+import { isLockedDevice } from '@/lib/myLock';
 import { loadKids, mergeKids, saveKids, type Kid } from '@/lib/myKids';
 import { loadPass } from '@/lib/myPass';
 import { PassOffer, type BillingInfo } from './PassOffer';
+import { PinSettings } from './PinSettings';
 import { createRoomAction } from '@/app/reyes/actions';
 import { Honeypot } from '@/components/ui/Honeypot';
 import { CHARACTERS, CHARACTER_GROUPS, resolveCharacter, type CharacterId } from '@/lib/characters';
@@ -41,8 +43,22 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
   const [familyLink, setFamilyLink] = useState<string | null>(null);
   const [savedKids, setSavedKids] = useState<Kid[]>([]);
   const [extras, setExtras] = useState<Extra[]>([]);
+  const [pinDone, setPinDone] = useState(false);
   /** El selector de personajes se pliega al elegir uno, para que se vea lo que sigue. */
   const [pickerOpen, setPickerOpen] = useState(!initialCharacter);
+  /** Paso a paso: 1 = el peque (nombre, lectura, consentimiento) · 2 = el personaje y crear. */
+  const [step, setStep] = useState<1 | 2>(1);
+  const goStep = (n: 1 | 2) => {
+    setStep(n);
+    setError(null);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('[data-scroll-root]')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const next = () => {
+    if (!childName.trim()) return setError('Escribe el nombre de tu peque.');
+    if (!consent) return setError('Necesitamos tu consentimiento para crear el portal.');
+    goStep(2);
+  };
   const [familyName, setFamilyName] = useState('');
   const [hasFamily, setHasFamily] = useState(true);
   const doneRef = useRef<HTMLDivElement>(null);
@@ -51,7 +67,13 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
     if (created) doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [created]);
   useEffect(() => {
-    // Peques conocidos: la lista propia de este móvil + las salas guardadas + (si hay familia) los de la familia en el servidor.
+    // Con PIN en este móvil, la portada no enseña nombres de peques (el que coja el móvil no debe verlos).
+    if (isLockedDevice()) {
+      setSavedKids([]);
+      setHasFamily(!!loadFamily());
+      return;
+    }
+    // Peques conocidos: la lista propia de este móvil + los portales guardados + (si hay familia) los de la familia en el servidor.
     const local = mergeKids(loadKids(), loadRooms().map((x) => ({ name: x.childName, reading: 'yes' as const })));
     setSavedKids(local);
     const fam = loadFamily();
@@ -78,7 +100,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
     const kids: { name: string; characterId: CharacterId; reading: Reading; alias: string; gender: 'm' | 'f'; payload: Record<string, unknown> }[] = [];
     if (!characterId) {
       setPickerOpen(true);
-      setError('Elige quién le va a contestar a tu peque.');
+      setError('Elige con quién va a hablar tu peque.');
       return;
     }
     const isElf = characterId === 'duende_chispa';
@@ -93,7 +115,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       }
       kids.push({ name: x.name.trim(), characterId: x.characterId as CharacterId, reading: x.reading, alias: '', gender: 'm', payload: { ...base, childName: x.name, characterId: x.characterId, readingLevel: x.reading } });
     }
-    // Se valida todo antes de crear nada: o salen todas las salas o ninguna por un dato mal puesto.
+    // Se valida todo antes de crear nada: o salen todos los portales o ninguna por un dato mal puesto.
     for (const k of kids) {
       const check = createRoomSchema.safeParse(k.payload);
       if (!check.success) {
@@ -111,7 +133,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         const res = await createRoomAction({ ...k.payload, ...(familyToken ? { familyToken } : {}), ...(i === 0 && !familyToken && familyName.trim() ? { familyName: familyName.trim() } : {}) });
         if (!res.ok) {
           if (res.error.code === 'TRIAL_USED') setTrialUsed(true);
-          setError(done.length > 0 ? `${res.error.message} (Se han creado ${done.length} de ${kids.length} salas.)` : res.error.message);
+          setError(done.length > 0 ? `${res.error.message} (Se han abierto ${done.length} de ${kids.length} portales.)` : res.error.message);
           break;
         }
         familyToken = res.data.familyToken;
@@ -141,11 +163,11 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
       <div ref={doneRef} className={`${CARD} scroll-mt-4 space-y-4 animate-pop`}>
         <div className="text-center">
           <p aria-hidden className="text-4xl">🎉</p>
-          <p className="mt-1 font-serif text-[22px] leading-tight text-[#f6d77a]">{multi ? '¡Las salas están listas!' : '¡La sala está lista!'}</p>
+          <p className="mt-1 font-serif text-[22px] leading-tight text-[#f6d77a]">{multi ? '¡Los portales están abiertos!' : '¡El portal está abierto!'}</p>
           <p className="mt-1 text-[13.5px] text-[#fff6dc]/70">
             {multi ? `${created.map((x) => x.name).join(', ')} ya pueden escribir.` : `${first?.name} ya puede escribir a ${firstChar?.shortName}.`}
             {plan === 'trial' && ' Prueba gratis de 3 días.'}
-            {plan === 'pass' && ' ✨ Con tu Pase de Navidad.'}
+            {plan === 'pass' && ' Con tu Pase de Navidad.'}
           </p>
         </div>
         {error && <p role="alert" className="text-center text-sm text-[#ff8a8c]">{error}</p>}
@@ -153,7 +175,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         <section data-family-link={familyLink} className="rounded-2xl border-2 border-[#f6d77a] bg-[#f6d77a]/[.09] p-4">
           <p className="text-[15.5px] font-extrabold text-[#f6d77a]">🔑 Guarda el enlace de tu familia ahora</p>
           <p className="mt-1 text-[13px] leading-snug text-[#fff6dc]/80">
-            <R>Es la única llave de vuestras salas: no hay cuenta ni contraseña. Mándatelo y podrás volver desde cualquier móvil.</R>
+            <R>Es la única llave de vuestros portales: no hay cuenta ni contraseña. Mándatelo y podrás volver desde cualquier móvil.</R>
           </p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-[13px]">
             <a href={`https://wa.me/?text=${encodeURIComponent(`${mailSubject}: ${familyLink}`)}`} target="_blank" rel="noopener noreferrer"
@@ -168,7 +190,19 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           </div>
         </section>
 
-        <ul className="space-y-2.5" aria-label="Salas creadas">
+        {pinDone ? (
+          <p role="status" className="rounded-2xl border border-[#7ee2a8]/40 bg-[#7ee2a8]/10 p-3 text-center text-[13.5px] font-semibold text-[#7ee2a8]">🔒 Panel protegido con tu PIN</p>
+        ) : (
+          <PinSettings
+            token={created[0]?.parent.split('/paje/')[1] ?? ''}
+            hasPin={false}
+            tone="landing"
+            intro="Recomendado: si tu peque coge tu móvil, no podrá ver el panel ni lo que escribes como el personaje."
+            onDone={() => setPinDone(true)}
+          />
+        )}
+
+        <ul className="space-y-2.5" aria-label="Portales abiertos">
           {created.map((room) => {
             const c = resolveCharacter(CHARACTERS[room.characterId], { alias: room.alias, gender: room.gender, locale });
             const childMsg = `${r(`Abre este enlace en el móvil de ${room.name}`)}: ${room.child}`;
@@ -202,20 +236,22 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
             type="button"
             onClick={() => {
               setCreated(null);
+              setStep(1);
               setFamilyLink(null);
               setError(null);
               setChildName('');
               setExtras([]);
+              setPinDone(false);
               setCharacterId(null);
               setPickerOpen(true);
               setConsent(false);
             }}
             className="min-h-11 w-full rounded-2xl border border-white/20 font-semibold text-[#fff6dc]/85 active:scale-[0.99]"
           >
-            Preparar otra sala (otro peque u otro personaje)
+            Abrir otro portal (otro peque u otro personaje)
           </button>
           <Link href={familyPath} className="py-1 text-[#f6d77a] underline underline-offset-2">
-            Ver todas las salas de la familia
+            Ver todos los portales de la familia
           </Link>
         </div>
       </div>
@@ -258,10 +294,16 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
   return (
     <>
     <div className="mb-3 text-center">
-      <h2 className="font-serif text-2xl text-[#fff6dc]">Crea la sala de tu peque</h2>
-      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">Sin registrarte. Tarda un minuto.</p>
+      <p className="text-[12px] font-bold uppercase tracking-[.2em] text-[#f6d77a]/80">Paso {step} de 2</p>
+      <div aria-hidden className="mx-auto mt-2 flex max-w-[10rem] gap-1.5">
+        {[1, 2].map((n) => <span key={n} className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#f6d77a]' : 'bg-white/15'}`} />)}
+      </div>
+      <h2 className="mt-3 font-serif text-2xl text-[#fff6dc]">{step === 1 ? 'Abre el portal para tu peque' : '¿Con quién quiere hablar?'}</h2>
+      <p className="mt-1 text-[13.5px] text-[#fff6dc]/60">{step === 1 ? 'Esta Navidad podrá hablar con sus seres mágicos. Sin registrarte, en un minuto.' : `Elige al ser mágico que le escribirá a ${childName.trim() || 'tu peque'}.`}</p>
     </div>
     <form onSubmit={submit} noValidate className={`${CARD} relative space-y-5`}>
+      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>Tienes un Pase de Navidad en este móvil: tu portal no tendrá límite.</R></p>}
+      {step === 1 && (<>
       <div className="space-y-1.5">
         {savedKids.length > 0 && (
           <div className="mb-2">
@@ -287,8 +329,50 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         <p className="text-xs text-[#fff6dc]/50">Solo el nombre de pila. Nunca pedimos apellidos ni dirección.</p>
       </div>
 
+      <fieldset className="space-y-1.5">
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿{childName.trim() || 'Tu peque'} ya lee?</legend>
+        <div role="radiogroup" aria-label="Nivel de lectura" className="grid grid-cols-3 gap-2">
+          {([['yes', 'Sí'], ['learning', 'Está empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={reading === v}
+              onClick={() => setReading(v)}
+              className={`min-h-11 rounded-2xl border px-1 text-[13px] font-bold leading-tight ${reading === v ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {reading !== 'yes' && (
+          <p className="text-xs leading-snug text-[#fff6dc]/55">
+            {reading === 'learning'
+              ? 'Verá todo en MAYÚSCULAS y te daremos consejos para escribirle frases fáciles. ¡Querrá leer cada mensaje!'
+              : 'Verá todo en MAYÚSCULAS. Leedlo juntos y usad fotos: él puede contestar con notas de voz.'}
+          </p>
+        )}
+      </fieldset>
+
+      <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
+        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
+        <span>
+          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos se guarden en privado, solo para esta conversación, y se borren solos a los 45 días o pasadas las fiestas.{' '}
+          <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
+        </span>
+      </label>
+
+      {error && <p role="alert" className="text-sm text-[#ff8a8c]">{error}</p>}
+      <button type="button" onClick={next}
+        className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg">
+        Siguiente →
+      </button>
+
+      </>)}
+
+      {step === 2 && (<>
       <fieldset className="space-y-3">
-        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Quién le va a contestar?</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿Con quién quiere hablar?</legend>
         {!pickerOpen && picked && characterId && (
           <>
             <div className="flex items-center gap-3 rounded-2xl border border-[#f6d77a] bg-[#f6d77a]/10 p-3">
@@ -329,31 +413,6 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           {group.id === 'duende' && elfBlock}
           </div>
         ))}
-      </fieldset>
-
-      <fieldset className="space-y-1.5">
-        <legend className="mb-1.5 text-sm font-semibold text-[#fff6dc]/85">¿{childName.trim() || 'Tu peque'} ya lee?</legend>
-        <div role="radiogroup" aria-label="Nivel de lectura" className="grid grid-cols-3 gap-2">
-          {([['yes', 'Sí'], ['learning', 'Está empezando'], ['no', 'Todavía no']] as const).map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={reading === v}
-              onClick={() => setReading(v)}
-              className={`min-h-11 rounded-2xl border px-1 text-[13px] font-bold leading-tight ${reading === v ? 'border-[#f6d77a] bg-[#f6d77a]/15 text-[#fff6dc]' : 'border-white/10 bg-white/[.03] text-[#fff6dc]/70'}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {reading !== 'yes' && (
-          <p className="text-xs leading-snug text-[#fff6dc]/55">
-            {reading === 'learning'
-              ? 'Verá todo en MAYÚSCULAS y te daremos consejos para escribirle frases fáciles. ¡Querrá leer cada mensaje!'
-              : 'Verá todo en MAYÚSCULAS. Leedlo juntos y usad fotos: él puede contestar con notas de voz.'}
-          </p>
-        )}
       </fieldset>
 
       {extras.map((x, i) => (
@@ -419,7 +478,7 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
           onClick={() => setExtras((list) => [...list, { name: '', characterId: '', reading: 'yes' }])}
           className="min-h-11 w-full rounded-2xl border border-dashed border-[#f6d77a]/40 text-[14px] font-semibold text-[#f6d77a]/90 active:scale-[0.99]"
         >
-          + Añadir otro peque (salas a la vez)
+          + Añadir otro peque (portales a la vez)
         </button>
       )}
 
@@ -432,26 +491,21 @@ export function CreateRoomForm({ billing, defaultCharacter, initialCharacter }: 
         </div>
       )}
 
-      <label className="flex items-start gap-3 text-[13px] leading-snug text-[#fff6dc]/75">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#f6d77a]" />
-        <span>
-          Soy su madre, padre o tutor. Acepto que los mensajes, audios y fotos se guarden en privado, solo para esta conversación, y se borren solos a los 45 días o pasadas las fiestas.{' '}
-          <Link href="/privacidad" target="_blank" className="text-[#f6d77a] underline underline-offset-2">Más información</Link>
-        </span>
-      </label>
-
       <Honeypot value={trap} onChange={setTrap} />
       {error && <p role="alert" className="text-sm text-[#ff8a8c]">{error}</p>}
       {trialUsed && billing.enabled && <PassOffer billing={billing} title="Pase de Navidad" tone="landing" />}
 
       <button type="submit" disabled={pending}
         className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#f6d77a] to-[#d9a23a] font-bold text-[#2a0f4a] shadow-lg disabled:opacity-60">
-        {pending ? 'Preparando la sala…' : extras.length > 0 ? `Crear las ${extras.length + 1} salas` : 'Crear la sala'}
+        {pending ? 'Abriendo el portal…' : extras.length > 0 ? `Abrir los ${extras.length + 1} portales` : 'Abrir el portal'}
       </button>
       {billing.enabled && !hasPass && (
         <p className="text-center text-xs text-[#fff6dc]/50">Gratis 3 días · después, Pase de Navidad {billing.price} (pago único)</p>
       )}
-      {hasPass && <p className="text-center text-xs text-[#f6d77a]/80"><R>✨ Tienes un Pase de Navidad en este móvil: tu sala no tendrá límite.</R></p>}
+      <button type="button" onClick={() => goStep(1)} className="mx-auto block text-[13px] text-[#fff6dc]/60 underline underline-offset-2">
+        ← Volver
+      </button>
+      </>)}
     </form>
     </>
   );

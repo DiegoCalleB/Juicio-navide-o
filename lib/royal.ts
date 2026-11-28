@@ -18,6 +18,9 @@ export interface RoomMessageDTO {
   pending?: boolean;
 }
 
+/** Mensajes con la voz del personaje incluidos en la prueba gratis (con el Pase, sin este límite). */
+export const TRIAL_VOICE_MESSAGES = 3;
+
 export const MAX_VOICE_SECONDS = 60;
 export const MAX_VOICE_BYTES = 2 * 1024 * 1024;
 export const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;

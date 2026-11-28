@@ -1,5 +1,5 @@
 /**
- * Enlace de familia guardado en ESTE móvil (solo navegador). Permite añadir las salas nuevas a la misma
+ * Enlace de familia guardado en ESTE móvil (solo navegador). Permite añadir los portales nuevos a la misma
  * familia y volver a verlas todas. Es un enlace secreto: no sale del móvil.
  */
 const KEY = 'magic-family';

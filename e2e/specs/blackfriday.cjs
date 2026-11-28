@@ -1,5 +1,5 @@
 // Calendario: portada de temporada (elfo, Papá Noel, Reyes, Ratoncito), campaña de Black Friday y precios. Se lanza con --now=ISO (reloj simulado FAKE_NOW).
-const { BASE, launch } = require('../_lib.cjs');
+const { OUT: S, BASE, launch, nextStep } = require('../_lib.cjs');
 const results = [];
 const check = (n, ok, x = '') => { results.push(!!ok); console.log((ok ? 'PASS ' : 'FAIL ') + n + (x ? '  → ' + x : '')); };
 
@@ -30,25 +30,19 @@ const EXPECT = {
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
 
-  check(`portada: el botón del Pase muestra ${price}`, await page.getByRole('button', { name: new RegExp(`Conseguir el Pase · ${price.replace('.', '\\.')}`) }).isVisible());
-  check(`portada: el enlace junto al botón principal muestra ${price}`, await page.getByRole('link', { name: new RegExp(`Ver el Pase de Navidad · ${price}`) }).isVisible());
-  const banner = page.getByRole('link', { name: /Oferta Black Friday · Pase de Navidad a/ });
-  check(inBF ? 'durante la campaña: aparece el aviso de Black Friday' : 'fuera de la campaña: no hay aviso de Black Friday', inBF ? await banner.isVisible() : (await banner.count()) === 0);
-  if (inBF) {
-    const txt = (await banner.innerText()).replace(/\s+/g, ' ');
-    check('el aviso dice el precio y hasta cuándo', /2,99 €/.test(txt) && /hasta el lunes 30 de noviembre/.test(txt), txt);
-    check('la tarjeta del Pase lleva la etiqueta de Black Friday', await page.getByText('🖤 Oferta Black Friday').first().isVisible());
-    check('no hay un precio anterior tachado (sin referencias engañosas)', (await page.locator('s, del, .line-through').count()) === 0);
-  } else {
-    check('la tarjeta del Pase no lleva etiqueta de campaña', (await page.getByText('Oferta Black Friday').count()) === 0);
-  }
-  check('nunca se habla de "precio de lanzamiento" (el precio es el de temporada)', (await page.getByText(/lanzamiento/i).count()) === 0);
-
+  check('portada (la puede ver un peque): sin precios ni ofertas', (await page.getByText(/€|Black Friday|Pase de Navidad/).count()) === 0);
+  // La imagen de vista previa (WhatsApp, redes) se genera en cada temporada y lleva el retrato del personaje
+  const ogr = await fetch(BASE + '/opengraph-image');
+  const ogb = Buffer.from(await ogr.arrayBuffer());
+  require('fs').writeFileSync(S + `/og-${phase}.png`, ogb);
+  check(`vista previa (${phase}): imagen PNG de 1200×630 con el retrato de la temporada`, ogr.status === 200 && /image\/png/.test(ogr.headers.get('content-type') || '') && ogb.readUInt32BE(16) === 1200 && ogb.readUInt32BE(20) === 630 && ogb.length > 60000, `${ogr.status} ${ogb.length} bytes`);
+  // La pestaña y la vista previa siguen a la portada de temporada (mismo gancho que el titular)
+  const tagline = ((await page.locator('header > p').nth(1).textContent()) || '').trim();
+  const og = await page.locator('meta[property="og:title"]').getAttribute('content');
+  check(`pestaña (${phase}): el título sigue a la portada («${tagline}»)`, tagline.length > 5 && (await page.title()) === `Línea Mágica · ${tagline}` && og === `Línea Mágica · ${tagline}`, `${await page.title()} | ${og}`);
   // Portada de temporada
   check(`portada de temporada (${phase}): titular`, await page.getByRole('heading', { level: 1 }).filter({ hasText: EXPECT.h1 }).isVisible());
   check(`portada de temporada (${phase}): el chat de ejemplo es del personaje de la época`, await page.getByText(EXPECT.demo).first().isVisible());
-  check(`portada de temporada (${phase}): ningún personaje viene marcado (se ven todos)`, (await page.locator('input[name=character]:checked').count()) === 0);
-  check(`portada de temporada (${phase}): ${EXPECT.char} lleva la etiqueta "De temporada"`, (await page.locator('label', { hasText: EXPECT.tag }).filter({ hasText: 'De temporada' }).count()) === 1 && (await page.getByText('De temporada').count()) === 1);
   if (phase === 'elf-pre') {
     const txt = daysLeft <= 1 ? '¡Llega mañana!' : `faltan ${daysLeft} días`;
     check(`cuenta atrás hasta la llegada del elfo (${txt})`, await page.getByText(txt, { exact: false }).first().isVisible());
@@ -56,6 +50,32 @@ const EXPECT = {
     check('fuera de la cuenta atrás no se muestra', (await page.getByText(/faltan \d+ días|Llega mañana/).count()) === 0);
   }
   if (phase === 'elf' || phase === 'elf-pre') check('el chat del elfo muestra la foto de la trastada', await page.getByRole('img', { name: /Mira la trastada/ }).isVisible());
+
+
+  // Zona de mayores: el enlace a precios lleva el del Pase y, en campaña, la oferta
+  await page.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
+  const offer = page.getByRole('link', { name: new RegExp(`Pase de Navidad ${price}`) });
+  check(`zona de mayores: el enlace a precios muestra ${price}`, await offer.isVisible());
+  const offerTxt = (await offer.innerText()).replace(/\s+/g, ' ');
+  if (inBF) check('durante la campaña: dice Black Friday y hasta cuándo', /Oferta Black Friday/.test(offerTxt) && /hasta el lunes 30 de noviembre/i.test(offerTxt), offerTxt);
+  else check('fuera de la campaña: no hay aviso de Black Friday', !/Black Friday/.test(offerTxt), offerTxt);
+
+  await page.goto(BASE + '/precios', { waitUntil: 'networkidle' });
+  check(`precios: el botón del Pase muestra ${price}`, await page.getByRole('button', { name: new RegExp(`Conseguir el Pase · ${price.replace('.', '\\.')}`) }).isVisible());
+  if (inBF) {
+    check('la tarjeta del Pase lleva la etiqueta de Black Friday', await page.getByText('🖤 Oferta Black Friday').first().isVisible());
+    check('no hay un precio anterior tachado (sin referencias engañosas)', (await page.locator('s, del, .line-through').count()) === 0);
+  } else {
+    check('la tarjeta del Pase no lleva etiqueta de campaña', (await page.getByText('Oferta Black Friday').count()) === 0);
+  }
+  check('nunca se habla de "precio de lanzamiento" (el precio es el de temporada)', (await page.getByText(/lanzamiento/i).count()) === 0);
+  // Crear: ningún personaje marcado y el de temporada destacado
+  await page.goto(BASE + '/crear', { waitUntil: 'networkidle' });
+  await page.fill('#child', 'Lucía'); await page.locator('form').getByRole('checkbox').check();
+  await nextStep(page);
+  check(`crear (${phase}): ningún personaje viene marcado (se ven todos)`, (await page.locator('input[name=character]:checked').count()) === 0);
+  check(`crear (${phase}): ${EXPECT.char} lleva la etiqueta "De temporada"`, (await page.locator('label', { hasText: EXPECT.tag }).filter({ hasText: 'De temporada' }).count()) === 1 && (await page.getByText('De temporada').count()) === 1);
+  await page.goto(BASE + '/precios', { waitUntil: 'networkidle' });
 
   // El pago se abre con la casilla legal y el importe vigente (Stripe simulado)
   await page.getByText(/Quiero que el pase se active ya/).click();

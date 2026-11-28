@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       return fail('TOO_LARGE', 'La foto es demasiado grande.', 413);
     }
     const found = await findRoomByToken(token);
-    if (!found) return fail('NOT_FOUND', 'Sala no encontrada', 404);
+    if (!found) return fail('NOT_FOUND', 'Enlace no encontrado', 404);
 
     const form = await req.formData();
     const file = form.get('image');

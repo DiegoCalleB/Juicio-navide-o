@@ -11,7 +11,7 @@ export type Audience = 'child' | 'parent';
 export type RoomEvent =
   | { type: 'refresh' }
   | { type: 'typing'; from: Audience }
-  /** El niño entra o sale de la sala (solo se avisa a los padres). `openedAt` = cuándo abrió el mensaje de entrada. */
+  /** El niño entra o sale del portal (solo se avisa a los padres). `openedAt` = cuándo abrió el mensaje de entrada. */
   | { type: 'presence'; online: boolean; openedAt?: string };
 
 type Listener = (event: RoomEvent) => void;
@@ -64,7 +64,7 @@ export function markOpened(roomId: string): void {
   publish(roomId, presenceEvent(roomId, true), 'parent');
 }
 
-/** `to` limita el destinatario; sin él, llega a todos los conectados de la sala. */
+/** `to` limita el destinatario; sin él, llega a todos los conectados del portal. */
 export function publish(roomId: string, event: RoomEvent, to?: Audience): void {
   for (const sub of bus().get(roomId) ?? []) {
     if (to && sub.audience !== to) continue;

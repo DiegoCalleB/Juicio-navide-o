@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { getClientFingerprint, rateLimit } from '@/lib/security';
+import { secEvent } from '@/lib/securityLog';
 import { RoomError } from '@/services/room-errors';
 
 const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
@@ -19,7 +20,7 @@ interface Limit {
   key: string;
   max: number;
   windowMs: number;
-  /** Identifica el recurso limitado (p. ej. el token de la sala). Sin él, se limita por IP+navegador. */
+  /** Identifica el recurso limitado (p. ej. el token del portal). Sin él, se limita por IP+navegador. */
   scope?: string;
 }
 
@@ -28,6 +29,7 @@ export async function guarded(name: string, limit: Limit, fn: () => Promise<Next
   try {
     const fp = await getClientFingerprint();
     if (!rateLimit(`all:${fp}`, PER_CLIENT_MAX, 60_000) || !rateLimit(`${limit.key}:${limit.scope ?? fp}`, limit.max, limit.windowMs)) {
+      secEvent('limite_peticiones', { ruta: name });
       return fail('RATE_LIMITED', 'Demasiadas peticiones. Espera un momento.', 429);
     }
     return await fn();
@@ -35,7 +37,7 @@ export async function guarded(name: string, limit: Limit, fn: () => Promise<Next
     if (err instanceof RoomError) {
       if (err.code === 'RATE_LIMITED') return fail('RATE_LIMITED', 'Demasiados mensajes por ahora. Inténtalo más tarde.', 429);
       if (err.code === 'INVALID_FILE') return fail('VALIDATION', 'Archivo no válido.', 415);
-      if (err.code === 'TRIAL_ENDED') return fail('TRIAL_ENDED', 'La prueba gratis de esta sala ha terminado.', 402);
+      if (err.code === 'TRIAL_ENDED') return fail('TRIAL_ENDED', 'La prueba gratis de este portal ha terminado.', 402);
     }
     console.error(`[${name}]`, err);
     return fail('UNKNOWN', 'Ha habido un problema. Inténtalo de nuevo.', 500);

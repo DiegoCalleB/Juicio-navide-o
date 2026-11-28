@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { playChime, unlockAudio } from '@/lib/chime';
+import { useEffect, useRef, useState } from 'react';
+import { playChime, playClips, preloadClips, unlockAudio } from '@/lib/chime';
+import { KING_VOICE_ENABLED } from '@/lib/features';
 import { vibrate } from '@/lib/haptics';
 import { MagicScene } from './MagicScene';
 import { RoyalAvatar } from './RoyalAvatar';
@@ -38,10 +39,27 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
   const [phase, setPhase] = useState<'connecting' | 'ready' | 'leaving'>('connecting');
   const { theme, intro } = character;
 
+  // Saludo hablado: "¡Hola, Lucía!" (generado para este niño) + el resto, grabado por personaje.
+  // Se prepara mientras "conecta" para que suene nada más tocar el sello.
+  const greeting = useRef<Promise<AudioBuffer[]> | null>(null);
+
   useEffect(() => {
     if (wasSeen(token)) {
       onOpen();
       return;
+    }
+    if (KING_VOICE_ENABLED) {
+      greeting.current = (async () => {
+        try {
+          const r = await fetch(`/api/rooms/${token}/greeting`);
+          const j = (await r.json()) as { ok: boolean; data?: { speak: boolean; url: string | null; clip: string } };
+          if (!j.ok || !j.data?.speak) return [];
+          const id = j.data.clip;
+          return preloadClips([j.data.url ?? `/voces/saludo/${id}-hola.mp3`, `/voces/saludo/${id}.mp3`]);
+        } catch {
+          return [];
+        }
+      })();
     }
     const t = setTimeout(() => setPhase('ready'), CONNECT_MS);
     return () => clearTimeout(t);
@@ -52,6 +70,7 @@ export function NorthPoleIntro({ token, character, childName, onOpen }: { token:
     if (phase !== 'ready') return;
     unlockAudio();
     playChime();
+    void greeting.current?.then((clips) => playClips(clips, 0.8));
     vibrate([60, 40, 120]);
     markSeen(token);
     void fetch(`/api/rooms/${token}/opened`, { method: 'POST' }).catch(() => undefined);

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { loadPass, startCheckout } from '@/lib/myPass';
+import { forgetPass, loadPass, startCheckout } from '@/lib/myPass';
 import type { BillingInfo } from './PassOffer';
+import { KING_VOICE_ENABLED } from '@/lib/features';
 
 /**
  * "Elige cómo empezar": la prueba gratis y el Pase de Navidad, uno al lado del otro, explicados.
@@ -17,7 +18,26 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => setHasPass(!!loadPass()), []);
 
-  if (!billing.enabled || hasPass) return null;
+  if (hasPass) {
+    return (
+      <section aria-label="Pase guardado" className="mb-8 rounded-2xl border border-white/15 bg-white/[.05] p-4 text-center text-[13.5px] leading-relaxed text-[#fff6dc]/85">
+        <p>En este móvil ya hay un Pase de Navidad guardado, por eso no se ofrece comprar otro.</p>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('Se quitará el pase de este móvil (no se anula). Si no tienes guardado su enlace, no podrás volver a usarlo desde aquí. ¿Quitarlo?')) {
+              forgetPass();
+              setHasPass(false);
+            }
+          }}
+          className="mt-3 min-h-11 rounded-xl border border-white/25 px-4 font-semibold text-[#fff6dc] active:scale-[0.98]"
+        >
+          Quitar el pase de este móvil
+        </button>
+      </section>
+    );
+  }
+  if (!billing.enabled) return null;
 
   const buy = async () => {
     if (!waiver) return setError('Marca la casilla para continuar.');
@@ -31,25 +51,26 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
   };
 
   return (
-    <section id="pase" aria-labelledby="pase-title" className="mb-8 scroll-mt-4">
-      <h2 id="pase-title" className="mb-3 text-center font-serif text-2xl text-[#fff6dc]">Elige cómo empezar</h2>
-      <div className="space-y-3">
-        <article className="rounded-3xl border border-white/10 bg-[#1d0b3a]/70 p-4">
+    <section id="pase" aria-labelledby="pase-title" className="mb-8 scroll-mt-4 lg:mb-14">
+      <h2 id="pase-title" className="mb-3 text-center font-serif text-2xl text-[#fff6dc] lg:mb-8 lg:text-4xl">Elige cómo empezar</h2>
+      <div className="space-y-3 lg:mx-auto lg:grid lg:max-w-4xl lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
+        <article className="flex flex-col rounded-3xl border border-white/10 bg-[#1d0b3a]/70 p-4 lg:p-7">
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[16px] font-bold text-[#fff6dc]">Prueba gratis</h3>
             <p className="text-[13px] font-semibold text-[#7ee2a8]">0 €</p>
           </div>
-          <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/75">
+          <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/75 lg:mb-4 lg:text-[15px]">
             <li>✓ 3 días para probarlo con vuestros peques</li>
-            <li>✓ Una sala por cada peque (hasta 5)</li>
+            <li>✓ Un portal por cada peque (hasta 5)</li>
             <li>✓ Mensajes y fotos, sin registrarte</li>
+            {KING_VOICE_ENABLED && <li>✓ 🎙️ Le saluda por su nombre y 3 mensajes con voz</li>}
           </ul>
-          <a href="#crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] active:scale-[0.98]">
+          <a href="/crear" className="mt-3 grid min-h-11 place-items-center rounded-xl border border-white/20 font-semibold text-[#fff6dc] hover:bg-white/5 active:scale-[0.98] lg:mt-auto">
             Empezar gratis
           </a>
         </article>
 
-        <article className="relative rounded-3xl border-2 border-[#f6d77a] bg-gradient-to-b from-[#f6d77a]/[.13] to-[#f6d77a]/[.04] p-4 shadow-lg">
+        <article className="relative rounded-3xl lg:p-7 border-2 border-[#f6d77a] bg-gradient-to-b from-[#f6d77a]/[.13] to-[#f6d77a]/[.04] p-4 shadow-lg">
           <p className="absolute -top-3 left-4 rounded-full bg-[#f6d77a] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#2a0f4a]">{billing.campaign ? `🖤 ${billing.campaign.label}` : 'Recomendado'}</p>
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-[17px] font-bold text-[#f6d77a]">Pase de Navidad</h3>
@@ -61,8 +82,8 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
           </p>
           <ul className="mt-2 space-y-1 text-[13.5px] leading-snug text-[#fff6dc]/85">
             <li>✓ La magia sigue hasta el 20 de enero</li>
-            <li>✓ Todos los peques y todos los personajes (hasta 10 salas)</li>
-            <li>✓ 🎁 Incluye un pase para regalar a otra familia</li>
+            {KING_VOICE_ENABLED && <li>✓ 🎙️ El personaje le habla con su voz en cada mensaje</li>}
+            <li>✓ Todos los peques y todos los personajes (hasta 10 portales)</li>
             <li>✓ Se activa al momento, sin esperas</li>
           </ul>
           <label className="mt-3 flex items-start gap-2.5 text-[11.5px] leading-snug text-[#fff6dc]/70">
@@ -76,7 +97,7 @@ export function PricingSection({ billing }: { billing: BillingInfo }) {
             {busy ? 'Abriendo el pago…' : `Conseguir el Pase · ${billing.price}`}
           </button>
           {error && <p role="alert" className="mt-2 text-[13px] text-[#ff8a8c]">{error}</p>}
-          <p className="mt-2 text-center text-[11.5px] text-[#fff6dc]/50">Pago seguro con Stripe · también para regalar a abuelos y tíos</p>
+          <p className="mt-2 text-center text-[11.5px] text-[#fff6dc]/50">Pago seguro con Stripe</p>
         </article>
       </div>
     </section>

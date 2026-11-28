@@ -16,7 +16,7 @@ const get = async (path) => fetch(BASE + path);
   const m = await mres.json();
   check('manifiesto general: nombre, id, inicio y alcance', m.name === 'Línea Mágica' && m.id === '/' && m.scope === '/' && /^\/\?utm_source=pwa/.test(m.start_url), `${m.name} ${m.start_url}`);
   check('manifiesto general: se abre como app (standalone) y sin bloquear la orientación', m.display === 'standalone' && !m.orientation);
-  check('manifiesto general: atajos a "Crear sala" y "Trastadas"', (m.shortcuts ?? []).length === 2 && m.shortcuts.some((s) => s.url === '/ideas-elfo'));
+  check('manifiesto general: atajos al Diario de Chispa y a «Cuenta y condiciones»', (m.shortcuts ?? []).length === 2 && m.shortcuts.some((s) => s.url === '/diario-de-chispa') && m.shortcuts.some((s) => s.url === '/mayores'));
   const sizes = {};
   for (const ic of m.icons) { const r = await get(ic.src); sizes[`${ic.sizes}/${ic.purpose}`] = r.status === 200 && /image\/png/.test(r.headers.get('content-type') ?? '') ? pngWidth(Buffer.from(await r.arrayBuffer())) : 0; }
   check('iconos 192, 512 y maskable existen y tienen el tamaño declarado', sizes['192x192/any'] === 192 && sizes['512x512/any'] === 512 && sizes['512x512/maskable'] === 512, JSON.stringify(sizes));
@@ -25,7 +25,7 @@ const get = async (path) => fetch(BASE + path);
   const sw = await get('/sw.js'); const swText = await sw.text();
   check('service worker: se sirve y solo gestiona navegaciones (no guarda salas)', sw.status === 200 && /javascript/.test(sw.headers.get('content-type') ?? '') && /mode !== 'navigate'/.test(swText) && !/\/paje|\/familia|\/api/.test(swText.replace(/NO guarda[^]*?caché\)/, '')));
   const off = await get('/offline.html'); const offText = await off.text();
-  check('página sin conexión disponible', off.status === 200 && /Se ha cortado la línea mágica/.test(offText) && /Reintentar/.test(offText));
+  check('página sin conexión disponible', off.status === 200 && /no hay conexión/i.test(offText) && /Volver a intentarlo/.test(offText) && !/✨/.test(offText));
 
   // ── Cabeceras de la portada
   const page = await mk();
@@ -34,14 +34,14 @@ const get = async (path) => fetch(BASE + path);
   check('iconos de pestaña y de pantalla de inicio de iPhone', (await page.locator('link[rel=icon]').count()) >= 1 && (await page.locator('link[rel=apple-touch-icon]').count()) >= 1);
   check('aplicación web de iPhone con el nombre de la app', (await page.locator('meta[name=apple-mobile-web-app-title], meta[name="apple-mobile-web-app-title"]').first().getAttribute('content')) === 'Línea Mágica');
 
-  // ── Botón de instalar
+  // ── Botón de instalar (en la zona de mayores; la portada es solo magia)
   const android = await mk();
   await android.addInitScript(() => {
     window.__prompted = 0;
     const fire = () => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => { window.__prompted++; }; e.userChoice = Promise.resolve({ outcome: 'accepted' }); window.dispatchEvent(e); };
     let n = 0; const t = setInterval(() => { fire(); if (++n > 20) clearInterval(t); }, 400);
   });
-  await android.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await android.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await android.getByRole('button', { name: 'Instalar', exact: true }).waitFor({ timeout: 15000 });
   check('Android/ordenador: aparece "Instalar" cuando el navegador lo permite', await android.getByText('Instala Línea Mágica en tu móvil').isVisible());
   await android.getByRole('button', { name: 'Instalar', exact: true }).click();
@@ -51,7 +51,7 @@ const get = async (path) => fetch(BASE + path);
 
   const dism = await mk();
   await dism.addInitScript(() => { let n = 0; const t = setInterval(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => {}; e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); if (++n > 40) clearInterval(t); }, 400); });
-  await dism.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await dism.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await dism.getByRole('button', { name: 'No volver a mostrar' }).click();
   await dism.reload({ waitUntil: 'networkidle' }); await dism.waitForTimeout(1500);
   check('al descartarlo, no vuelve a molestar al recargar', (await dism.getByText('Instala Línea Mágica en tu móvil').count()) === 0);
@@ -62,21 +62,21 @@ const get = async (path) => fetch(BASE + path);
     window.matchMedia = (q) => (/display-mode:\s*standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false } : orig(q));
     let n = 0; const t = setInterval(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = async () => {}; e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); if (++n > 10) clearInterval(t); }, 400);
   });
-  await inst.goto(BASE + '/', { waitUntil: 'networkidle' }); await inst.waitForTimeout(1500);
+  await inst.goto(BASE + '/mayores', { waitUntil: 'networkidle' }); await inst.waitForTimeout(1500);
   check('si ya está instalada (modo app), no se ofrece instalarla', (await inst.getByText('Instala Línea Mágica en tu móvil').count()) === 0);
 
   const ios = await mk({ userAgent: devices['iPhone 13'].userAgent, hasTouch: true, isMobile: true });
-  await ios.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await ios.goto(BASE + '/mayores', { waitUntil: 'networkidle' });
   await ios.getByRole('button', { name: 'Cómo instalarla' }).waitFor({ timeout: 15000 });
   await ios.getByRole('button', { name: 'Cómo instalarla' }).click();
   check('iPhone/iPad: explica los dos pasos ("Añadir a pantalla de inicio")', await ios.getByText('«Añadir a pantalla de inicio»').first().isVisible() && await ios.getByText('Compartir', { exact: false }).first().isVisible());
 
   // ── Manifiestos de sala, panel y familia
   const p = await mk();
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/crear', { waitUntil: 'networkidle' });
   await p.fill('#child', 'Lucía'); await p.locator('form').getByRole('checkbox').check();
-  await ensureChar(p); await p.getByRole('button', { name: /Crear la sala/ }).click();
-  await p.waitForSelector('text=La sala está lista', { timeout: 30000 });
+  await ensureChar(p); await p.getByRole('button', { name: /Abrir el portal/ }).click();
+  await p.waitForSelector('text=El portal está abierto', { timeout: 30000 });
   const childLink = await childLinkOf(p); const familyLink = await familyLinkOf(p);
   const panelLink = (await p.getByRole('link', { name: /Abrir mi panel/ }).getAttribute('href')).replace(/^https?:\/\/[^/]+/, '');
   const ctok = childLink.split('/r/')[1]; const ptok = panelLink.split('/paje/')[1]; const ftok = familyLink.split('/familia/')[1];
@@ -90,15 +90,15 @@ const get = async (path) => fetch(BASE + path);
   check('un enlace inventado no tiene manifiesto (404)', (await get(`/r/${'Z'.repeat(43)}/manifest.webmanifest`)).status === 404);
 
   const pm = await (await get(`/paje/${ptok}/manifest.webmanifest`)).json();
-  check('panel de los padres: la app abre ese panel', /Panel de Lucía/.test(pm.name) && pm.start_url === `/paje/${ptok}`, pm.name);
+  check('panel de los padres: la app abre ese panel (con nombre neutro, sin el del peque)', /Panel de los padres/.test(pm.name) && !/Lucía/.test(pm.name) && pm.start_url === `/paje/${ptok}`, pm.name);
   check('el enlace del niño no vale para el manifiesto del panel (404)', (await get(`/paje/${ctok}/manifest.webmanifest`)).status === 404);
   const fm = await (await get(`/familia/${ftok}/manifest.webmanifest`)).json();
-  check('familia: la app abre todas las salas', /Línea Mágica/.test(fm.name) && fm.start_url === `/familia/${ftok}`, fm.name);
+  check('familia: la app abre todos los portales', /Línea Mágica/.test(fm.name) && fm.start_url === `/familia/${ftok}`, fm.name);
   check('una familia inventada no tiene manifiesto (404)', (await get(`/familia/${'Y'.repeat(43)}/manifest.webmanifest`)).status === 404);
 
   // Las propias páginas enlazan su manifiesto
   const kid = await mk(); await kid.goto(BASE + childLink.replace(/^https?:\/\/[^/]+/, ''), { waitUntil: 'networkidle' });
-  check('la sala del niño enlaza SU manifiesto', (await kid.locator('link[rel=manifest]').first().getAttribute('href')) === `/r/${ctok}/manifest.webmanifest`);
+  check('el portal del niño enlaza SU manifiesto', (await kid.locator('link[rel=manifest]').first().getAttribute('href')) === `/r/${ctok}/manifest.webmanifest`);
   const par = await mk(); await par.goto(BASE + panelLink, { waitUntil: 'networkidle' });
   check('el panel enlaza su manifiesto', (await par.locator('link[rel=manifest]').first().getAttribute('href')) === `/paje/${ptok}/manifest.webmanifest`);
   const fam = await mk(); await fam.goto(BASE + `/familia/${ftok}`, { waitUntil: 'networkidle' });

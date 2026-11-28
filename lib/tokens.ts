@@ -28,9 +28,9 @@ export function newFamilySeed(): string {
 }
 
 /**
- * Enlace de padres de una sala, derivado del enlace de FAMILIA y del seed de la sala (HMAC-SHA256).
+ * Enlace de padres de un portal, derivado del enlace de FAMILIA y del seed del portal (HMAC-SHA256).
  * Así el enlace de familia reconstruye todos los paneles sin guardarlos: en la base de datos solo hay huellas.
- * Cadena: familia → panel de la sala → niño.
+ * Cadena: familia → panel del portal → niño.
  */
 export function deriveParentToken(familyToken: string, seed: string): string {
   return createHmac('sha256', familyToken).update(`royal-parent:${seed}`).digest('base64url');

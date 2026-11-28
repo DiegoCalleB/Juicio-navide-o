@@ -1,10 +1,10 @@
 import 'server-only';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { CHARACTERS, fillChild, isCharacterId, resolveCharacter, roomExpiresAt, type CharacterId } from '@/lib/characters';
 import { CHILD_AUDIO_ENABLED, KING_VOICE_ENABLED } from '@/lib/features';
-import type { ReplyDelay, RoomMessageDTO } from '@/lib/royal';
+import { TRIAL_VOICE_MESSAGES, type ReplyDelay, type RoomMessageDTO } from '@/lib/royal';
 import { deriveChildToken, deriveParentToken, hashToken, newFamilySeed, newToken, TOKEN_REGEX } from '@/lib/tokens';
-import { prepareSpeechText, synthesizeKingVoice, voiceLimits, VoiceError } from '@/lib/voice';
+import { greetingNameLine, prepareSpeechText, synthesizeKingVoice, voiceLimits, voiceModel, voiceIdFor, VoiceError } from '@/lib/voice';
 import { publish, publishRefresh, type Audience } from '@/services/realtime';
 import { parseLocale, type Locale } from '@/lib/i18n';
 import { RoomError } from '@/services/room-errors';
@@ -12,6 +12,7 @@ import { getRoomStore } from '@/services/room-store';
 import type { MessageRecord } from '@/services/room-store/types';
 import { paymentsEnabled, trialMs, TRIAL_WINDOW_DAYS, TRIALS_PER_CREATOR } from '@/lib/billing';
 import { checkPass, checkPassById } from '@/services/passes';
+import { isUnlocked, scopeOf } from '@/services/pin';
 
 export { RoomError };
 
@@ -29,16 +30,18 @@ export interface Room {
   readingLevel: ReadingLevel;
   trialEndsAt: string | null;
   passId: string | null;
-  /** Variante de idioma de la sala (la misma para los padres y para el niño). */
+  /** Variante de idioma del portal (la misma para los padres y para el niño). */
   locale: Locale;
   /** Huella de la familia (null = sala sin familia). */
   familyHash: string | null;
+  /** El portal tiene PIN de padres. */
+  hasPin: boolean;
 }
 
 export type ReadingLevel = 'yes' | 'learning' | 'no';
 const asReading = (v: string): ReadingLevel => (v === 'learning' || v === 'no' ? v : 'yes');
 
-/** Estado de pago de la sala, tal como lo ven el panel y el niño. */
+/** Estado de pago del portal, tal como lo ven el panel y el niño. */
 export interface RoomAccess {
   /** 'free' = sin límites (cobros apagados o sala antigua) · 'trial' = prueba · 'pass' = con pase. */
   plan: 'free' | 'trial' | 'pass';
@@ -58,7 +61,7 @@ function assertOpen(room: Room): void {
   if (roomAccess(room).locked) throw new RoomError('TRIAL_ENDED');
 }
 
-// ── Salas ────────────────────────────────────────────────────────────────
+// ── Portales ────────────────────────────────────────────────────────────────
 
 export async function createRoom(
   input: { childName: string; characterId: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel; passToken?: string; locale?: Locale; familyToken?: string; familyName?: string },
@@ -69,12 +72,15 @@ export async function createRoom(
   let familyToken = newToken();
   let familyName: string | null = input.familyName?.trim() || null;
   let familyPassId: string | null = null;
+  let familyPin: { parentPin: string; pinRecovery: string | null } | null = null;
   if (input.familyToken && TOKEN_REGEX.test(input.familyToken)) {
     const existing = await store.listRoomsByFamilyHash(hashToken(input.familyToken));
     if (existing.length > 0) {
       familyToken = input.familyToken;
       familyName = familyName ?? existing.find((x) => x.familyName)?.familyName ?? null;
       familyPassId = existing.find((x) => x.passId)?.passId ?? null;
+      const withPin = existing.find((x) => x.parentPin);
+      if (withPin?.parentPin) familyPin = { parentPin: withPin.parentPin, pinRecovery: withPin.pinRecovery };
     }
   }
   // Con un pase válido: sin límite. Si no, prueba gratis (con tope suave por dispositivo/conexión).
@@ -109,25 +115,32 @@ export async function createRoom(
     familyHash: hashToken(familyToken),
     familySeed,
     familyName,
+    parentPin: familyPin?.parentPin ?? null,
+    pinRecovery: familyPin?.pinRecovery ?? null,
   });
   return { childToken, parentToken, familyToken, plan: passId ? 'pass' : trialEndsAt ? 'trial' : 'free' };
 }
 
 /** Resuelve token → sala + rol. El token se compara por hash; nunca se guarda en claro. */
-export async function findRoomByToken(token: string): Promise<{ room: Room; role: Role } | null> {
+export async function findRoomByToken(token: string, opts: { allowLocked?: boolean } = {}): Promise<{ room: Room; role: Role; locked: boolean } | null> {
   if (!TOKEN_REGEX.test(token)) return null;
   const h = hashToken(token);
   const rec = await getRoomStore().findRoomByTokenHash(h);
   if (!rec || !isCharacterId(rec.characterId)) return null;
+  const role: Role = rec.childTokenHash === h ? 'child' : 'parent';
+  // Bloqueo parental: con PIN, el enlace de padres solo sirve si el panel está desbloqueado en este navegador.
+  const locked = role === 'parent' && !!rec.parentPin && !(await isUnlocked(scopeOf(rec)));
+  if (locked && !opts.allowLocked) return null;
   return {
-    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash },
-    role: rec.childTokenHash === h ? 'child' : 'parent',
+    room: { id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender, childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId, locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash, hasPin: !!rec.parentPin },
+    role,
+    locked,
   };
 }
 
 // ── Lectura ──────────────────────────────────────────────────────────────
 
-/** Versión del estado de la sala para el sondeo condicional. */
+/** Versión del estado del portal para el sondeo condicional. */
 export async function getMessagesVersion(room: Room, role: Role): Promise<string> {
   return getRoomStore().getRoomVersion(room.id, { deliveredOnly: role === 'child' });
 }
@@ -183,25 +196,10 @@ function notify(room: Room, rec: MessageRecord): void {
   publishRefresh(room.id, rec.deliverAt);
 }
 
-/** Acuse automático en la voz del personaje ("he recibido tu mensaje…"). Máximo uno cada 15 min. */
-async function maybeAcknowledge(room: Room): Promise<void> {
-  const since = new Date(Date.now() - 15 * 60_000).toISOString();
-  if ((await getRoomStore().countSystemMessagesSince(room.id, since)) > 0) return;
-  const c = resolveCharacter(CHARACTERS[room.character], { alias: room.characterAlias, gender: room.characterGender, locale: room.locale });
-  const rec = await getRoomStore().insertMessage({
-    roomId: room.id,
-    sender: 'system',
-    kind: 'text',
-    body: fillChild(c.busyAck, room.childName),
-  });
-  notify(room, rec);
-}
-
 export async function addChildText(room: Room, text: string): Promise<void> {
   assertOpen(room);
   const rec = await getRoomStore().insertMessage({ roomId: room.id, sender: 'child', kind: 'text', body: text });
   notify(room, rec);
-  await maybeAcknowledge(room);
 }
 
 export async function addPhoto(
@@ -231,7 +229,6 @@ export async function addPhoto(
       role === 'parent' ? (scheduledAt ?? (delayMinutes > 0 ? new Date(Date.now() + delayMinutes * 60_000).toISOString() : undefined)) : undefined,
   });
   notify(room, rec);
-  if (role === 'child') await maybeAcknowledge(room);
 }
 
 export async function addChildVoice(room: Room, audio: Buffer, mime: string, seconds: number): Promise<void> {
@@ -246,13 +243,60 @@ export async function addChildVoice(room: Room, audio: Buffer, mime: string, sec
   await store.uploadFile('voices', path, audio, type);
   const rec = await store.insertMessage({ roomId: room.id, sender: 'child', kind: 'voice', audioPath: path, durationS: seconds });
   notify(room, rec);
-  await maybeAcknowledge(room);
 }
 
 export interface ReplyOutcome {
   delivered: 'voice' | 'text';
-  /** Si se pidió voz y se entregó por escrito, por qué. */
-  fallback?: 'limit' | 'unavailable';
+  /** Si se pidió voz y se entregó por escrito, por qué ('trial' = ya se usaron los mensajes con voz de la prueba). */
+  fallback?: 'limit' | 'unavailable' | 'trial';
+}
+
+// ── Voz: "escuchar antes de enviar" sin pagar dos veces ─────────────────────
+// La escucha previa se guarda unos minutos; si los padres envían el mismo texto, se reutiliza ese audio.
+type Synth = { audio: Buffer; seconds: number; spokenChars: number };
+const PREVIEW_TTL_MS = 15 * 60_000;
+const previewCache = (): Map<string, { synth: Synth; exp: number }> => {
+  const g = globalThis as unknown as { __voicePreview?: Map<string, { synth: Synth; exp: number }> };
+  return (g.__voicePreview ??= new Map());
+};
+const previewKey = (room: Room, text: string) =>
+  createHash('sha256').update(`${room.id}|${voiceIdFor(room.character, room.characterGender)}|${voiceModel()}|${prepareSpeechText(text)}`).digest('base64url');
+
+/** ¿Puede este portal usar la voz ahora? Devuelve el motivo si no. */
+async function voiceAllowance(room: Room, text: string): Promise<'ok' | 'trial' | 'limit'> {
+  const store = getRoomStore();
+  if (roomAccess(room).plan === 'trial') {
+    const used = await store.countVoiceRepliesSince(room.id, new Date(0).toISOString());
+    if (used >= TRIAL_VOICE_MESSAGES) return 'trial';
+  }
+  const limits = voiceLimits();
+  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const [roomReplies, totalChars] = await Promise.all([store.countVoiceRepliesSince(room.id, since), store.sumVoiceCharsSince(since)]);
+  if (roomReplies >= limits.roomDailyReplies || totalChars + text.length > limits.dailyChars) return 'limit';
+  return 'ok';
+}
+
+/** Escucha previa para los padres: genera el audio (sin enviarlo) y lo guarda unos minutos para reutilizarlo al enviar. */
+export async function previewVoice(room: Room, text: string): Promise<{ ok: true; audio: Buffer } | { ok: false; reason: 'trial' | 'limit' | 'unavailable' | 'empty' }> {
+  assertOpen(room);
+  if (!KING_VOICE_ENABLED) return { ok: false, reason: 'unavailable' };
+  if (!prepareSpeechText(text)) return { ok: false, reason: 'empty' };
+  const allowed = await voiceAllowance(room, text);
+  if (allowed !== 'ok') return { ok: false, reason: allowed };
+  const key = previewKey(room, text);
+  const cache = previewCache();
+  const hit = cache.get(key);
+  if (hit && hit.exp > Date.now()) return { ok: true, audio: hit.synth.audio };
+  try {
+    const synth = await synthesizeKingVoice(room.character, text, { gender: room.characterGender });
+    const now = Date.now();
+    for (const [k, v] of cache) if (v.exp <= now) cache.delete(k);
+    cache.set(key, { synth, exp: now + PREVIEW_TTL_MS });
+    return { ok: true, audio: synth.audio };
+  } catch (err) {
+    console.error('[voice-preview]', err instanceof VoiceError ? err.message : err);
+    return { ok: false, reason: err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable' };
+  }
 }
 
 export async function addKingReply(
@@ -278,18 +322,22 @@ export async function addKingReply(
   if (mode === 'text' || !KING_VOICE_ENABLED || effect === 'surprise') return sendText();
   if (!prepareSpeechText(text)) return sendText();
 
-  // Topes de coste: por sala y diario global. Si se superan, se entrega por escrito.
-  const limits = voiceLimits();
-  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
-  const [roomReplies, totalChars] = await Promise.all([store.countVoiceRepliesSince(room.id, since), store.sumVoiceCharsSince(since)]);
-  if (roomReplies >= limits.roomDailyReplies || totalChars + text.length > limits.dailyChars) return sendText('limit');
+  // Prueba gratis: unos pocos mensajes con voz. Topes de coste: por sala y diario global. Si no, por escrito.
+  const allowed = await voiceAllowance(room, text);
+  if (allowed !== 'ok') return sendText(allowed);
 
-  let synth: Awaited<ReturnType<typeof synthesizeKingVoice>>;
-  try {
-    synth = await synthesizeKingVoice(room.character, text);
-  } catch (err) {
-    console.error('[voice]', err instanceof VoiceError ? err.message : err);
-    return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
+  let synth: Synth;
+  const cached = previewCache().get(previewKey(room, text));
+  if (cached && cached.exp > Date.now()) {
+    synth = cached.synth; // lo que los padres escucharon es exactamente lo que recibe el niño
+    previewCache().delete(previewKey(room, text));
+  } else {
+    try {
+      synth = await synthesizeKingVoice(room.character, text, { gender: room.characterGender });
+    } catch (err) {
+      console.error('[voice]', err instanceof VoiceError ? err.message : err);
+      return sendText(err instanceof VoiceError && err.kind === 'quota' ? 'limit' : 'unavailable');
+    }
   }
   const { audio, seconds } = synth;
   const path = `${room.id}/${randomUUID()}.mp3`;
@@ -307,6 +355,44 @@ export async function addKingReply(
   return { delivered: 'voice' };
 }
 
+// ── Saludo con el nombre ("¡Hola, Lucía!") ───────────────────────────────────
+// Se genera una vez por sala, la primera vez que el niño abre el sello, y se guarda en la carpeta del portal
+// (se borra con ella). El resto del saludo está pregrabado por personaje.
+const greetingPath = (room: Room) => `${room.id}/saludo.mp3`;
+const greetingInFlight = (): Map<string, Promise<string | null>> => {
+  const g = globalThis as unknown as { __greetingInFlight?: Map<string, Promise<string | null>> };
+  return (g.__greetingInFlight ??= new Map());
+};
+
+export async function greetingAudioUrl(room: Room): Promise<string | null> {
+  if (!KING_VOICE_ENABLED) return null;
+  const line = greetingNameLine(room.character, room.childName);
+  if (!line) return null;
+  const inflight = greetingInFlight();
+  const running = inflight.get(room.id);
+  if (running) return running;
+  const job = (async () => {
+    const store = getRoomStore();
+    const path = greetingPath(room);
+    try {
+      if (!(await store.fileExists('voices', path))) {
+        const { audio } = await synthesizeKingVoice(room.character, line, { trusted: true, gender: room.characterGender });
+        await store.uploadFile('voices', path, audio, 'audio/mpeg').catch((e) => {
+          if (!/exist|duplicate/i.test(String(e))) throw e; // otra petición lo subió a la vez
+        });
+      }
+      return (await store.signedUrls('voices', [path])).get(path) ?? null;
+    } catch (err) {
+      console.error('[greeting]', err instanceof VoiceError ? err.message : err);
+      return null;
+    } finally {
+      inflight.delete(room.id);
+    }
+  })();
+  inflight.set(room.id, job);
+  return job;
+}
+
 /** Cancela un mensaje programado que aún no se ha entregado. */
 export async function cancelPending(room: Room, messageId: string): Promise<boolean> {
   const ok = await getRoomStore().deletePendingMessage(room.id, messageId, new Date().toISOString());
@@ -320,7 +406,7 @@ export function signalTyping(room: Room, from: Role): void {
 }
 
 /**
- * Borra un mensaje de la sala (lo hacen los padres si hay un error). Desaparece también
+ * Borra un mensaje del portal (lo hacen los padres si hay un error). Desaparece también
  * para el niño en su próxima actualización, y se borran sus audios o fotos del almacén.
  */
 export async function eraseMessage(room: Room, messageId: string): Promise<boolean> {
@@ -345,7 +431,7 @@ export async function editMessage(room: Room, messageId: string, text: string): 
   return 'ok';
 }
 
-/** Cambia el nombre y/o el personaje de la sala. El niño lo verá al volver a abrir su enlace. */
+/** Cambia el nombre y/o el personaje del portal. El niño lo verá al volver a abrir su enlace. */
 export async function editRoom(
   room: Room,
   patch: { childName?: string; characterId?: CharacterId; characterAlias?: string; characterGender?: 'm' | 'f'; readingLevel?: ReadingLevel },
@@ -360,14 +446,15 @@ export async function editRoom(
 }
 
 /**
- * Borra la sala por completo: mensajes, audios y fotos. Es irreversible.
- * El niño verá "esta sala ya no existe" en su siguiente actualización.
+ * Borral portal por completo: mensajes, audios y fotos. Es irreversible.
+ * El niño verá "este portal ya no existe" en su siguiente actualización.
  */
 export async function eraseRoom(room: Room): Promise<void> {
   const store = getRoomStore();
   for (const f of await store.listFilePaths(room.id)) {
     await store.removeFile(f.bucket, f.path).catch(() => undefined);
   }
+  await store.removeFile('voices', greetingPath(room)).catch(() => undefined);
   await store.deleteRoom(room.id);
   publishRefresh(room.id);
 }
@@ -381,7 +468,7 @@ export async function rotateChildLink(room: Room, parentToken: string): Promise<
   const childToken = deriveChildToken(parentToken, version);
   const ok = await getRoomStore().updateChildLink(room.id, version, hashToken(childToken));
   if (!ok) throw new RoomError('NOT_FOUND');
-  // Si el niño tenía la sala abierta, en su próxima actualización verá que el enlace ya no vale.
+  // Si el niño teníal portal abierta, en su próxima actualización verá que el enlace ya no vale.
   publishRefresh(room.id);
   return childToken;
 }
@@ -407,7 +494,7 @@ export interface FamilyView {
   rooms: FamilyRoomView[];
 }
 
-/** Reconstruye todas las salas de una familia a partir de su enlace. null si no existe o ha caducado. */
+/** Reconstruye todos los portales de una familia a partir de su enlace. null si no existe o ha caducado. */
 export async function getFamily(familyToken: string): Promise<FamilyView | null> {
   if (!TOKEN_REGEX.test(familyToken)) return null;
   const recs = await getRoomStore().listRoomsByFamilyHash(hashToken(familyToken));
@@ -420,7 +507,7 @@ export async function getFamily(familyToken: string): Promise<FamilyView | null>
     const room: Room = {
       id: rec.id, childName: rec.childName, character: rec.characterId, characterAlias: rec.characterAlias, characterGender: rec.characterGender,
       childLinkVersion: rec.childLinkVersion, readingLevel: asReading(rec.readingLevel), trialEndsAt: rec.trialEndsAt, passId: rec.passId,
-      locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash,
+      locale: parseLocale(rec.locale) ?? 'es', familyHash: rec.familyHash, hasPin: !!rec.parentPin,
     };
     rooms.push({
       childName: rec.childName,

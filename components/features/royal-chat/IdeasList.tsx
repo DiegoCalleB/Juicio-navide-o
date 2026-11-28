@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { CharacterProfile } from '@/lib/characters';
 import { IconClose } from './icons';
 
@@ -8,11 +9,15 @@ interface Props {
   /** Idea elegida ahora mismo (día). */
   selectedDay: number | null;
   onPick: (day: number) => void;
+  /** Trastada exprés: rellena el mensaje con su sugerencia. */
+  onUseText: (template: string) => void;
   onClose: () => void;
+  initialTab?: 'nights' | 'quick';
 }
 
 /** Ideas de travesuras para montar por la noche. Los padres eligen la que quieren y escriben su propio mensaje. */
-export function IdeasList({ character, selectedDay, onPick, onClose }: Props) {
+export function IdeasList({ character, selectedDay, onPick, onUseText, onClose, initialTab = 'nights' }: Props) {
+  const [tab, setTab] = useState(initialTab);
   const cal = character.mischief;
   if (!cal) return null;
   const [m, d] = cal.startDate.split('-').map(Number) as [number, number];
@@ -35,6 +40,31 @@ export function IdeasList({ character, selectedDay, onPick, onClose }: Props) {
             <IconClose className="size-5" />
           </button>
         </div>
+        <div role="tablist" aria-label="Tipo de ideas" className="mx-4 mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white/5 p-1 text-[13px] font-bold">
+          <button type="button" role="tab" aria-selected={tab === 'nights'} onClick={() => setTab('nights')} className={`min-h-9 rounded-lg ${tab === 'nights' ? 'bg-[#5eead4] text-[#04302b]' : 'text-[#e8f1ff]/75'}`}>Las 24 noches</button>
+          <button type="button" role="tab" aria-selected={tab === 'quick'} onClick={() => setTab('quick')} className={`min-h-9 rounded-lg ${tab === 'quick' ? 'bg-[#f6d77a] text-[#2a0f4a]' : 'text-[#e8f1ff]/75'}`}>⚡ Sin tiempo</button>
+        </div>
+        {tab === 'quick' ? (
+          <ul className="flex-1 space-y-2 overflow-y-auto px-4 pb-4" aria-label="Trastadas exprés">
+            <li className="px-1 pb-1 text-[12.5px] leading-snug text-[#e8f1ff]/60">Para cuando no hay tiempo, no hay ganas o se te ha olvidado. Menos de un minuto.</li>
+            {cal.quick.map((q) => (
+              <li key={q.id} className="rounded-2xl border border-[#f6d77a]/25 bg-[#f6d77a]/[.05] p-3">
+                <p className="text-[15px] font-bold leading-snug text-[#e8f1ff]">{q.title}</p>
+                <p className="mt-0.5 text-[13.5px] leading-snug text-[#e8f1ff]/80">{q.how}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onUseText(q.suggestion);
+                    onClose();
+                  }}
+                  className="mt-2 min-h-10 w-full rounded-xl border border-[#f6d77a]/50 text-[13px] font-bold text-[#f6d77a]"
+                >
+                  Usar su mensaje
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
           {cal.days.map((day) => (
             <li key={day.day} className={`rounded-2xl border p-3 ${selectedDay === day.day ? 'border-[#5eead4] bg-[#5eead4]/10' : 'border-white/10 bg-white/[.04]'}`}>
@@ -42,7 +72,8 @@ export function IdeasList({ character, selectedDay, onPick, onClose }: Props) {
                 <span className="font-bold text-[#5eead4]">Día {day.day}</span>
                 <span>{dateOf(day.day)}</span>
               </div>
-              <p className="mt-1 text-[14px] leading-snug text-[#e8f1ff]">{day.idea}</p>
+              <p className="mt-1 text-[15px] font-bold leading-snug text-[#e8f1ff]">{day.title}</p>
+              <p className="mt-0.5 text-[13.5px] leading-snug text-[#e8f1ff]/80">{day.idea} <span className="text-[#e8f1ff]/50">· {day.minutes} min · {day.need}</span></p>
               <button
                 type="button"
                 onClick={() => {
@@ -56,6 +87,7 @@ export function IdeasList({ character, selectedDay, onPick, onClose }: Props) {
             </li>
           ))}
         </ul>
+        )}
       </div>
     </div>
   );
